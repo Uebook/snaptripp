@@ -164,6 +164,18 @@ export default function HierarchicalMap({ items, searchType, onItemClick, select
 
         const marker = L.marker([item.coordinates.lat, item.coordinates.lng], { icon }).addTo(mapRef.current)
 
+        // Make marker draggable to DayPlanner
+        if (item.type === 'place') {
+          const element = marker.getElement()
+          if (element) {
+            element.draggable = true
+            element.addEventListener('dragstart', (e) => {
+              e.dataTransfer!.setData('application/json', JSON.stringify(item))
+              e.dataTransfer!.effectAllowed = 'copy'
+            })
+          }
+        }
+
         // Enhanced popup content based on item type
         let popupContent = ''
         if (item.type === 'place' && item.data) {

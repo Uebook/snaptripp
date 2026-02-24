@@ -8,7 +8,7 @@ import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { MapItem } from '../components/HierarchicalMap'
 import ItinerarySidebar from '../components/ItinerarySidebar'
-import DragDropItinerary from '../components/DragDropItinerary'
+import DayPlanner, { DayPlan } from '../components/DayPlanner'
 import TimelineView from '../components/TimelineView'
 import { detectSearchType } from '../utils/searchTypeDetector'
 
@@ -26,7 +26,9 @@ function ExploreContent() {
   const [searchType, setSearchType] = useState<'city' | 'state' | 'country'>('city')
   const [mapItems, setMapItems] = useState<MapItem[]>([])
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null)
-  const [selectedItineraryItems, setSelectedItineraryItems] = useState<MapItem[]>([])
+
+
+  const [dayPlans, setDayPlans] = useState<DayPlan[]>([])
   const [showTimeline, setShowTimeline] = useState(false)
   const [autoMode, setAutoMode] = useState(false)
   const [fallbackItem, setFallbackItem] = useState<MapItem | null>(null)
@@ -245,39 +247,60 @@ function ExploreContent() {
   }
 
   const handleAddToItinerary = (item: MapItem) => {
-    if (!selectedItineraryItems.find(i => i.id === item.id)) {
-      setSelectedItineraryItems([...selectedItineraryItems, item])
+    // Add to the first day by default, creating one if none exist
+    if (dayPlans.length === 0) {
+      const newDay: DayPlan = {
+        id: `day-${Date.now()}`,
+        title: 'Day 1',
+        items: [item]
+      }
+      setDayPlans([newDay])
+    } else {
+      // Add to Day 1 (index 0) or ask user? For now, Day 1.
+      const newDays = [...dayPlans]
+      // Avoid duplicates in the first day
+      if (!newDays[0].items.find(i => i.id === item.id)) {
+        newDays[0].items.push(item)
+        setDayPlans(newDays)
+      }
     }
   }
 
-  const handleRemoveFromItinerary = (id: string) => {
-    setSelectedItineraryItems(selectedItineraryItems.filter(item => item.id !== id))
+  const handleUpdateDays = (updatedDays: DayPlan[]) => {
+    setDayPlans(updatedDays)
   }
 
-  const handleReorderItems = (items: MapItem[]) => {
-    setSelectedItineraryItems(items)
+  const handleRemoveItem = (dayId: string, itemId: string) => {
+    const newDays = dayPlans.map(day => {
+      if (day.id === dayId) {
+        return { ...day, items: day.items.filter(i => i.id !== itemId) }
+      }
+      return day
+    })
+    setDayPlans(newDays)
   }
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
       <SiteHeader />
-      {/* Drag & Drop Itinerary Bar */}
-      {selectedItineraryItems.length > 0 && (
-        <DragDropItinerary
-          selectedItems={selectedItineraryItems}
-          onRemoveItem={handleRemoveFromItinerary}
-          onReorderItems={handleReorderItems}
+      {/* Day Planner Sidebar */}
+      {dayPlans.length > 0 && (
+        <DayPlanner
+          days={dayPlans}
+          onUpdateDays={handleUpdateDays}
+          onRemoveItem={handleRemoveItem}
           onGenerateTimeline={() => setShowTimeline(true)}
+          onSaveTrip={() => alert("Save functionality coming to Explore page soon! Go to Planner to save.")}
         />
       )}
 
       {/* Main Content */}
       <main style={{
-        paddingTop: selectedItineraryItems.length > 0 ? '220px' : '2rem',
-        padding: selectedItineraryItems.length > 0 ? '220px 2rem 2rem 2rem' : '2rem',
+        paddingTop: '2rem',
+        paddingLeft: dayPlans.length > 0 ? '370px' : '2rem', // Shift content when planner is open
+        paddingRight: selectedItem ? '400px' : '2rem',
         minHeight: '100vh',
-        marginRight: selectedItem ? '400px' : '0',
-        transition: 'margin-right 0.3s'
+        transition: 'all 0.3s'
       }}>
         {!autoMode && (
           <div style={{
@@ -421,7 +444,7 @@ function ExploreContent() {
       {/* Timeline View */}
       {showTimeline && (
         <TimelineView
-          items={selectedItineraryItems}
+          items={dayPlans.flatMap(d => d.items)} // Flatten for now, existing TimelineView expects flat list
           onClose={() => setShowTimeline(false)}
         />
       )}

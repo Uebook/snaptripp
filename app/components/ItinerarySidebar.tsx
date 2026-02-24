@@ -45,11 +45,18 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
           border: '1px solid #e0e0e0',
           cursor: hasChildren ? 'pointer' : 'default'
         }}
-        onClick={() => hasChildren && toggleSection(sectionId)}
+          onClick={() => hasChildren && toggleSection(sectionId)}
+          draggable={!hasChildren} // Only leaf nodes (places) are draggable
+          onDragStart={(e) => {
+            if (!hasChildren) {
+              e.dataTransfer.setData('application/json', JSON.stringify(it))
+              e.dataTransfer.effectAllowed = 'copy'
+            }
+          }}
         >
           {placeImage && (
-            <img 
-              src={placeImage} 
+            <img
+              src={placeImage}
               alt={it.name}
               style={{
                 width: '60px',
@@ -172,8 +179,8 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
         ) : item.children && item.children.length > 0 ? (
           <div>
             {item.type === 'city' && item.children[0]?.type === 'place' && (
-              <h3 style={{ 
-                fontSize: '1.1rem', 
+              <h3 style={{
+                fontSize: '1.1rem',
                 marginBottom: '1rem',
                 color: '#667eea',
                 fontWeight: '600'
@@ -182,8 +189,8 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
               </h3>
             )}
             {item.type === 'state' && item.children[0]?.type === 'city' && (
-              <h3 style={{ 
-                fontSize: '1.1rem', 
+              <h3 style={{
+                fontSize: '1.1rem',
                 marginBottom: '1rem',
                 color: '#667eea',
                 fontWeight: '600'
@@ -202,8 +209,8 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
                   <div style={{ marginBottom: '1rem' }}>
                     {item.data.images && item.data.images.length > 1 ? (
                       <div>
-                        <img 
-                          src={item.data.images[0]} 
+                        <img
+                          src={item.data.images[0]}
                           alt={item.name}
                           style={{
                             width: '100%',
@@ -222,9 +229,9 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
                           gap: '0.5rem'
                         }}>
                           {item.data.images.slice(1, 5).map((img: string, idx: number) => (
-                            <img 
+                            <img
                               key={idx}
-                              src={img} 
+                              src={img}
                               alt={`${item.name} ${idx + 2}`}
                               style={{
                                 width: '100%',
@@ -242,8 +249,8 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
                       </div>
                     ) : (
                       (item.data.images?.[0] || item.data.imageUrl) && (
-                        <img 
-                          src={item.data.images?.[0] || item.data.imageUrl} 
+                        <img
+                          src={item.data.images?.[0] || item.data.imageUrl}
                           alt={item.name}
                           style={{
                             width: '100%',
@@ -280,9 +287,9 @@ export default function ItinerarySidebar({ item, onClose, onAddToItinerary, load
                   </p>
                 )}
                 {item.data.website && (
-                  <a 
-                    href={item.data.website} 
-                    target="_blank" 
+                  <a
+                    href={item.data.website}
+                    target="_blank"
                     rel="noopener noreferrer"
                     style={{
                       display: 'inline-block',

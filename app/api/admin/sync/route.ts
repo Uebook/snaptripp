@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ApifyClient } from 'apify-client';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: NextRequest) {
     try {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
                     'popular attractions'
                 ],
                 locationQuery: targetCity ? `${targetCity}, ${country}` : country,
-                maxCrawledPlacesPerSearch: 250, // Increased to 250 as requested
+                maxCrawledPlacesPerSearch: 50, // Reduced from 250 to prevent Vercel timeouts
                 language: 'en',
                 scrapePlaceDetailPage: true,
                 minScore: 4, // 4+ stars filter
