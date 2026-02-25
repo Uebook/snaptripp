@@ -2,255 +2,534 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    location: '',
+    bio: '',
+    avatar_url: '',
+    created_at: ''
+  })
+  const [stats, setStats] = useState({
+    trips: 0,
+    countries: 0
+  })
   const [loading, setLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     async function fetchUser() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setUser(session.user)
+      if (!session) {
+        router.push('/')
+        return
       }
+
+      setUser(session.user)
+
+      try {
+        // Fetch Profile from DB
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profileData) {
+          const names = profileData.full_name ? profileData.full_name.split(' ') : ['']
+          const firstName = names[0] || ''
+          const lastName = names.slice(1).join(' ') || ''
+
+          setProfile({
+            first_name: firstName,
+            last_name: lastName,
+            email: profileData.email || session.user.email || '',
+            phone: profileData.phone || '',
+            location: profileData.location || '',
+            bio: profileData.bio || '',
+            avatar_url: profileData.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
+            created_at: profileData.created_at || session.user.created_at
+          })
+        } else {
+          setProfile(prev => ({
+            ...prev,
+            email: session.user.email || '',
+            created_at: session.user.created_at,
+            avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'
+          }))
+        }
+
+        // Fetch Stats
+        const { count: tripsCount } = await supabase
+          .from('trips')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', session.user.id)
+
+        const { data: reviewsData } = await supabase
+          .from('traveler_reviews')
+          .select('country')
+          .eq('user_id', session.user.id)
+
+        const uniqueCountries = new Set(reviewsData?.map(r => r.country) || [])
+
+        setStats({
+          trips: tripsCount || 0,
+          countries: uniqueCountries.size
+        })
+
+      } catch (error) {
+        console.error("Error fetching profile details:", error)
+      }
+
       setLoading(false)
     }
     fetchUser()
-  }, [])
+  }, [router])
 
-  if (loading) return <div className="p-10">Loading profile...</div>
+  const handleSave = async () => {
+    if (!user) return
+    setIsSaving(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: `${profile.first_name} ${profile.last_name}`.trim(),
+          email: profile.email,
+          phone: profile.phone,
+          location: profile.location,
+          bio: profile.bio,
+          updated_at: new Date().toISOString()
+        })
+      if (error) throw error
+      alert("Profile saved successfully!")
+    } catch (error: any) {
+      alert("Failed to save profile: " + error.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (loading) return <div style={{ padding: '40px' }}>Loading profile...</div>
 
   return (
-    <div className="profile-container animate-fade-in">
-      <header className="profile-header">
-        <h1 className="profile-title">Personal Identity</h1>
-        <p className="profile-subtitle">Manage your traveler profile and account credentials.</p>
+    <div className="profile-edit-body">
+      <header className="profile-edit-header">
+        <div className="header-text">
+          <h1>Edit Profile</h1>
+          <p>Update your personal information and preferences</p>
+        </div>
+        <div className="header-buttons">
+          <button className="btn-cancel" onClick={() => router.push('/dashboard')}>Cancel</button>
+          <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : '✓ Save Changes'}
+          </button>
+        </div>
       </header>
 
-      <div className="profile-grid">
-        <div className="profile-sidebar-info">
-          <div className="avatar-card-luxe">
-            <div className="avatar-placeholder">
-              {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+      <div className="profile-edit-grid">
+        {/* Left Column: Photo & Stats */}
+        <div className="edit-left-column">
+          <div className="photo-card">
+            <div className="avatar-preview">
+              <img
+                src={profile.avatar_url}
+                alt="Profile"
+              />
             </div>
-            <button className="change-photo-btn">Change Portrait</button>
-            <div className="user-membership">
-              <span className="member-label">Membership</span>
-              <span className="member-tier">Luxury Explorer</span>
+            <button className="btn-change-photo" onClick={() => alert("Photo upload feature coming soon!")}>↑ Change Photo</button>
+            <p className="photo-hint">JPG, PNG or GIF. Max size 2MB</p>
+          </div>
+
+          <div className="account-stats-card">
+            <h3>Account Stats</h3>
+            <div className="stat-row">
+              <span className="label">Trips Planned</span>
+              <span className="value">{stats.trips}</span>
+            </div>
+            <div className="stat-row border-top">
+              <span className="label">Countries Visited</span>
+              <span className="value">{stats.countries}</span>
+            </div>
+            <div className="stat-row border-top">
+              <span className="label">Member Since</span>
+              <span className="value">{new Date(profile.created_at).getFullYear() || '-'}</span>
             </div>
           </div>
         </div>
 
-        <div className="profile-main-form">
-          <section className="form-section-luxe">
-            <h3 className="section-title">Personal Details</h3>
-            <div className="input-group-luxe">
-              <label>Full Name</label>
-              <input type="text" defaultValue={user?.user_metadata?.full_name || ''} readOnly />
+        {/* Right Column: Forms */}
+        <div className="edit-right-column">
+          {/* Personal Info */}
+          <div className="form-card">
+            <h3>Personal Information</h3>
+            <div className="form-grid">
+              <div className="input-group">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  value={profile.first_name}
+                  onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
+                />
+              </div>
+              <div className="input-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  value={profile.last_name}
+                  onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
+                />
+              </div>
+              <div className="input-group full-width">
+                <label>Email Address</label>
+                <div className="icon-input">
+                  <span className="input-icon">✉️</span>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="input-group">
+                <label>Phone Number</label>
+                <div className="icon-input">
+                  <span className="input-icon">📞</span>
+                  <input
+                    type="tel"
+                    value={profile.phone}
+                    onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+              </div>
+              <div className="input-group">
+                <label>Location</label>
+                <div className="icon-input">
+                  <span className="input-icon">📍</span>
+                  <input
+                    type="text"
+                    value={profile.location}
+                    onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. New York, USA"
+                  />
+                </div>
+              </div>
+              <div className="input-group full-width">
+                <label>Bio</label>
+                <textarea
+                  rows={4}
+                  value={profile.bio}
+                  onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  placeholder="Tell us about your travel style!"
+                />
+              </div>
             </div>
-            <div className="input-group-luxe">
-              <label>Professional Email</label>
-              <input type="email" defaultValue={user?.email || ''} readOnly />
-            </div>
-          </section>
+          </div>
 
-          <section className="form-section-luxe">
-            <h3 className="section-title">Account Security</h3>
-            <div className="input-group-luxe">
-              <label>Current Password</label>
-              <input type="password" value="********" readOnly />
+          {/* Preferences */}
+          <div className="form-card">
+            <h3>Preferences</h3>
+            <div className="preferences-list">
+              <div className="pref-item">
+                <div className="pref-text">
+                  <span className="pref-label">Email Notifications</span>
+                  <span className="pref-desc">Receive updates about your trips and new features</span>
+                </div>
+                <label className="toggle">
+                  <input type="checkbox" defaultChecked />
+                  <span className="slider"></span>
+                </label>
+              </div>
+              <div className="pref-item divider">
+                <div className="pref-text">
+                  <span className="pref-label">Travel Recommendations</span>
+                  <span className="pref-desc">Get personalized destination suggestions</span>
+                </div>
+                <label className="toggle">
+                  <input type="checkbox" defaultChecked />
+                  <span className="slider"></span>
+                </label>
+              </div>
+              <div className="pref-item divider">
+                <div className="pref-text">
+                  <span className="pref-label">Public Profile</span>
+                  <span className="pref-desc">Make your profile visible to other travelers</span>
+                </div>
+                <label className="toggle">
+                  <input type="checkbox" defaultChecked />
+                  <span className="slider"></span>
+                </label>
+              </div>
             </div>
-            <button className="btn-gold-outline-luxe">Request Password Reset</button>
-          </section>
+          </div>
 
-          <div className="profile-footer">
-            <button className="btn-gold-luxe">Save Changes</button>
+          {/* Security */}
+          <div className="form-card security-card">
+            <h3>🛡️ Security Settings</h3>
+            <div className="security-actions">
+              <button className="btn-outline">🔓 Change Password</button>
+              <button className="btn-outline">📱 Enable 2FA</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <style jsx global>{`
-        .profile-container a { text-decoration: none !important; color: inherit; }
-        .profile-container {
-          padding: 64px 48px;
-          max-width: 1000px;
-          margin: 0 auto;
+      <style jsx>{`
+        .profile-edit-body {
+          padding: 40px;
+          background: #f8fafc;
+          min-height: 100vh;
+          font-family: 'Inter', sans-serif;
         }
 
-        .profile-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 48px;
-          font-weight: 900;
-          color: #031B4E;
-          margin: 0 0 12px;
-          letter-spacing: -1.5px;
+        .profile-edit-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 40px;
         }
 
-        .profile-subtitle {
-          color: #64748B;
-          font-size: 18px;
-          margin-bottom: 64px;
-          font-weight: 500;
+        .header-text h1 {
+          font-size: 2rem;
+          color: #0a192f;
+          margin: 0 0 8px 0;
+          font-weight: 700;
         }
 
-        .profile-grid {
+        .header-text p {
+          color: #64748b;
+          font-size: 1rem;
+          margin: 0;
+        }
+
+        .header-buttons {
+          display: flex;
+          gap: 12px;
+        }
+
+        .btn-cancel {
+          background: white;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
+          padding: 10px 24px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .btn-save {
+          background: #0ea5e9;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .profile-edit-grid {
           display: grid;
           grid-template-columns: 320px 1fr;
-          gap: 48px;
+          gap: 30px;
+          max-width: 1200px;
         }
 
-        .avatar-card-luxe {
+        .photo-card, .account-stats-card, .form-card {
           background: white;
-          padding: 40px 32px;
-          border-radius: 28px;
+          border-radius: 12px;
+          padding: 30px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          border: 1px solid #edf2f7;
+          margin-bottom: 30px;
+        }
+
+        .photo-card {
           text-align: center;
-          border: 1px solid rgba(241, 245, 249, 0.8);
-          box-shadow: 0 10px 40px rgba(3, 27, 78, 0.04);
         }
 
-        .avatar-placeholder {
-          width: 140px;
-          height: 140px;
-          background: #031B4E;
-          color: #D4AF37;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 56px;
-          font-weight: 900;
-          margin: 0 auto 32px;
-          box-shadow: 0 15px 30px rgba(3, 27, 78, 0.15);
-          border: 6px solid white;
+        .avatar-preview {
+          width: 120px;
+          height: 120px;
+          border-radius: 20px;
+          border: 3px solid #0ea5e9;
+          overflow: hidden;
+          margin: 0 auto 20px;
         }
 
-        .change-photo-btn {
-          background: transparent;
-          border: 1.5px solid #E2E8F0;
-          padding: 10px 24px;
-          border-radius: 30px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #64748B;
+        .avatar-preview img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .btn-change-photo {
+          background: white;
+          border: 1px solid #0ea5e9;
+          color: #0ea5e9;
+          padding: 8px 20px;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          font-weight: 600;
           cursor: pointer;
+          margin-bottom: 12px;
+        }
+
+        .photo-hint {
+          font-size: 11px;
+          color: #94a3b8;
+          margin: 0;
+        }
+
+        .account-stats-card h3, .form-card h3 {
+          font-size: 1.1rem;
+          color: #0a192f;
+          margin: 0 0 24px 0;
+          font-weight: 700;
+        }
+
+        .stat-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 15px 0;
+        }
+
+        .stat-row.border-top {
+          border-top: 1px solid #f1f5f9;
+        }
+
+        .stat-row .label { color: #64748b; font-size: 0.9rem; }
+        .stat-row .value { font-weight: 800; color: #0ea5e9; }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+        }
+
+        .input-group.full-width {
+          grid-column: span 2;
+        }
+
+        .input-group label {
+          display: block;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #0a192f;
+          margin-bottom: 8px;
+        }
+
+        .input-group input, .input-group textarea {
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          font-size: 0.95rem;
+          outline: none;
           transition: all 0.2s;
         }
 
-        .change-photo-btn:hover {
-          background: #F8FAFC;
-          border-color: #D4AF37;
-          color: #031B4E;
+        .input-group input:focus, .input-group textarea:focus {
+          border-color: #0ea5e9;
+          background: white;
         }
 
-        .user-membership {
-          margin-top: 40px;
-          padding-top: 32px;
-          border-top: 1px solid #F1F5F9;
+        .icon-input {
+          position: relative;
+        }
+
+        .input-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 1.1rem;
+          pointer-events: none;
+        }
+
+        .icon-input input {
+          padding-left: 44px;
+        }
+
+        .preferences-list {
           display: flex;
           flex-direction: column;
-          gap: 6px;
         }
 
-        .member-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #94A3B8; font-weight: 800; }
-        .member-tier { font-size: 18px; color: #D4AF37; font-weight: 800; font-family: 'Playfair Display', serif; }
-
-        .form-section-luxe {
-          background: white;
-          padding: 40px;
-          border-radius: 28px;
-          border: 1px solid #F1F5F9;
-          margin-bottom: 32px;
-          box-shadow: 0 10px 30px rgba(3, 27, 78, 0.04);
-        }
-
-        .section-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 24px;
-          color: #031B4E;
-          margin: 0 0 32px;
-          font-weight: 800;
-          border-bottom: 1px solid #F1F5F9;
-          padding-bottom: 16px;
-        }
-
-        .input-group-luxe {
-          margin-bottom: 24px;
-        }
-
-        .input-group-luxe label {
-          display: block;
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-          color: #64748B;
-          font-weight: 800;
-          margin-bottom: 10px;
-        }
-
-        .input-group-luxe input {
-          width: 100%;
-          padding: 14px 20px;
-          border-radius: 14px;
-          border: 1px solid #E2E8F0;
-          background: #F8FAFC;
-          color: #031B4E;
-          font-weight: 600;
-          font-size: 16px;
-          transition: all 0.2s;
-        }
-        
-        .input-group-luxe input:focus {
-          border-color: #D4AF37;
-          background: white;
-          box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
-          outline: none;
-        }
-
-        .btn-gold-outline-luxe {
-          background: transparent;
-          border: 1.5px solid #D4AF37;
-          color: #D4AF37 !important;
-          padding: 14px 28px;
-          border-radius: 14px;
-          font-weight: 700;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.3s;
-          text-decoration: none !important;
-        }
-
-        .btn-gold-outline-luxe:hover {
-          background: rgba(212, 175, 55, 0.08);
-          transform: translateY(-2px);
-        }
-
-        .profile-footer {
-          margin-top: 48px;
+        .pref-item {
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 0;
         }
 
-        .btn-gold-luxe {
-          background: #D4AF37;
-          color: white !important;
-          padding: 16px 48px;
-          border-radius: 14px;
-          border: none;
-          font-weight: 800;
-          font-size: 16px;
+        .pref-item.divider {
+          border-top: 1px solid #f1f5f9;
+        }
+
+        .pref-text { display: flex; flex-direction: column; gap: 4px; }
+        .pref-label { font-weight: 700; color: #0a192f; font-size: 0.95rem; }
+        .pref-desc { font-size: 0.85rem; color: #64748b; }
+
+        .toggle {
+          position: relative;
+          display: inline-block;
+          width: 44px;
+          height: 24px;
+        }
+
+        .toggle input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+          position: absolute;
           cursor: pointer;
-          box-shadow: 0 10px 25px rgba(212, 175, 55, 0.25);
-          transition: all 0.3s;
-          text-decoration: none !important;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #e2e8f0;
+          transition: .4s;
+          border-radius: 24px;
         }
 
-        .btn-gold-luxe:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 15px 35px rgba(212, 175, 55, 0.35);
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 18px; width: 18px;
+          left: 3px; bottom: 3px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
         }
 
-        .animate-fade-in { animation: fadeIn 0.8s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        input:checked + .slider { background-color: #0ea5e9; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .security-card {
+          background: #f0f9ff;
+          border: 1px solid #bae6fd;
+        }
+
+        .security-actions {
+          display: flex;
+          gap: 15px;
+        }
+
+        .btn-outline {
+          background: white;
+          border: 1px solid #0ea5e9;
+          color: #0ea5e9;
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+        }
       `}</style>
     </div>
   )

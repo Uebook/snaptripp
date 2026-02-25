@@ -4,28 +4,65 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import './DashboardSidebar.css'
 
 interface NavItem {
   name: string
-  icon: string
+  icon: React.ReactNode
   href: string
-  badge?: string
 }
 
-interface NavGroup {
-  category: string
-  items: NavItem[]
+const icons = {
+  dashboard: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  trips: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </svg>
+  ),
+  profile: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+    </svg>
+  ),
+  settings: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+  chart: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  ),
+  idCard: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="2" />
+      <path d="M15 8h2" />
+      <path d="M15 12h2" />
+      <path d="M7 16h10" />
+    </svg>
+  )
 }
 
-const navigation: NavGroup[] = [
-  {
-    category: 'Your Account',
-    items: [
-      { name: 'Profile', icon: '👤', href: '/dashboard/profile' },
-      { name: 'Trip saved', icon: '🗺️', href: '/dashboard/trips' },
-      { name: 'Setting', icon: '⚙️', href: '/dashboard/settings' },
-    ]
-  }
+const navigation: NavItem[] = [
+  { name: 'Dashboard', icon: icons.dashboard, href: '/dashboard' },
+  { name: 'My Trips', icon: icons.trips, href: '/dashboard/trips' },
+  { name: 'Chart Map', icon: icons.chart, href: '/dashboard/chart-map' },
+  { name: 'Traveler ID', icon: icons.idCard, href: '/dashboard/id-card' },
+  { name: 'Profile', icon: icons.profile, href: '/dashboard/profile' },
+  { name: 'Settings', icon: icons.settings, href: '/dashboard/settings' },
 ]
 
 export default function DashboardSidebar() {
@@ -49,53 +86,31 @@ export default function DashboardSidebar() {
       <div className="sidebar-header">
         <Link href="/" className="brand-link">
           <div className="brand-logo">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            <svg viewBox="0 0 24 24" fill="white" width="28" height="28">
+              <path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.91 12.21 21.96 12 21.96C11.79 21.96 11.59 21.91 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.09 11.79 2.04 12 2.04C12.21 2.04 12.41 2.09 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z" opacity="0.2" />
+              <path d="M12 22C11.79 22 11.59 21.95 11.43 21.85L3.53 17.39C3.21 17.21 3 16.87 3 16.5V7.5C3 7.13 3.21 6.79 3.53 6.61L11.43 2.15C11.59 2.05 11.79 2 12 2C12.21 2 12.41 2.05 12.57 2.15L20.47 6.61C20.79 6.79 21 7.13 21 7.5V16.5C21 16.87 20.79 17.21 20.47 17.39L12.57 21.85C12.41 21.95 12.21 22 12 22ZM5 16.03L12 20L19 16.03V7.97L12 4L5 7.97V16.03Z" fill="white" />
+              <path d="M17.5 10.5C17.5 10.5 14.5 9 12 9C9.5 9 6.5 10.5 6.5 10.5L6 11.5L12 10.5L18 11.5L17.5 10.5Z" fill="#22d3ee" />
+              <path d="M11 11V15L12 16L13 15V11L12 10L11 11Z" fill="#22d3ee" />
             </svg>
           </div>
-          <span className="brand-text">SnapTrip WebApp</span>
-          <span className="chevron-down">⌄</span>
+          <span className="brand-text">SnapTrip</span>
         </Link>
       </div>
 
-      <div className="user-profile-section">
-        <div className="user-avatar-wrapper">
-          <div className="avatar-disc">
-            {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <div className="status-indicator online"></div>
-        </div>
-        <div className="user-info">
-          <span className="user-name">
-            {user?.user_metadata?.full_name || 'Dr. Codex Lantern'}
-            <span className="chevron-down">⌄</span>
-          </span>
-          <span className="user-location">Toronto, Canada</span>
-        </div>
-        <div className="background-image-overlay"></div>
-      </div>
-
       <nav className="nav-container">
-        {navigation.map((group, i) => (
-          <div key={i} className="nav-group">
-            <h3 className="nav-category-title">{group.category} <span className="category-chevron">⌃</span></h3>
-            <ul className="nav-list">
-              {group.items.map((item, j) => {
-                const isActive = pathname === item.href
-                return (
-                  <li key={j} className="nav-item-wrapper">
-                    <Link href={item.href} className={`nav-link ${isActive ? 'active' : ''}`}>
-                      <span className="item-icon">{item.icon}</span>
-                      <span className="item-name">{item.name}</span>
-                      {item.badge && <span className="item-badge">{item.badge}</span>}
-                      {isActive && <div className="active-dot"></div>}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        ))}
+        <ul className="nav-list">
+          {navigation.map((item, j) => {
+            const isActive = pathname === item.href
+            return (
+              <li key={j} className="nav-item-wrapper">
+                <Link href={item.href} className={`nav-link ${isActive ? 'active' : ''}`}>
+                  <span className="item-icon">{item.icon}</span>
+                  <span className="item-name">{item.name}</span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       </nav>
 
       <div className="sidebar-footer">
@@ -104,260 +119,6 @@ export default function DashboardSidebar() {
           Logout
         </button>
       </div>
-
-      <style jsx>{`
-        .modern-sidebar {
-          width: 280px;
-          height: 100vh;
-          background: #3d464d;
-          color: #adb5bd;
-          display: flex;
-          flex-direction: column;
-          position: sticky;
-          top: 0;
-          left: 0;
-          font-family: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, oxygen, ubuntu, cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-          z-index: 1000;
-          box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-          background: #464f56;
-          padding: 0 20px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .brand-link {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: white !important;
-          text-decoration: none !important;
-          font-weight: 500;
-          font-size: 15px;
-          width: 100%;
-        }
-
-        .brand-logo {
-          width: 30px;
-          height: 30px;
-          background: #886ab5;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .brand-text {
-          flex: 1;
-        }
-
-        .chevron-down {
-          font-size: 14px;
-          opacity: 0.5;
-        }
-
-        .user-profile-section {
-          padding: 25px 20px;
-          background: #464f56 url('https://images.unsplash.com/photo-1518066000714-58c45f1a2c0a?auto=format&fit=crop&q=80&w=400') center/cover;
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          overflow: hidden;
-        }
-
-        .user-profile-section::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: rgba(43, 46, 51, 0.7);
-          z-index: 1;
-        }
-
-        .user-avatar-wrapper {
-          position: relative;
-          z-index: 2;
-        }
-
-        .avatar-disc {
-          width: 45px;
-          height: 45px;
-          border-radius: 50%;
-          border: 2px solid white;
-          background: #886ab5;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 18px;
-        }
-
-        .status-indicator {
-          position: absolute;
-          bottom: 2px;
-          right: 2px;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          border: 2px solid #2b2e33;
-        }
-        .status-indicator.online { background: #1dc9b7; }
-
-        .user-info {
-          position: relative;
-          z-index: 2;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .user-name {
-          color: white;
-          font-weight: 600;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-        }
-
-        .user-location {
-          font-size: 11px;
-          opacity: 0.8;
-        }
-
-        .nav-container {
-          flex: 1;
-          overflow-y: auto;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.1) transparent;
-        }
-
-        .nav-group {
-          padding-top: 15px;
-        }
-
-        .nav-category-title {
-          padding: 0 20px 10px;
-          font-size: 11px;
-          text-transform: uppercase;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          color: rgba(255,255,255,0.4);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .category-chevron { font-size: 9px; }
-
-        .nav-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .nav-link {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 20px;
-          color: #adb5bd !important;
-          text-decoration: none !important;
-          font-size: 13.5px;
-          position: relative;
-          transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-          background: rgba(0,0,0,0.1);
-          color: white !important;
-          text-decoration: none !important;
-        }
-
-        .nav-link.active {
-          background: #464f56;
-          color: white !important;
-          font-weight: 500;
-          text-decoration: none !important;
-        }
-
-        .item-icon {
-          width: 20px;
-          text-align: center;
-          opacity: 0.7;
-          font-size: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .item-name { 
-          flex: 1;
-          color: inherit !important;
-        }
-
-        .item-badge {
-          background: #886ab5;
-          color: white !important;
-          font-size: 10px;
-          padding: 2px 6px;
-          border-radius: 10px;
-          font-weight: 700;
-        }
-
-        .active-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #1dc9b7;
-          position: absolute;
-          right: 20px;
-        }
-
-        .sidebar-footer {
-          padding: 15px 20px;
-          border-top: 1px solid rgba(0,0,0,0.1);
-          background: rgba(0,0,0,0.1);
-        }
-
-        .logout-button {
-          width: 100%;
-          background: transparent;
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #adb5bd !important;
-          padding: 8px;
-          border-radius: 4px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          font-size: 13px;
-          transition: all 0.2s;
-          text-decoration: none !important;
-        }
-
-        .logout-button:hover {
-          background: rgba(239, 68, 68, 0.1);
-          color: #ef4444 !important;
-          border-color: #ef4444;
-        }
-      `}</style>
-      <style jsx global>{`
-        .modern-sidebar a, 
-        .modern-sidebar a:hover, 
-        .modern-sidebar a:focus, 
-        .modern-sidebar a:active,
-        .modern-sidebar a:visited {
-          color: inherit !important;
-          text-decoration: none !important;
-          outline: none !important;
-        }
-      `}</style>
     </aside>
   )
 }

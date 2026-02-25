@@ -1,0 +1,620 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
+export default function TravelerIDCard() {
+    const [userProfile, setUserProfile] = useState<any>(null)
+    const [stats, setStats] = useState({
+        countries: 0,
+        cities: 0,
+        trips: 0
+    })
+    const [topDestinations, setTopDestinations] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        async function fetchTravelerData() {
+            try {
+                // 1. Get User
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session && session.user) {
+                    setUserProfile({
+                        name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Traveler',
+                        email: session.user.email,
+                        avatar: session.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop'
+                    })
+                }
+
+                // 2. Fetch Reviews (Countries & Cities)
+                const reviewsRes = await fetch('/api/reviews', {
+                    headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+                })
+                const reviewsData = await reviewsRes.json()
+
+                let uniqueCountries = new Set<string>()
+                let totalCities = 0
+                let destMap = new Map<string, { count: number, cities: Set<string> }>()
+
+                if (reviewsData.success && reviewsData.reviews) {
+                    reviewsData.reviews.forEach((rev: any) => {
+                        uniqueCountries.add(rev.country)
+
+                        const cities = rev.selected_cities || []
+                        totalCities += cities.length
+
+                        if (!destMap.has(rev.country)) {
+                            destMap.set(rev.country, { count: 1, cities: new Set(cities) })
+                        } else {
+                            const dest = destMap.get(rev.country)!
+                            dest.count += 1
+                            cities.forEach((c: string) => dest.cities.add(c))
+                        }
+                    })
+                }
+
+                // Process Top Destinations
+                const sortedDest = Array.from(destMap.entries())
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .slice(0, 3)
+                    .map((entry, idx) => ({
+                        rank: idx + 1,
+                        name: entry[0],
+                        cities: Array.from(entry[1].cities).join(', ') || 'Various locations',
+                        count: `${entry[1].cities.size} cities`
+                    }))
+
+                setTopDestinations(sortedDest)
+
+                // 3. Fetch Trips (for Trips Completed)
+                const tripsRes = await fetch('/api/trips', {
+                    headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {}
+                })
+                const tripsData = await tripsRes.json()
+                const maxTrips = tripsData.success && tripsData.trips ? tripsData.trips.length : 0
+
+                setStats({
+                    countries: uniqueCountries.size,
+                    cities: totalCities,
+                    trips: maxTrips
+                })
+
+            } catch (err) {
+                console.error("Failed to load traveler ID data", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchTravelerData()
+    }, [])
+
+    if (loading) {
+        return <div style={{ color: 'white', textAlign: 'center', padding: '50px' }}>Generating Traveler ID...</div>
+    }
+    return (
+        <div className="id-card-wrapper">
+            <div className="id-card-container">
+                {/* Header */}
+                <div className="card-header">
+                    <div className="brand">
+                        <div className="brand-logo">
+                            <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
+                                <path d="M21 16.5L12 21L3 16.5V7.5L12 3L21 7.5V16.5Z" />
+                            </svg>
+                        </div>
+                        <span className="brand-name">SnapTrip</span>
+                    </div>
+                    <div className="id-badge">
+                        🆔 TRAVELER ID
+                    </div>
+                </div>
+
+                <div className="card-main-grid">
+                    {/* Profile Section */}
+                    <div className="profile-section">
+                        <div className="profile-image-container">
+                            <img
+                                src={userProfile?.avatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop"}
+                                alt={userProfile?.name || "Traveler"}
+                                className="profile-image"
+                            />
+                        </div>
+                        <h2 className="profile-name">{userProfile?.name || "Adventure Explorer"}</h2>
+                        <p className="profile-title">{stats.countries > 10 ? 'Global Citizen' : 'Adventure Explorer'}</p>
+                        <div className="elite-badge">
+                            {stats.countries > 15 ? '🎖️ Platinum Traveler' : '🏅 Gold Traveler'}
+                        </div>
+                    </div>
+
+                    {/* Stats & Destinations Section */}
+                    <div className="stats-dest-section">
+                        {/* Stats Row */}
+                        <div className="stats-grid">
+                            {[
+                                { label: 'Countries Visited', val: stats.countries.toString(), color: '#ffc107' },
+                                { label: 'Cities Explored', val: stats.cities.toString(), color: '#22d3ee' },
+                                { label: 'Trips Planned', val: stats.trips.toString(), color: '#fb7185' },
+                            ].map(stat => (
+                                <div key={stat.label} className="stat-box" style={{ '--accent': stat.color } as any}>
+                                    <div className="stat-value">{stat.val}</div>
+                                    <div className="stat-label">{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Top Destinations */}
+                        <div className="destinations-container">
+                            <h3 className="section-title">
+                                🗺️ Top Destinations
+                            </h3>
+                            <div className="destinations-list">
+                                {topDestinations.length > 0 ? topDestinations.map(dest => (
+                                    <div key={dest.rank} className="destination-item">
+                                        <div className="rank-circle">{dest.rank}</div>
+                                        <div className="dest-info">
+                                            <div className="dest-name">{dest.name}</div>
+                                            <div className="dest-cities">{dest.cities}</div>
+                                        </div>
+                                        <div className="city-count-badge">
+                                            🏙️ {dest.count}
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Map out your adventures in the interactive chart map to see your top destinations here!</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Map & QR Section */}
+                    <div className="map-qr-section">
+                        <h3 className="map-title">My Travel Map</h3>
+                        <div className="mini-map-container">
+                            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400" alt="Travel Map" className="map-image" />
+                            <div className="map-overlay">
+                                <div className="map-pin pin-1">📍</div>
+                                <div className="map-pin pin-2">📍</div>
+                                <div className="map-pin pin-3">📍</div>
+                            </div>
+                        </div>
+
+                        <div className="qr-preview-container">
+                            <div className="qr-code">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=snaptrip.com/sarah-anderson" alt="QR Code" />
+                            </div>
+                            <div className="qr-text">
+                                <span className="qr-label">Scan to view profile</span>
+                                <span className="qr-url">snaptrip.com/sarah-anderson</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="card-footer">
+                    <div className="share-text">Share Your Journey</div>
+                    <div className="action-buttons">
+                        <button className="icon-btn">𝕏</button>
+                        <button className="icon-btn">📸</button>
+                        <button className="icon-btn">📘</button>
+                        <button className="icon-btn">🔗</button>
+                        <button className="download-btn">📥 DOWNLOAD</button>
+                    </div>
+                </div>
+            </div>
+
+            <style jsx>{`
+                .id-card-wrapper {
+                    width: 100%;
+                    max-width: 1100px;
+                    padding: clamp(10px, 3vw, 30px);
+                    margin: 0 auto;
+                }
+                .id-card-container {
+                    background: #0a192f;
+                    background: linear-gradient(135deg, #0a192f 0%, #0d213f 100%);
+                    border-radius: clamp(20px, 5vw, 40px);
+                    padding: clamp(25px, 6vw, 60px);
+                    color: white;
+                    font-family: 'Inter', sans-serif;
+                    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+                    position: relative;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    overflow: hidden;
+                    width: 100%;
+                }
+                .id-card-container::after {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    right: -20%;
+                    width: clamp(300px, 50vw, 500px);
+                    height: clamp(300px, 50vw, 500px);
+                    background: radial-gradient(circle, rgba(34, 211, 238, 0.05) 0%, transparent 70%);
+                    pointer-events: none;
+                }
+                .card-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: clamp(30px, 5vw, 60px);
+                    flex-wrap: wrap;
+                    gap: 20px;
+                }
+                .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .brand-logo {
+                    background: #22d3ee;
+                    width: clamp(32px, 4vw, 42px);
+                    height: clamp(32px, 4vw, 42px);
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 8px 16px rgba(34, 211, 238, 0.3);
+                }
+                .brand-name {
+                    font-size: clamp(1.4rem, 4vw, 2rem);
+                    font-weight: 900;
+                    letter-spacing: -1px;
+                }
+                .id-badge {
+                    background: #ffc107;
+                    color: #000;
+                    padding: 8px 18px;
+                    border-radius: 25px;
+                    font-weight: 900;
+                    font-size: clamp(11px, 2vw, 13px);
+                    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+                }
+                .card-main-grid {
+                    display: grid;
+                    grid-template-columns: minmax(200px, 260px) 1fr minmax(220px, 280px);
+                    gap: clamp(20px, 4vw, 50px);
+                }
+                .profile-image-container {
+                    width: 100%;
+                    max-width: 200px;
+                    aspect-ratio: 1 / 1;
+                    border-radius: clamp(30px, 8vw, 50px);
+                    border: 4px solid #ffc107;
+                    padding: clamp(6px, 1.5vw, 10px);
+                    margin: 0 auto 25px;
+                    position: relative;
+                    box-shadow: 0 15px 35px rgba(255, 193, 7, 0.2);
+                }
+                .profile-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: clamp(20px, 6vw, 40px);
+                    display: block;
+                }
+                .profile-section {
+                    text-align: center;
+                }
+                .profile-name {
+                    font-size: clamp(1.5rem, 4vw, 2rem);
+                    font-weight: 900;
+                    margin: 0 0 8px 0;
+                    letter-spacing: -0.5px;
+                }
+                .profile-title {
+                    color: #22d3ee;
+                    font-size: clamp(12px, 2vw, 14px);
+                    font-weight: 600;
+                    margin-bottom: 25px;
+                    opacity: 0.9;
+                }
+                .elite-badge {
+                    background: rgba(255, 193, 7, 0.1);
+                    color: #ffc107;
+                    padding: 6px 20px;
+                    border-radius: 30px;
+                    font-weight: 800;
+                    font-size: clamp(10px, 1.8vw, 12px);
+                    display: inline-block;
+                    border: 1px solid rgba(255, 193, 7, 0.2);
+                    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.05);
+                }
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: clamp(10px, 2vw, 20px);
+                    margin-bottom: clamp(30px, 5vw, 50px);
+                }
+                .stat-box {
+                    background: rgba(255, 255, 255, 0.03);
+                    padding: clamp(15px, 3vw, 25px) clamp(10px, 2vw, 15px);
+                    border-radius: clamp(20px, 4vw, 30px);
+                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    text-align: center;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .stat-box:hover {
+                    transform: translateY(-8px);
+                    background: rgba(255, 255, 255, 0.06);
+                    border-color: var(--accent);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+                }
+                .stat-value {
+                    font-size: clamp(1.4rem, 4vw, 2.6rem);
+                    font-weight: 900;
+                    color: var(--accent);
+                    line-height: 1;
+                    margin-bottom: 8px;
+                }
+                .stat-label {
+                    font-size: clamp(8px, 1.5vw, 11px);
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    opacity: 0.5;
+                    font-weight: 700;
+                }
+                .section-title {
+                    font-size: clamp(11px, 1.8vw, 14px);
+                    color: #ffc107;
+                    text-transform: uppercase;
+                    letter-spacing: clamp(1px, 0.3vw, 3px);
+                    margin-bottom: 25px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-weight: 900;
+                }
+                .destinations-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                }
+                .destination-item {
+                    background: rgba(255, 255, 255, 0.02);
+                    padding: clamp(10px, 2vw, 16px) clamp(12px, 2.5vw, 20px);
+                    border-radius: clamp(15px, 3vw, 24px);
+                    border: 1px solid rgba(255, 255, 255, 0.04);
+                    display: flex;
+                    align-items: center;
+                    gap: clamp(10px, 2vw, 20px);
+                    transition: all 0.2s;
+                    cursor: default;
+                }
+                .destination-item:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    transform: translateX(5px);
+                }
+                .rank-circle {
+                    width: clamp(24px, 4vw, 32px);
+                    height: clamp(24px, 4vw, 32px);
+                    background: #ffc107;
+                    color: #000;
+                    border-radius: 50%;
+                    font-weight: 900;
+                    font-size: clamp(12px, 2vw, 15px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+                    flex-shrink: 0;
+                }
+                .dest-name {
+                    font-weight: 800;
+                    font-size: clamp(14px, 2.5vw, 17px);
+                    margin-bottom: 2px;
+                }
+                .dest-cities {
+                    font-size: clamp(10px, 1.8vw, 12px);
+                    color: rgba(255, 255, 255, 0.5);
+                }
+                .city-count-badge {
+                    background: rgba(34, 211, 238, 0.08);
+                    color: #22d3ee;
+                    padding: 4px 10px;
+                    border-radius: 10px;
+                    font-size: clamp(9px, 1.5vw, 11px);
+                    font-weight: 800;
+                    margin-left: auto;
+                    border: 1px solid rgba(34, 211, 238, 0.1);
+                    white-space: nowrap;
+                }
+                .map-title {
+                    text-align: center;
+                    font-size: clamp(10px, 1.8vw, 13px);
+                    color: rgba(255, 255, 255, 0.4);
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    margin-bottom: 20px;
+                    font-weight: 700;
+                }
+                .mini-map-container {
+                    width: 100%;
+                    height: clamp(150px, 20vw, 200px);
+                    border-radius: clamp(15px, 3.5vw, 30px);
+                    overflow: hidden;
+                    position: relative;
+                    background: #001a33;
+                    margin-bottom: 30px;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .map-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    opacity: 0.7;
+                    filter: grayscale(0.5) contrast(1.2);
+                }
+                .map-pin {
+                    position: absolute;
+                    font-size: clamp(18px, 3vw, 24px);
+                    filter: drop-shadow(0 0 10px rgba(255, 193, 7, 0.5));
+                    animation: float 3s ease-in-out infinite;
+                }
+                .pin-1 { top: 30%; left: 45%; animation-delay: 0s; }
+                .pin-2 { top: 55%; left: 65%; animation-delay: 1s; }
+                .pin-3 { top: 40%; left: 80%; animation-delay: 2s; }
+
+                @keyframes float {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-5px); }
+                }
+                
+                .qr-preview-container {
+                    display: flex;
+                    align-items: center;
+                    gap: clamp(10px, 2vw, 20px);
+                    padding: clamp(15px, 3vw, 25px);
+                    background: rgba(255, 255, 255, 0.02);
+                    border-radius: 25px;
+                    border: 1px solid rgba(255, 255, 255, 0.04);
+                }
+                .qr-code {
+                    background: white;
+                    padding: 6px;
+                    border-radius: 12px;
+                    width: clamp(60px, 10vw, 80px);
+                    height: clamp(60px, 10vw, 80px);
+                    flex-shrink: 0;
+                    box-shadow: 0 10px 20px rgba(255,255,255,0.05);
+                }
+                .qr-code img {
+                    width: 100%;
+                    height: 100%;
+                }
+                .qr-label {
+                    display: block;
+                    font-size: clamp(9px, 1.5vw, 11px);
+                    color: rgba(255,255,255,0.4);
+                    margin-bottom: 4px;
+                    font-weight: 600;
+                }
+                .qr-url {
+                    font-size: clamp(10px, 1.8vw, 13px);
+                    font-weight: 800;
+                    color: white;
+                }
+                .card-footer {
+                    margin-top: clamp(30px, 6vw, 60px);
+                    padding-top: clamp(20px, 4vw, 40px);
+                    border-top: 1px solid rgba(255, 255, 255, 0.06);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 20px;
+                    flex-wrap: wrap;
+                }
+                .share-text {
+                    font-size: clamp(11px, 1.8vw, 13px);
+                    color: rgba(255, 255, 255, 0.4);
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                }
+                .action-buttons {
+                    display: flex;
+                    gap: clamp(8px, 1.5vw, 12px);
+                    align-items: center;
+                    flex-wrap: wrap;
+                }
+                .icon-btn, .download-btn {
+                    width: clamp(36px, 5vw, 46px);
+                    height: clamp(36px, 5vw, 46px);
+                    border-radius: 12px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: rgba(255, 255, 255, 0.04);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: clamp(14px, 2.5vw, 18px);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .icon-btn:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: #22d3ee;
+                    transform: translateY(-3px);
+                }
+                .download-btn {
+                    background: #ffc107;
+                    color: #000;
+                    width: auto;
+                    padding: 0 clamp(15px, 3vw, 25px);
+                    font-weight: 900;
+                    font-size: clamp(11px, 1.8vw, 13px);
+                    border: none;
+                }
+                .download-btn:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+                    background: #ffcb32;
+                }
+                
+                /* Responsiveness - Breakpoints */
+                @media (max-width: 1024px) {
+                    .card-main-grid {
+                        grid-template-columns: minmax(200px, 1fr) 1.5fr;
+                    }
+                    .map-qr-section {
+                        grid-column: span 2;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 30px;
+                        align-items: start;
+                    }
+                    .mini-map-container {
+                        margin-bottom: 0;
+                    }
+                }
+                
+                @media (max-width: 768px) {
+                    .card-main-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .map-qr-section {
+                        grid-column: span 1;
+                        grid-template-columns: 1fr;
+                    }
+                    .mini-map-container {
+                        height: 200px;
+                    }
+                    .qr-preview-container {
+                        flex-direction: row;
+                        text-align: left;
+                    }
+                    .profile-image-container {
+                        max-width: 180px;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .id-card-container {
+                        padding: 25px 20px;
+                    }
+                    .card-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 15px;
+                    }
+                    .stats-grid {
+                        grid-template-columns: 1fr;
+                        gap: 15px;
+                    }
+                    .qr-preview-container {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+                    .card-footer {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                    }
+                    .action-buttons {
+                        justify-content: center;
+                    }
+                }
+            `}</style>
+        </div>
+    )
+}

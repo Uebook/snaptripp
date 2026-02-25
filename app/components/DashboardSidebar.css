@@ -1,0 +1,121 @@
+.modern-sidebar {
+    width: 280px;
+    height: 100vh;
+    background: #00153d !important;
+    color: #ffffff !important;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    left: 0;
+    font-family: 'Inter', sans-serif;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 40px 30px;
+}
+
+.brand-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    color: white !important;
+    text-decoration: none !important;
+    font-weight: 700 !important;
+    font-size: 28px !important;
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-container {
+    flex: 1;
+    padding: 0 20px;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nav-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 15px 20px !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    text-decoration: none !important;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.nav-link.active {
+    background: #002d62 !important;
+    color: #22d3ee !important;
+    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.1) !important;
+}
+
+.item-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.nav-link.active .item-icon {
+    opacity: 1;
+    color: #22d3ee !important;
+}
+
+.sidebar-footer {
+    padding: 30px 20px;
+}
+
+.logout-button {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6) !important;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.logout-button:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Global resets for the sidebar links */
+.modern-sidebar a,
+.modern-sidebar a:visited,
+.modern-sidebar a:hover {
+    text-decoration: none !important;
+}

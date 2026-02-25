@@ -11,6 +11,7 @@ import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
 import DayPlanner, { DayPlan } from '../components/DayPlanner'
 import TimelineView from '../components/TimelineView'
 import { MapItem } from '../components/HierarchicalMap'
@@ -160,6 +161,9 @@ function TripMapContent() {
       return
     }
 
+    const customTitle = window.prompt("Enter a title for your trip:", `${country} Adventure`);
+    if (!customTitle) return;
+
     try {
       setIsSaving(true)
       const res = await fetch('/api/trips', {
@@ -170,7 +174,7 @@ function TripMapContent() {
         },
         body: JSON.stringify({
           country: country || 'Unknown',
-          title: `Trip to ${country}`,
+          title: customTitle,
           days: dayPlans.map(d => ({
             title: d.title,
             items: d.items.map(i => ({
@@ -215,7 +219,7 @@ function TripMapContent() {
     setDayPlans(newDays)
   }
 
-  const handleAddToItinerary = (place: Place, dayIndex: number = 0) => {
+  const handleAddToItinerary = (place: Place, targetDayIndex?: number) => {
     const item: MapItem = {
       id: `place-${place.id}`,
       name: place.title,
@@ -225,52 +229,43 @@ function TripMapContent() {
     }
 
     const newDays = [...dayPlans]
-    if (newDays.length === 0 || !newDays[dayIndex]) {
-      // Create days if they don't exist
-      for (let i = 0; i <= dayIndex; i++) {
-        if (!newDays[i]) {
-          newDays[i] = {
-            id: `day-${Date.now()}-${i}`,
-            title: `Day ${i + 1}`,
-            items: []
-          }
-        }
+
+    // Prevent duplicates globally
+    if (newDays.some(day => day.items.some(i => i.id === item.id))) return;
+
+    if (targetDayIndex !== undefined) {
+      if (newDays[targetDayIndex]) {
+        newDays[targetDayIndex].items.push(item);
+        setDayPlans(newDays);
       }
+      return;
     }
 
-    if (!newDays[dayIndex].items.find(i => i.id === item.id)) {
-      newDays[dayIndex].items.push(item)
-      setDayPlans(newDays)
-    }
-  }
-
-  const handleGenerateItinerary = () => {
-    if (!selectedCity) return;
-
-    const cityPlaces = places.filter(p => p.city === selectedCity);
-    const startDayIndex = dayPlans.length;
-    const newDays: DayPlan[] = [...dayPlans];
-
-    for (let i = 0; i < daysCount; i++) {
-      const dayPlaces = cityPlaces.slice(i * 5, (i + 1) * 5);
-      if (dayPlaces.length === 0) break;
-
-      const currentDayNumber = startDayIndex + i + 1;
+    // Auto-add logic
+    if (newDays.length === 0) {
       newDays.push({
-        id: `day-${Date.now()}-${currentDayNumber}`,
-        title: `Day ${currentDayNumber}`,
-        items: dayPlaces.map(p => ({
-          id: `place-${p.id}`,
-          name: p.title,
-          type: 'place',
-          coordinates: { lat: p.location_lat, lng: p.location_lng },
-          data: p
-        }))
+        id: `day-${Date.now()}-1`,
+        title: `Day 1`,
+        items: []
       });
     }
 
+    let lastDayIndex = newDays.length - 1;
+    if (newDays[lastDayIndex].items.length >= 4) {
+      // Auto add a new day when the last one has 4 items
+      lastDayIndex++;
+      newDays.push({
+        id: `day-${Date.now()}-${lastDayIndex + 1}`,
+        title: `Day ${lastDayIndex + 1}`,
+        items: []
+      });
+    }
+
+    newDays[lastDayIndex].items.push(item);
     setDayPlans(newDays);
   }
+
+
 
 
   const getOthers = () => {
@@ -443,7 +438,7 @@ function TripMapContent() {
                       <button
                         className="add-site-btn-round"
                         style={{ width: '24px', height: '24px', fontSize: '14px', marginLeft: 'auto' }}
-                        onClick={() => handleAddToItinerary(place, 0)}
+                        onClick={() => handleAddToItinerary(place)}
                       >+</button>
                     </div>
                   ))}
@@ -478,6 +473,7 @@ function TripMapContent() {
             dayPlans={dayPlans}
             selectedCity={selectedCity}
             onCityClick={(city) => setSelectedCity(city)}
+            onAddToPlan={(place) => handleAddToItinerary(place)}
           />
         </div>
 
@@ -508,20 +504,7 @@ function TripMapContent() {
                   {selectedCityData?.description || `${selectedCity} is a stunning destination. Explore its hidden gems and vibrant culture.`}
                 </p>
 
-                <div className="generation-section-premium">
-                  <h3 className="section-subtitle-modern">Add city to plan</h3>
-                  <div className="input-group-modern">
-                    <input
-                      type="number"
-                      value={daysCount}
-                      onChange={(e) => setDaysCount(parseInt(e.target.value) || 1)}
-                      min="1"
-                      className="premium-input-small"
-                    />
-                    <span className="input-label">days</span>
-                    <button onClick={handleGenerateItinerary} className="btn-primary-gradient">Add to Plan</button>
-                  </div>
-                </div>
+
 
                 <div className="places-in-city-explorer">
                   <h3 className="section-subtitle-modern">Top Sights in {selectedCity}</h3>
@@ -533,7 +516,7 @@ function TripMapContent() {
                           <h4>{place.title}</h4>
                           <p>{place.categoryName || 'Sightseeing'}</p>
                         </div>
-                        <button className="add-site-btn-round" onClick={() => handleAddToItinerary(place, 0)}>+</button>
+                        <button className="add-site-btn-round" onClick={() => handleAddToItinerary(place)}>+</button>
                       </div>
                     ))}
                   </div>
@@ -1304,6 +1287,7 @@ function TripMapContent() {
           onClose={() => setShowTimeline(false)}
         />
       )}
+      <SiteFooter />
     </div>
   )
 }

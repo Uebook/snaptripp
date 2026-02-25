@@ -37,9 +37,10 @@ interface TripMapProps {
     loading?: boolean
     selectedCity?: string | null
     onCityClick?: (city: string) => void
+    onAddToPlan?: (place: Place) => void
 }
 
-export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick }: TripMapProps) {
+export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick, onAddToPlan }: TripMapProps) {
     const mapRef = useRef<L.Map | null>(null)
     const mapContainerRef = useRef<HTMLDivElement>(null)
     const markersRef = useRef<L.Marker[]>([])
@@ -213,10 +214,39 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                     <div style="min-width: 280px; max-width: 320px;">
                         ${place.image_url ? `<img src="${place.image_url}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />` : ''}
                         <h3 style="margin: 0; font-size: 17px; color: #031B4E;">${place.title}</h3>
-                        <p style="margin: 8px 0; font-size: 13px; color: #555;">${place.description?.substring(0, 100)}...</p>
+                        ${place.reviewsCount ? `<div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; margin-bottom: 8px;">
+                            <span style="color: #f59e0b; font-size: 14px;">★</span>
+                            <span style="font-size: 13px; color: #666;">${place.reviewsCount} reviews</span>
+                        </div>` : ''}
+                        <p style="margin: 8px 0; font-size: 13px; color: #555;">${place.description && place.description.length > 100 ? place.description.substring(0, 100) + '...' : place.description || ''}</p>
+                        
+                        ${(place.website || place.phone || place.address) ? `
+                        <div style="margin: 12px 0; padding-top: 12px; border-top: 1px solid #eee; font-size: 12px; color: #666; display: flex; flex-direction: column; gap: 6px;">
+                            ${place.address ? `<div style="display: flex; gap: 6px; align-items: start;"><span style="font-size: 14px;">📍</span> <span style="line-height: 1.4;">${place.address}</span></div>` : ''}
+                            ${place.phone ? `<div style="display: flex; gap: 6px; align-items: center;"><span style="font-size: 14px;">📞</span> <span>${place.phone}</span></div>` : ''}
+                            ${place.website ? `<div style="display: flex; gap: 6px; align-items: center;"><span style="font-size: 14px;">🌐</span> <a href="${place.website.startsWith('http') ? place.website : 'https://' + place.website}" target="_blank" style="color: #667eea; text-decoration: none; word-break: break-all;">Website</a></div>` : ''}
+                        </div>
+                        ` : ''}
+                        
+                        <button class="add-to-plan-btn" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 12px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                            + Add to Plan
+                        </button>
                     </div>
                 `
-                marker.bindPopup(popupContent)
+                marker.bindPopup(popupContent, { minWidth: 280 })
+
+                marker.on('popupopen', (e) => {
+                    const popupNode = e.popup.getElement();
+                    if (popupNode) {
+                        const btn = popupNode.querySelector('.add-to-plan-btn');
+                        if (btn) {
+                            btn.addEventListener('click', () => {
+                                if (onAddToPlan) onAddToPlan(place);
+                                marker.closePopup();
+                            });
+                        }
+                    }
+                });
                 placeMarkers.push(marker)
                 markersRef.current.push(marker)
             })
