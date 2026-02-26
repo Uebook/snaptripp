@@ -63,35 +63,8 @@
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
    Collecting page data ...
-   Generating static pages (0/49) ...
-Fetch Cities Error: B [Error]: Dynamic server usage: Route /api/planner/cities couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at V (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21778)
-    at Object.get (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29465)
-    at c (/Users/vansh/ReactProject/mn356/Snaptrip/.next/server/app/api/planner/cities/route.js:1:557)
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38417
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/server/lib/trace/tracer.js:140:36
-    at NoopContextManager.with (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
-    at ContextAPI.with (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
-    at NoopTracer.startActiveSpan (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
-    at ProxyTracer.startActiveSpan (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/server/lib/trace/tracer.js:122:103 {
-  description: "Route /api/planner/cities couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Fetch Places Error: B [Error]: Dynamic server usage: Route /api/planner/places couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at V (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21778)
-    at Object.get (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29465)
-    at l (/Users/vansh/ReactProject/mn356/Snaptrip/.next/server/app/api/planner/places/route.js:1:555)
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38417
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/server/lib/trace/tracer.js:140:36
-    at NoopContextManager.with (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
-    at ContextAPI.with (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
-    at NoopTracer.startActiveSpan (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
-    at ProxyTracer.startActiveSpan (/Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
-    at /Users/vansh/ReactProject/mn356/Snaptrip/node_modules/next/dist/server/lib/trace/tracer.js:122:103 {
-  description: "Route /api/planner/places couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
+   Generating static pages (0/48) ...
+   Generating static pages (12/48) 
 Test query result: { testData: [ { count: 1590 } ], testError: null }
 Places query: {
   places: [
@@ -453,15 +426,14 @@ Countries query: {
   ],
   countriesError: null
 }
-   Generating static pages (12/49) 
-   Generating static pages (24/49) 
-   Generating static pages (36/49) 
- ✓ Generating static pages (49/49)
+   Generating static pages (24/48) 
+   Generating static pages (36/48) 
+ ✓ Generating static pages (48/48)
    Finalizing page optimization ...
    Collecting build traces ...
 
 Route (app)                              Size     First Load JS
-┌ ○ /                                    5.86 kB         156 kB
+┌ ○ /                                    3.41 kB         154 kB
 ├ ○ /_not-found                          878 B          88.8 kB
 ├ ○ /about                               1.88 kB         153 kB
 ├ ○ /admin                               166 B          88.1 kB
@@ -509,6 +481,7 @@ Route (app)                              Size     First Load JS
 ├ ○ /dashboard/trips                     3.06 kB         154 kB
 ├ ○ /explore                             5.23 kB         159 kB
 ├ ○ /how-it-works                        2.64 kB         153 kB
+├ ○ /plan                                3.81 kB         154 kB
 ├ ○ /planner                             1.13 kB         152 kB
 ├ ○ /trip-map                            11.1 kB         168 kB
 └ ○ /trip-types                          1.57 kB         152 kB
