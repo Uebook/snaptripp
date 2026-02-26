@@ -71,7 +71,7 @@ export default function Home() {
       try {
         const response = await fetch(`/api/itinerary?city=${encodeURIComponent(item.name)}`)
         const data = await response.json()
-        
+
         if (response.ok && data.itinerary) {
           const children: MapItem[] = data.itinerary.map((it: any, idx: number) => ({
             id: `${item.id}-child-${idx}`,
@@ -80,7 +80,7 @@ export default function Home() {
             coordinates: it.coordinates || { lat: 0, lng: 0 },
             data: it
           }))
-          
+
           setSelectedItem({
             ...item,
             children
@@ -268,7 +268,7 @@ export default function Home() {
       {/* Timeline View */}
       {showTimeline && (
         <TimelineView
-          items={selectedItineraryItems}
+          dayPlans={[{ id: '1', title: 'Day 1', items: selectedItineraryItems }]}
           onClose={() => setShowTimeline(false)}
         />
       )}

@@ -60,19 +60,26 @@ function TripMapContent() {
   const [showTimeline, setShowTimeline] = useState(false)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [daysCount, setDaysCount] = useState<number>(1)
+  const [isSidebarHidden, setIsSidebarHidden] = useState<boolean>(!!tripIdParam)
 
   // Auth & Saving State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSaveTitleModalOpen, setIsSaveTitleModalOpen] = useState(false)
+  const [saveTripTitle, setSaveTripTitle] = useState('')
   const [currentUser, setCurrentUser] = useState<any>(null)
 
   // UI state for Right Sidebar Accordions
   const [activeAccordion, setActiveAccordion] = useState<string | null>('overview')
+  const [activeCityTab, setActiveCityTab] = useState<string>('Overview')
 
   // Drag & Drop State
   const [dragItem, setDragItem] = useState<{ itemId: string; fromDayId: string } | null>(null)
   const [dragOverDayId, setDragOverDayId] = useState<string | null>(null)
 
+  // Mobile layout state
+  const [activeMobileTab, setActiveMobileTab] = useState<'itinerary' | 'map' | 'explore'>('map')
+  const [selectedPlaceDetails, setSelectedPlaceDetails] = useState<Place | null>(null)
 
   // Use refs for potential interaction if needed (though logic moved to TripMap)
   const markersRef = useRef<any[]>([])
@@ -153,7 +160,7 @@ function TripMapContent() {
     fetchPlaces()
   }, [country])
 
-  const handleSaveTrip = async () => {
+  const handleSaveTripClick = async () => {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
@@ -161,8 +168,15 @@ function TripMapContent() {
       return
     }
 
-    const customTitle = window.prompt("Enter a title for your trip:", `${country} Adventure`);
-    if (!customTitle) return;
+    setSaveTripTitle(`${country} Adventure`)
+    setIsSaveTitleModalOpen(true)
+  }
+
+  const confirmSaveTrip = async () => {
+    if (!saveTripTitle.trim()) return;
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return;
 
     try {
       setIsSaving(true)
@@ -174,7 +188,7 @@ function TripMapContent() {
         },
         body: JSON.stringify({
           country: country || 'Unknown',
-          title: customTitle,
+          title: saveTripTitle.trim(),
           days: dayPlans.map(d => ({
             title: d.title,
             items: d.items.map(i => ({
@@ -342,21 +356,59 @@ function TripMapContent() {
   const selectedCityData = selectedCity ? places.find(p => p.city === selectedCity) : null;
 
   return (
-    <div className="trip-map-page">
-      <SiteHeader />
+    <div className={`trip-map-page ${activeMobileTab === 'explore' && selectedCity ? 'mobile-explore-fullscreen' : ''}`}>
+      <div className="trip-map-header-wrapper">
+        <SiteHeader />
+      </div>
 
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
           setIsAuthModalOpen(false)
-          handleSaveTrip()
+          handleSaveTripClick()
         }}
       />
 
-      <div className="trip-map-container">
+      {/* Save Trip Title Modal */}
+      {isSaveTitleModalOpen && (
+        <div className="save-modal-overlay" onClick={() => setIsSaveTitleModalOpen(false)}>
+          <div className="save-modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="save-modal-title">Name Your Journey</h3>
+            <p className="save-modal-subtitle">Give your itinerary a memorable name before saving.</p>
+            <input
+              type="text"
+              className="save-modal-input"
+              value={saveTripTitle}
+              onChange={e => setSaveTripTitle(e.target.value)}
+              placeholder="e.g. Summer in Ireland"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setIsSaveTitleModalOpen(false);
+                  confirmSaveTrip();
+                }
+              }}
+            />
+            <div className="save-modal-actions">
+              <button className="btn-cancel" onClick={() => setIsSaveTitleModalOpen(false)}>Cancel</button>
+              <button
+                className="btn-confirm"
+                onClick={() => {
+                  setIsSaveTitleModalOpen(false);
+                  confirmSaveTrip();
+                }}
+                disabled={!saveTripTitle.trim() || isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Trip'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className={`trip-map-container ${isSidebarHidden ? 'fullscreen-map' : ''}`}>
         {/* Left Sidebar: Your Itinerary / Day Planner */}
-        <div className="sidebar left-sidebar">
+        <div className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
           <div className="itinerary-header-premium">
             <h2 className="itinerary-title-premium">Your Itinerary</h2>
             <p className="itinerary-subtitle-premium">{dayPlans.length} Days Planned</p>
@@ -385,16 +437,29 @@ function TripMapContent() {
                         onDragStart={() => handleDragStart(item.id, day.id)}
                         onDragEnd={() => { setDragItem(null); setDragOverDayId(null) }}
                       >
-                        <div className="drag-handle">⠿</div>
-                        <div className="entry-content">
-                          <span className="entry-dot" />
-                          <span className="entry-name">{item.name}</span>
+                        <div className="drag-handle-minimal">⠿</div>
+                        <div className="entry-content-minimal">
+                          {item.data?.image_url && (
+                            <img src={item.data.image_url} alt="" className="entry-thumbnail-img" />
+                          )}
+                          <div className="entry-text-stack">
+                            <span className="entry-name-minimal">{item.name}</span>
+                            <span className="entry-category-minimal">{item.data?.categoryName || 'Attraction'}</span>
+                          </div>
                         </div>
-                        <button
-                          className="entry-remove-btn"
-                          onClick={() => handleRemoveFromDay(day.id, item.id)}
-                          title="Remove"
-                        >×</button>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <button
+                            className="view-site-btn-minimal"
+                            onClick={() => setSelectedPlaceDetails(item.data as Place)}
+                            title="View Details"
+                          >View</button>
+                          <button
+                            className="entry-remove-btn"
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fef2f2', color: '#ef4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                            onClick={() => handleRemoveFromDay(day.id, item.id)}
+                            title="Remove"
+                          >×</button>
+                        </div>
                       </div>
                     ))}
                     {day.items.length === 0 && (
@@ -425,21 +490,35 @@ function TripMapContent() {
                   {getOthers().slice(0, 8).map(place => (
                     <div
                       key={place.id}
-                      className={`site-entry-premium draggable-entry ${dragItem?.itemId === place.id.toString() ? 'is-dragging' : ''}`}
+                      className={`site-entry-minimal draggable-entry ${dragItem?.itemId === place.id.toString() ? 'is-dragging' : ''}`}
                       draggable
                       onDragStart={() => handleDragStart(place.id.toString(), 'suggested')}
                       onDragEnd={() => { setDragItem(null); setDragOverDayId(null) }}
                     >
-                      <div className="drag-handle">⠿</div>
-                      <div className="entry-content">
-                        <span className="entry-dot-alt" />
-                        <span className="entry-name" style={{ opacity: 0.7 }}>{place.title}</span>
+                      <div className="drag-handle-minimal">⠿</div>
+                      <div className="entry-content-minimal">
+                        {place.image_url ? (
+                          <img src={place.image_url} alt="" className="entry-thumbnail-img" />
+                        ) : (
+                          <div className="entry-thumbnail-placeholder" />
+                        )}
+                        <div className="entry-text-stack">
+                          <span className="entry-name-minimal" style={{ opacity: 0.9 }}>{place.title}</span>
+                          <span className="entry-category-minimal">{place.categoryName || 'Attraction'}</span>
+                        </div>
                       </div>
-                      <button
-                        className="add-site-btn-round"
-                        style={{ width: '24px', height: '24px', fontSize: '14px', marginLeft: 'auto' }}
-                        onClick={() => handleAddToItinerary(place)}
-                      >+</button>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button
+                          className="view-site-btn-minimal"
+                          onClick={() => setSelectedPlaceDetails(place)}
+                          title="View Details"
+                        >View</button>
+                        <button
+                          className="add-site-btn-minimal"
+                          title="Add to Itinerary"
+                          onClick={() => handleAddToItinerary(place)}
+                        >+</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -458,7 +537,7 @@ function TripMapContent() {
             </button>
             <button
               className="btn-save-trip-primary"
-              onClick={handleSaveTrip}
+              onClick={handleSaveTripClick}
               disabled={isSaving || dayPlans.length === 0}
             >
               {isSaving ? 'Saving...' : 'Save Trip'}
@@ -467,66 +546,118 @@ function TripMapContent() {
         </div>
 
         {/* Center: Map */}
-        <div className="trip-map-main-wrapper" style={{ flex: 1, position: 'relative' }}>
+        <div className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`} style={{ flex: 1, position: 'relative' }}>
+
+          {/* Floating Toggle Button */}
+          <button
+            onClick={() => setIsSidebarHidden(!isSidebarHidden)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              zIndex: 1000,
+              background: isSidebarHidden ? '#031B4E' : 'white',
+              color: isSidebarHidden ? 'white' : '#031B4E',
+              padding: '10px 16px',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              border: isSidebarHidden ? 'none' : '1px solid #e2e8f0',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: '"Inter", sans-serif'
+            }}
+          >
+            {isSidebarHidden ? '📖 Open Planner' : '✖ Close Planner'}
+          </button>
+
           <TripMap
             places={places}
             dayPlans={dayPlans}
             selectedCity={selectedCity}
-            onCityClick={(city) => setSelectedCity(city)}
+            isSavedTripView={!!tripIdParam}
+            onCityClick={(city) => {
+              setSelectedCity(city)
+              if (window.innerWidth <= 768) setActiveMobileTab('explore')
+            }}
             onAddToPlan={(place) => handleAddToItinerary(place)}
           />
         </div>
 
         {/* Right Sidebar: Country Discovery (Permanent) */}
-        <div className="sidebar right-sidebar">
-          {selectedCity ? (
-            <div className="discovery-view animate-fade-in">
-              <div className="sidebar-header-premium">
-                <button
-                  onClick={() => setSelectedCity(null)}
-                  className="icon-btn back-btn"
-                  title="Back to Country Overview"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-                </button>
-                <h2 className="city-name-premium">{selectedCity}</h2>
+        <div className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''} ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
+          <div className="country-discovery-view animate-fade-in">
+            <div className="country-hero-card">
+              <div className="country-hero-bg" style={{ backgroundImage: `url(${countryInfo?.cover_image_url || '/api/placeholder/400/300'})` }} />
+              <div className="hero-gradient-overlay" />
+              <div className="hero-text-overlay">
+                <h2>{country}</h2>
+                <span>TRAVEL GUIDE</span>
               </div>
+            </div>
 
-              <div className="exploration-content">
-                {selectedCityData?.image_url && (
-                  <div className="image-card-premium">
-                    <img src={selectedCityData.image_url} alt={selectedCity} />
-                    <div className="image-overlay-subtle" />
-                  </div>
-                )}
+            <div className="discovery-scroll-area">
+              <div className="info-accordion-stack">
+                <div className={`accordion-item ${activeAccordion === 'overview' ? 'active' : ''}`}>
+                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'overview' ? null : 'overview')}>
+                    <span className="icon">🌍</span>
+                    <span className="label">Brief Overview</span>
+                    <span className="arrow">{activeAccordion === 'overview' ? '−' : '+'}</span>
+                  </button>
+                  {activeAccordion === 'overview' && (
+                    <div className="accordion-content animate-slide-down">
+                      <p className="overview-text-premium">{countryInfo?.overview || `Explore the beauty and culture of ${country}.`}</p>
+                    </div>
+                  )}
+                </div>
 
-                <p className="city-description-glass">
-                  {selectedCityData?.description || `${selectedCity} is a stunning destination. Explore its hidden gems and vibrant culture.`}
-                </p>
-
-
-
-                <div className="places-in-city-explorer">
-                  <h3 className="section-subtitle-modern">Top Sights in {selectedCity}</h3>
-                  <div className="places-scroller-premium">
-                    {places.filter(p => p.city === selectedCity).map((place) => (
-                      <div key={place.id} className="place-row-premium">
-                        <div className="place-icon">🏛️</div>
-                        <div className="place-info">
-                          <h4>{place.title}</h4>
-                          <p>{place.categoryName || 'Sightseeing'}</p>
-                        </div>
-                        <button className="add-site-btn-round" onClick={() => handleAddToItinerary(place)}>+</button>
+                <div className={`accordion-item ${activeAccordion === 'bucket' ? 'active' : ''}`}>
+                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'bucket' ? null : 'bucket')}>
+                    <span className="icon">✨</span>
+                    <span className="label">Must Do Bucket-List</span>
+                    <span className="arrow">{activeAccordion === 'bucket' ? '−' : '+'}</span>
+                  </button>
+                  {activeAccordion === 'bucket' && (
+                    <div className="accordion-content animate-slide-down">
+                      <div className="bucket-grid">
+                        {countryInfo?.bucket_list?.map((item: any, i: number) => (
+                          <div key={i} className="bucket-card-glass">
+                            {item.image_url && <img src={item.image_url} alt="" />}
+                            <p>{item.text}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={`accordion-item ${activeAccordion === 'foods' ? 'active' : ''}`}>
+                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'foods' ? null : 'foods')}>
+                    <span className="icon">🥘</span>
+                    <span className="label">Gastronomy Guide</span>
+                    <span className="arrow">{activeAccordion === 'foods' ? '−' : '+'}</span>
+                  </button>
+                  {activeAccordion === 'foods' && (
+                    <div className="accordion-content animate-slide-down">
+                      <div className="foods-list" style={{ padding: '0 16px 16px' }}>
+                        {countryInfo?.local_foods?.map((food: any, i: number) => (
+                          <div key={i} className="food-item-premium" style={{ marginBottom: '20px' }}>
+                            <h4 style={{ margin: '0 0 4px', color: 'var(--color-sapphire)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '1px' }}>{food.name}</h4>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-soft-slate)', lineHeight: '1.5' }}>{food.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="city-switcher-tray">
-                <h4 className="section-subtitle-modern">Explore Other Cities</h4>
+              <div className="quick-city-selector">
+                <h3 className="top-cities-header">Top Cities to Visit</h3>
                 <div className="city-grid-mini">
-                  {Array.from(new Set(places.map(p => p.city))).filter(c => c !== selectedCity).slice(0, 4).map(city => (
+                  {Array.from(new Set(places.map(p => p.city))).slice(0, 6).map(city => (
                     <button key={city} className="city-card-glass" onClick={() => setSelectedCity(city)}>
                       <span>{city}</span>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
@@ -535,99 +666,64 @@ function TripMapContent() {
                 </div>
               </div>
 
-              <button onClick={() => router.push('/')} className="btn-secondary-outline back-home">
+              <button onClick={() => router.push('/')} className="btn-secondary-outline back-home" style={{ marginTop: '24px' }}>
                 ← Main Menu
               </button>
             </div>
-          ) : (
-            <div className="country-discovery-view animate-fade-in">
-              <div className="country-hero-card">
-                <img src={countryInfo?.cover_image_url || '/api/placeholder/400/200'} alt={country} />
-                <div className="hero-gradient-overlay" />
-                <div className="hero-text-overlay">
-                  <h2>{country}</h2>
-                  <span>Travel Guide</span>
-                </div>
-              </div>
-
-              <div className="discovery-scroll-area">
-                <div className="info-accordion-stack">
-                  <div className={`accordion-item ${activeAccordion === 'overview' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'overview' ? null : 'overview')}>
-                      <span className="icon">🌍</span>
-                      <span className="label">Brief Overview</span>
-                      <span className="arrow">{activeAccordion === 'overview' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'overview' && (
-                      <div className="accordion-content animate-slide-down">
-                        <p className="overview-text-premium">{countryInfo?.overview || `Explore the beauty and culture of ${country}.`}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={`accordion-item ${activeAccordion === 'bucket' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'bucket' ? null : 'bucket')}>
-                      <span className="icon">✨</span>
-                      <span className="label">Must Do Bucket-List</span>
-                      <span className="arrow">{activeAccordion === 'bucket' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'bucket' && (
-                      <div className="accordion-content animate-slide-down">
-                        <div className="bucket-grid">
-                          {countryInfo?.bucket_list?.map((item: any, i: number) => (
-                            <div key={i} className="bucket-card-glass">
-                              {item.image_url && <img src={item.image_url} alt="" />}
-                              <p>{item.text}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={`accordion-item ${activeAccordion === 'foods' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'foods' ? null : 'foods')}>
-                      <span className="icon">🥘</span>
-                      <span className="label">Gastronomy Guide</span>
-                      <span className="arrow">{activeAccordion === 'foods' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'foods' && (
-                      <div className="accordion-content animate-slide-down">
-                        <div className="foods-list" style={{ padding: '0 16px 16px' }}>
-                          {countryInfo?.local_foods?.map((food: any, i: number) => (
-                            <div key={i} className="food-item-premium" style={{ marginBottom: '20px' }}>
-                              <h4 style={{ margin: '0 0 4px', color: 'var(--color-sapphire)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '1px' }}>{food.name}</h4>
-                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-soft-slate)', lineHeight: '1.5' }}>{food.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="quick-city-selector">
-                  <h3 className="section-subtitle-modern">Top Cities to Visit</h3>
-                  <div className="city-grid-mini">
-                    {Array.from(new Set(places.map(p => p.city))).slice(0, 6).map(city => (
-                      <button key={city} className="city-card-glass" onClick={() => setSelectedCity(city)}>
-                        <span>{city}</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button onClick={() => router.push('/')} className="btn-secondary-outline back-home" style={{ marginTop: '24px' }}>
-                  ← Main Menu
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
+      {/* Place Details Modal (looks like map popup) */}
+      {selectedPlaceDetails && (
+        <div className="place-modal-overlay" onClick={() => setSelectedPlaceDetails(null)}>
+          <div className="place-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="place-modal-close" onClick={() => setSelectedPlaceDetails(null)}>×</button>
+            <div style={{ minWidth: '280px', maxWidth: '320px' }}>
+              {selectedPlaceDetails.image_url ? <img src={selectedPlaceDetails.image_url} alt="" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} /> : null}
+              <h3 style={{ margin: '0', fontSize: '17px', color: '#031B4E' }}>{selectedPlaceDetails.title}</h3>
+              {selectedPlaceDetails.reviewsCount ? <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', marginBottom: '8px' }}>
+                <span style={{ color: '#f59e0b', fontSize: '14px' }}>★</span>
+                <span style={{ fontSize: '13px', color: '#666' }}>{selectedPlaceDetails.reviewsCount} reviews</span>
+              </div> : null}
+              <p style={{ margin: '8px 0', fontSize: '13px', color: '#555' }}>{(selectedPlaceDetails.description && selectedPlaceDetails.description.length > 100) ? selectedPlaceDetails.description.substring(0, 100) + '...' : (selectedPlaceDetails.description || '')}</p>
 
+              {(selectedPlaceDetails.website || selectedPlaceDetails.phone || selectedPlaceDetails.address) ? (
+                <div style={{ margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee', fontSize: '12px', color: '#666', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {selectedPlaceDetails.address ? <div style={{ display: 'flex', gap: '6px', alignItems: 'start' }}><span style={{ fontSize: '14px' }}>📍</span> <span style={{ lineHeight: '1.4' }}>{selectedPlaceDetails.address}</span></div> : null}
+                  {selectedPlaceDetails.phone ? <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>📞</span> <span>{selectedPlaceDetails.phone}</span></div> : null}
+                  {selectedPlaceDetails.website ? <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>🌐</span> <a href={selectedPlaceDetails.website.startsWith('http') ? selectedPlaceDetails.website : 'https://' + selectedPlaceDetails.website} target="_blank" rel="noreferrer" style={{ color: '#667eea', textDecoration: 'none', wordBreak: 'break-all' }}>Website</a></div> : null}
+                </div>
+              ) : null}
+
+              <button
+                style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', marginTop: '12px', transition: 'opacity 0.2s' }}
+                onClick={() => { handleAddToItinerary(selectedPlaceDetails); setSelectedPlaceDetails(null); }}
+                onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
+                onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
+              >
+                + Add to Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Navigation */}
+      <div className="mobile-bottom-nav">
+        <button className={`mobile-nav-btn ${activeMobileTab === 'itinerary' ? 'active' : ''}`} onClick={() => setActiveMobileTab('itinerary')}>
+          <span className="icon">📋</span>
+          Itinerary
+        </button>
+        <button className={`mobile-nav-btn ${activeMobileTab === 'map' ? 'active' : ''}`} onClick={() => setActiveMobileTab('map')}>
+          <span className="icon">🗺️</span>
+          Map
+        </button>
+        <button className={`mobile-nav-btn ${activeMobileTab === 'explore' ? 'active' : ''}`} onClick={() => setActiveMobileTab('explore')}>
+          <span className="icon">✨</span>
+          Explore
+        </button>
+      </div>
 
       <style jsx global>{`
         :root {
@@ -649,7 +745,7 @@ function TripMapContent() {
           
           /* Spacing */
           --sidebar-left: 400px;
-          --sidebar-right: 380px;
+          --sidebar-right: 480px;
         }
 
         .trip-map-page {
@@ -665,6 +761,10 @@ function TripMapContent() {
           grid-template-columns: var(--sidebar-left) 1fr var(--sidebar-right);
           height: calc(100vh - 64px);
           background: #eef2f7;
+        }
+
+        .trip-map-container.fullscreen-map {
+          grid-template-columns: 1fr !important;
         }
 
         .sidebar {
@@ -877,17 +977,18 @@ function TripMapContent() {
         }
 
         /* Right Sidebar: Itinerary Luxury Timeline */
+        /* New Card-Based Mindtrip Itinerary Styling */
         .itinerary-header-premium {
           padding: 40px 24px 24px;
-          background: rgba(255, 255, 255, 0.2);
+          background: #fff;
         }
 
-        .itinerary-title-premium { font-size: 28px; font-weight: 900; margin: 0; }
+        .itinerary-title-premium { font-size: 28px; font-family: 'Playfair Display', serif; color: var(--color-sapphire); margin: 0; font-weight: 900;}
         .itinerary-subtitle-premium { 
           font-size: 12px; 
           text-transform: uppercase; 
           letter-spacing: 2px;
-          color: var(--color-gold);
+          color: #E2B13C;
           font-weight: 700;
           margin-top: 4px;
         }
@@ -896,17 +997,8 @@ function TripMapContent() {
           padding: 24px;
           flex: 1;
           overflow-y: auto;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
-        }
-        .itinerary-scroller-premium::-webkit-scrollbar { width: 4px; }
-        .itinerary-scroller-premium::-webkit-scrollbar-track { background: transparent; }
-        .itinerary-scroller-premium::-webkit-scrollbar-thumb {
-          background: rgba(212, 175, 55, 0.45);
-          border-radius: 4px;
-        }
-        .itinerary-scroller-premium::-webkit-scrollbar-thumb:hover {
-          background: rgba(212, 175, 55, 0.8);
+          background: #fafafa;
+          scrollbar-width: none;
         }
 
         .day-card-premium {
@@ -921,8 +1013,8 @@ function TripMapContent() {
           left: 0;
           top: 10px;
           bottom: -40px;
-          width: 1px;
-          background: linear-gradient(to bottom, var(--color-gold) 0%, transparent 100%);
+          width: 2px;
+          background: #eee;
         }
 
         .day-card-premium:last-child::before { display: none; }
@@ -939,29 +1031,115 @@ function TripMapContent() {
 
         .day-label-modern::before {
           content: '';
-          width: 9px;
-          height: 9px;
-          background: var(--color-gold);
+          width: 12px;
+          height: 12px;
+          background: #E2B13C;
           border-radius: 50%;
           position: absolute;
-          left: -4px;
-          box-shadow: 0 0 0 4px var(--color-pure-white);
+          left: -5px;
+          box-shadow: 0 0 0 4px #fafafa;
         }
 
         .site-entry-premium {
-          background: var(--color-pure-white);
-          padding: 12px 16px;
+          background: #fff;
+          padding: 16px;
           border-radius: 12px;
-          margin-bottom: 10px;
-          box-shadow: 0 4px 10px rgba(3, 27, 78, 0.03);
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
           font-weight: 600;
           font-size: 14px;
+          border: 1px solid #f0f0f0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .site-entry-minimal {
+          background: #fff;
+          padding: 16px 20px;
+          border-radius: 16px;
+          margin-bottom: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          border: 1px solid #f0f0f0;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .site-entry-minimal:hover {
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+          transform: translateY(-2px);
+        }
+
+        .drag-handle-minimal {
+          color: #a0aec0;
+          cursor: grab;
+          font-size: 18px;
+          line-height: 1;
+          letter-spacing: -2px;
+        }
+
+        .entry-content-minimal {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .entry-thumbnail-img, .entry-thumbnail-placeholder {
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
+          object-fit: cover;
+          flex-shrink: 0;
+          background: #e2e8f0;
+        }
+
+        .entry-text-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .entry-category-minimal {
+          font-size: 12px;
+          color: #64748b;
+        }
+
+        .entry-name-minimal {
+          font-weight: 700;
+          color: #0f172a;
+          font-size: 14px;
+        }
+
+        .add-site-btn-minimal {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #1e293b;
+          font-weight: 900;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          font-family: monospace;
+          font-size: 18px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .add-site-btn-minimal:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
         }
 
         /* Footer Actions */
         .itinerary-footer-actions {
           padding: 24px;
-          background: rgba(255, 255, 255, 0.5);
+          background: #fff;
           display: flex;
           flex-direction: column;
           gap: 12px;
@@ -970,7 +1148,7 @@ function TripMapContent() {
         .btn-timeline-floating {
           height: 54px;
           background: var(--color-pure-white);
-          border: 1px solid var(--color-champagne);
+          border: 1px solid #E2E8F0;
           border-radius: 14px;
           font-weight: 800;
           color: var(--color-sapphire);
@@ -984,7 +1162,6 @@ function TripMapContent() {
 
         .btn-timeline-floating:hover {
           background: var(--color-ice);
-          border-color: var(--color-gold);
         }
 
         .btn-save-trip-primary {
@@ -995,6 +1172,7 @@ function TripMapContent() {
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 2px;
+          border: none;
           transition: all 0.3s;
           cursor: pointer;
         }
@@ -1276,19 +1454,415 @@ function TripMapContent() {
           border-color: rgba(212, 175, 55, 0.4);
           box-shadow: 0 4px 14px rgba(212, 175, 55, 0.08);
         }
+
+        /* --- Country Discovery View Redesign --- */
+        .country-discovery-view {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: #fafafa;
+          overflow-y: auto;
+          scrollbar-width: none;
+        }
+
+        .country-hero-card {
+          position: relative;
+          width: 100%;
+          height: 380px;
+          flex-shrink: 0;
+          clip-path: polygon(0 0, 100% 0, 100% 88%, 0 100%);
+          background: #000;
+        }
+
+        .country-hero-bg {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          opacity: 0.8;
+        }
+
+        .hero-gradient-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+        }
+
+        .hero-text-overlay {
+          position: absolute;
+          bottom: 60px;
+          left: 24px;
+          right: 24px;
+          padding-bottom: 20px;
+        }
+
+        .hero-text-overlay h2 {
+          font-family: 'Playfair Display', serif;
+          font-size: 48px;
+          font-weight: 900;
+          color: white;
+          margin: 0 0 4px;
+          letter-spacing: -1px;
+        }
+
+        .hero-text-overlay span {
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+          font-weight: 800;
+          color: var(--color-gold);
+          letter-spacing: 3px;
+          text-transform: uppercase;
+        }
+
+        .discovery-scroll-area {
+          padding: 24px;
+          flex: 1;
+          margin-top: -30px; /* Pull content up slightly over the slant margin */
+          z-index: 2;
+          position: relative;
+        }
+
+        /* Override old accordion icon sizes in fixed country view to match screenshot */
+        .accordion-trigger .icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--color-champagne);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          border: none;
+        }
+
+        .accordion-item.active .accordion-trigger .icon {
+          background: var(--color-champagne);
+          transform: none;
+        }
+
+        .accordion-trigger .arrow {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: var(--color-ice);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: 400;
+          color: #888;
+          transition: all 0.25s;
+        }
+
+        .accordion-item.active .accordion-trigger .arrow {
+          background: #D4AF37;
+          color: #fff;
+          border-radius: 6px;
+          transform: none;
+        }
+
+        .accordion-item {
+          border-radius: 16px;
+          margin-bottom: 16px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          border: 1px solid #f0f0f0;
+        }
+        
+        .accordion-item.active {
+          border-color: #f0f0f0;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+        }
+
+        .top-cities-header {
+          font-family: 'Inter', sans-serif;
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 2.5px;
+          color: #475569;
+          margin: 32px 0 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .top-cities-header::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: #e2e8f0;
+        }
+
+        .city-card-glass {
+          height: 52px;
+          background: #fff;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          padding: 0 16px;
+          font-weight: 700;
+          font-size: 14px;
+          color: #1e293b;
+          border: 1px solid #f1f5f9;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .city-card-glass:hover {
+          border-color: #e2e8f0;
+          color: #0f172a;
+        }
+
+        .city-card-glass svg { opacity: 0.3; }
+
+        /* Mobile Adjustments */
+        .mobile-bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 64px;
+          background: #fff;
+          border-top: 1px solid #eee;
+          z-index: 1000;
+          justify-content: space-around;
+          align-items: center;
+        }
+        
+        .mobile-nav-btn {
+          background: none;
+          border: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 600;
+          color: #888;
+          gap: 4px;
+          padding: 8px 16px;
+        }
+        
+        .mobile-nav-btn.active {
+          color: var(--color-sapphire);
+        }
+        
+        .mobile-nav-btn .icon {
+          font-size: 20px;
+        }
+
+        @media (max-width: 1024px) {
+          .trip-map-container {
+             grid-template-columns: var(--sidebar-left) 1fr;
+          }
+          .right-sidebar {
+            position: fixed;
+            right: 0;
+            top: 64px;
+            bottom: 0;
+            width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+          }
+          .right-sidebar.mobile-active {
+            transform: translateX(0);
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .trip-map-container {
+             display: flex;
+             flex-direction: column;
+             height: calc(100vh - 64px - 64px); /* header + bottom nav */
+          }
+          
+          .mobile-bottom-nav {
+             display: flex;
+          }
+          
+          .sidebar, .trip-map-main-wrapper {
+             display: none;
+             width: 100%;
+             height: 100%;
+          }
+          
+          .sidebar.mobile-active, .trip-map-main-wrapper.mobile-active {
+             display: flex;
+             position: relative;
+             transform: none;
+             top: 0;
+             z-index: auto;
+             box-shadow: none;
+          }
+          
+          .right-sidebar { left: 0; right: 0; width: 100%; }
+          
+          /* Hide menus when card is open to match fullscreen look */
+          .mobile-explore-fullscreen .trip-map-header-wrapper {
+             display: none;
+          }
+          .mobile-explore-fullscreen .mobile-bottom-nav {
+             display: none;
+          }
+          .mobile-explore-fullscreen .trip-map-container {
+             height: 100vh;
+          }
+        }
+
+        .sidebar-hidden {
+          display: none !important;
+        }
+
+        .place-modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.4);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          padding: 20px;
+        }
+
+        .place-modal-content {
+          background: white;
+          border-radius: 16px;
+          padding: 16px;
+          position: relative;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+          animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPopUp {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .place-modal-close {
+          position: absolute;
+          top: 10px; right: 10px;
+          width: 24px; height: 24px;
+          border: none; background: rgba(0,0,0,0.05); color: #666;
+          border-radius: 50%; font-size: 18px; line-height: 1;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; z-index: 10;
+        }
+        .place-modal-close:hover { background: rgba(0,0,0,0.1); color: #000; }
+
+        /* Save Trip Modal Styles */
+        .save-modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(3, 27, 78, 0.6);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999999;
+          padding: 20px;
+        }
+
+        .save-modal-content {
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          width: 100%;
+          max-width: 440px;
+          box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+          animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          text-align: center;
+        }
+
+        .save-modal-title {
+          margin: 0 0 12px 0;
+          font-size: 1.6rem;
+          color: var(--color-sapphire);
+          font-family: "Playfair Display", serif;
+          font-weight: 800;
+        }
+
+        .save-modal-subtitle {
+          margin: 0 0 24px 0;
+          font-size: 0.95rem;
+          color: var(--color-soft-slate);
+          line-height: 1.5;
+        }
+
+        .save-modal-input {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          font-size: 1rem;
+          color: #1e293b;
+          background: #f8fafc;
+          margin-bottom: 24px;
+          transition: all 0.2s;
+          box-sizing: border-box;
+          outline: none;
+        }
+        .save-modal-input:focus {
+          border-color: #D4AF37;
+          background: #fff;
+          box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+
+        .save-modal-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: stretch;
+        }
+
+        .save-modal-actions button {
+          flex: 1;
+          padding: 12px 0;
+          border-radius: 8px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+
+        .save-modal-actions .btn-cancel {
+          background: #f1f5f9;
+          color: #475569;
+        }
+        .save-modal-actions .btn-cancel:hover {
+          background: #e2e8f0;
+          color: #1e293b;
+        }
+
+        .save-modal-actions .btn-confirm {
+          background: linear-gradient(135deg, var(--color-sapphire) 0%, var(--color-sapphire-light) 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(3, 27, 78, 0.2);
+        }
+        .save-modal-actions .btn-confirm:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(3, 27, 78, 0.3);
+        }
+        .save-modal-actions .btn-confirm:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
       `}</style>
 
-
-
-
-      {showTimeline && (
-        <TimelineView
-          dayPlans={dayPlans}
-          onClose={() => setShowTimeline(false)}
-        />
-      )}
+      {
+        showTimeline && (
+          <TimelineView
+            dayPlans={dayPlans}
+            onClose={() => setShowTimeline(false)}
+          />
+        )
+      }
       <SiteFooter />
-    </div>
+    </div >
   )
 }
 

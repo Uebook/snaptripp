@@ -444,7 +444,7 @@ function ExploreContent() {
       {/* Timeline View */}
       {showTimeline && (
         <TimelineView
-          items={dayPlans.flatMap(d => d.items)} // Flatten for now, existing TimelineView expects flat list
+          dayPlans={dayPlans}
           onClose={() => setShowTimeline(false)}
         />
       )}

@@ -38,9 +38,10 @@ interface TripMapProps {
     selectedCity?: string | null
     onCityClick?: (city: string) => void
     onAddToPlan?: (place: Place) => void
+    isSavedTripView?: boolean
 }
 
-export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick, onAddToPlan }: TripMapProps) {
+export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick, onAddToPlan, isSavedTripView = false }: TripMapProps) {
     const mapRef = useRef<L.Map | null>(null)
     const mapContainerRef = useRef<HTMLDivElement>(null)
     const markersRef = useRef<L.Marker[]>([])
@@ -54,18 +55,102 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19,
             }).addTo(mapRef.current)
+
+            // Auto resize map when container dimensions change (e.g. sidebar toggles)
+            const resizeObserver = new ResizeObserver(() => {
+                mapRef.current?.invalidateSize()
+            })
+            resizeObserver.observe(mapContainerRef.current)
+
+            // Cleanup observer on unmount
+            return () => {
+                resizeObserver.disconnect()
+            }
         }
     }, [])
 
     // Update markers and view
     useEffect(() => {
-        if (!mapRef.current || places.length === 0) return
+        if (!mapRef.current) return
 
         // Clear existing markers
         markersRef.current.forEach(marker => marker.remove())
         markersRef.current = []
 
-        if (!selectedCity) {
+        if (isSavedTripView && dayPlans.length > 0) {
+            // Only show places saved in the day plans
+            const placeMarkers: L.Marker[] = []
+
+            dayPlans.forEach((day, dIdx) => {
+                day.items.forEach((item, iIdx) => {
+                    const place = item.data
+                    if (!place || !place.location_lat || !place.location_lng) return
+
+                    const colors = ['#e53e3e', '#d69e2e', '#38a169', '#3182ce', '#805ad5'];
+                    const color = colors[dIdx % colors.length];
+
+                    const iconHtml = `<div style="
+                        background: ${color};
+                        color: white;
+                        border-radius: 50%;
+                        width: 36px;
+                        height: 36px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: bold;
+                        font-size: 14px;
+                        border: 3px solid white;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+                    ">${iIdx + 1}</div>`;
+
+                    const icon = L.divIcon({
+                        className: 'custom-trip-marker',
+                        html: iconHtml,
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18],
+                    })
+
+                    const marker = L.marker([place.location_lat, place.location_lng], { icon, zIndexOffset: 1000 }).addTo(mapRef.current!)
+
+                    const popupContent = `
+                        <div style="min-width: 280px; max-width: 320px;">
+                            ${place.image_url ? `<img src="${place.image_url}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />` : ''}
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <h3 style="margin: 0; font-size: 17px; color: #031B4E; line-height: 1.3; padding-right: 10px;">${place.title}</h3>
+                                <div style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: ${color}20; color: ${color}; white-space: nowrap; border: 1px solid ${color}40;">Day ${dIdx + 1}</div>
+                            </div>
+                            
+                            ${place.reviewsCount ? `<div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                                <span style="color: #f59e0b; font-size: 14px;">★</span>
+                                <span style="font-size: 13px; color: #666; font-weight: 500;">${place.reviewsCount} reviews</span>
+                            </div>` : ''}
+                            
+                            <p style="margin: 8px 0; font-size: 13px; color: #555; line-height: 1.5;">${place.description && place.description.length > 100 ? place.description.substring(0, 100) + '...' : place.description || ''}</p>
+                            
+                            ${(place.website || place.phone || place.address) ? `
+                            <div style="margin: 12px 0 0; padding-top: 12px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #666; display: flex; flex-direction: column; gap: 8px;">
+                                ${place.address ? `<div style="display: flex; gap: 8px; align-items: flex-start;"><span style="font-size: 14px;">📍</span> <span style="line-height: 1.4;">${place.address}</span></div>` : ''}
+                                ${place.phone ? `<div style="display: flex; gap: 8px; align-items: center;"><span style="font-size: 14px;">📞</span> <span>${place.phone}</span></div>` : ''}
+                                ${place.website ? `<div style="display: flex; gap: 8px; align-items: center;"><span style="font-size: 14px;">🌐</span> <a href="${place.website.startsWith('http') ? place.website : 'https://' + place.website}" target="_blank" style="color: #667eea; text-decoration: none; word-break: break-all;">Website</a></div>` : ''}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `
+                    marker.bindPopup(popupContent, { minWidth: 250 })
+
+                    placeMarkers.push(marker)
+                    markersRef.current.push(marker)
+                })
+            })
+
+            if (placeMarkers.length > 0) {
+                const group = new L.FeatureGroup(placeMarkers)
+                mapRef.current.fitBounds(group.getBounds().pad(0.3))
+            }
+
+        } else if (!selectedCity) {
+            if (places.length === 0) return;
             // Group places by city
             const cityGroups = places.reduce((acc, place) => {
                 if (!acc[place.city]) {
@@ -261,7 +346,6 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
     // handle resize and polylines...
     useEffect(() => {
         if (!mapRef.current) return;
-        setTimeout(() => mapRef.current?.invalidateSize(), 300);
 
         if (!dayPlans || dayPlans.length === 0) return;
 
@@ -277,12 +361,36 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 const polyline = L.polyline(latLngs, {
                     color: colors[index % colors.length],
                     weight: 4,
-                    opacity: 0.7,
-                    dashArray: '10, 10',
+                    opacity: 0.8,
+                    dashArray: '8, 8',
                 }).addTo(mapRef.current!);
                 polylines.push(polyline);
             }
         });
+
+        // Connect days with subtle lines
+        for (let i = 0; i < dayPlans.length - 1; i++) {
+            const currentDay = dayPlans[i];
+            const nextDay = dayPlans[i + 1];
+
+            const currentValidItems = currentDay.items.filter(item => item.coordinates?.lat && item.coordinates?.lng);
+            const nextValidItems = nextDay.items.filter(item => item.coordinates?.lat && item.coordinates?.lng);
+
+            if (currentValidItems.length > 0 && nextValidItems.length > 0) {
+                const lastItem = currentValidItems[currentValidItems.length - 1];
+                const firstItem = nextValidItems[0];
+                const polyline = L.polyline([
+                    [lastItem.coordinates.lat, lastItem.coordinates.lng],
+                    [firstItem.coordinates.lat, firstItem.coordinates.lng]
+                ], {
+                    color: '#94a3b8', // slate-400
+                    weight: 3,
+                    opacity: 0.5,
+                    dashArray: '4, 12',
+                }).addTo(mapRef.current!);
+                polylines.push(polyline);
+            }
+        }
 
         return () => polylines.forEach(p => p.remove());
     }, [dayPlans]);

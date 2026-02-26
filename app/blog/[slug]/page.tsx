@@ -123,7 +123,7 @@ export default function BlogDetailsPage() {
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 20px' }}>
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ fontSize: '3rem', color: '#0a192f', marginBottom: '20px' }}>Post Not Found</h1>
-                        <p style={{ color: '#64748b', marginBottom: '30px' }}>Sorry, the blog post you are looking for doesn't exist.</p>
+                        <p style={{ color: '#64748b', marginBottom: '30px' }}>Sorry, the blog post you are looking for doesn&apos;t exist.</p>
                         <Link href="/blog" style={{ color: '#ffc107', fontWeight: 'bold' }}>Back to Blog</Link>
                     </div>
                 </div>

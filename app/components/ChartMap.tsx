@@ -103,6 +103,8 @@ export default function ChartMap() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [countryPlaces, setCountryPlaces] = useState<any[]>([])
     const [selectedCities, setSelectedCities] = useState<string[]>([])
+    const [customCityInput, setCustomCityInput] = useState('')
+    const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
     const [countryMapCenter, setCountryMapCenter] = useState<[number, number]>([20, 0])
 
     // Load places for selected country to display in mini map
@@ -110,6 +112,8 @@ export default function ChartMap() {
         if (selectedCountry && selectedCountry.name) {
             setCountryPlaces([]);
             setSelectedCities([]);
+            setCustomCityInput('');
+            setIsCityDropdownOpen(false);
             setReviewText('');
             setRatings({ sightseeing: 0, localPeople: 0, serviceQuality: 0, safety: 0, price: 0 });
 
@@ -146,6 +150,15 @@ export default function ChartMap() {
             setSelectedCities(prev => prev.filter(c => c !== cityName))
         } else {
             setSelectedCities(prev => [...prev, cityName])
+        }
+    }
+
+    const handleAddCustomCity = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        const cityToAdd = customCityInput.trim();
+        if (cityToAdd && !selectedCities.includes(cityToAdd)) {
+            setSelectedCities(prev => [...prev, cityToAdd]);
+            setCustomCityInput('');
         }
     }
 
@@ -230,8 +243,9 @@ export default function ChartMap() {
                 })
             },
             click: (e: any) => {
+                const finalCountryName = countryName || feature.properties.name || 'Unknown Country';
                 setSelectedCountry(stats || {
-                    name: countryName,
+                    name: finalCountryName,
                     code: feature.properties.ISO_A3 || '',
                     intensity: 'visited',
                     sightseeing: 0,
@@ -393,6 +407,74 @@ export default function ChartMap() {
                                             />
                                         </div>
                                     ))}
+                                </div>
+                                <div className="manual-city-input-wrapper">
+                                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>What cities did you visit?</p>
+
+                                    <div className="city-input-group" style={{ display: 'flex', gap: '10px', marginBottom: '15px', position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            value={customCityInput}
+                                            onChange={(e) => {
+                                                setCustomCityInput(e.target.value)
+                                                setIsCityDropdownOpen(true)
+                                            }}
+                                            onFocus={() => setIsCityDropdownOpen(true)}
+                                            onBlur={() => setTimeout(() => setIsCityDropdownOpen(false), 200)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCity(e)}
+                                            placeholder={`e.g. ${selectedCountry.name === 'Japan' ? 'Tokyo' : (selectedCountry.name === 'France' ? 'Paris' : 'Capital City')}`}
+                                            className="custom-city-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCustomCity}
+                                            className="btn-add-city"
+                                            disabled={!customCityInput.trim()}
+                                        >
+                                            Add
+                                        </button>
+
+                                        {/* Dropdown Menu */}
+                                        {isCityDropdownOpen && (
+                                            <div className="city-dropdown-menu">
+                                                {Array.from(new Set(countryPlaces.map(p => p.city)))
+                                                    .filter(city => city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city))
+                                                    .map(city => (
+                                                        <div
+                                                            key={city}
+                                                            className="city-dropdown-item"
+                                                            onClick={() => {
+                                                                setSelectedCities(prev => [...prev, city]);
+                                                                setCustomCityInput('');
+                                                                setIsCityDropdownOpen(false);
+                                                            }}
+                                                        >
+                                                            {city}
+                                                        </div>
+                                                    ))
+                                                }
+                                                {customCityInput.trim() && !Array.from(new Set(countryPlaces.map(p => p.city))).some(c => c.toLowerCase() === customCityInput.toLowerCase()) && (
+                                                    <div className="city-dropdown-item custom-add" onClick={handleAddCustomCity}>
+                                                        Add &quot;{customCityInput}&quot; (Custom)
+                                                    </div>
+                                                )}
+                                                {Array.from(new Set(countryPlaces.map(p => p.city))).filter(city => city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city)).length === 0 && !customCityInput.trim() && (
+                                                    <div className="city-dropdown-empty">Type to search or add a custom city...</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {selectedCities.length > 0 && (
+                                        <div className="selected-cities-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                                            {selectedCities.map(city => (
+                                                <div key={city} className="city-tag">
+                                                    {city}
+                                                    <button onClick={() => handleCityToggle(city)} className="btn-remove-tag">×</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {countryPlaces.length > 0 && (
@@ -746,6 +828,88 @@ export default function ChartMap() {
                     background: rgba(255, 255, 255, 0.02);
                     border: 1px solid rgba(255, 255, 255, 0.04);
                 }
+
+                .custom-city-input {
+                    flex: 1;
+                    padding: 12px 18px;
+                    border-radius: 12px;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    color: white;
+                    font-size: 14px;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+                .custom-city-input:focus { border-color: #ffc107; }
+                
+                .btn-add-city {
+                    padding: 0 24px;
+                    border-radius: 12px;
+                    border: none;
+                    background: #ffc107;
+                    color: black;
+                    font-weight: 800;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-add-city:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,193,7,0.3); }
+                .btn-add-city:disabled { opacity: 0.5; cursor: not-allowed; }
+
+                .city-dropdown-menu {
+                    position: absolute;
+                    top: calc(100% + 5px);
+                    left: 0;
+                    right: 80px; /* Leave space for Add button */
+                    background: #112240;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 12px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                }
+                .city-dropdown-menu::-webkit-scrollbar { width: 6px; }
+                .city-dropdown-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+                
+                .city-dropdown-item {
+                    padding: 12px 18px;
+                    color: white;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                }
+                .city-dropdown-item:last-child { border-bottom: none; }
+                .city-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+                .city-dropdown-item.custom-add { color: #ffc107; font-style: italic; }
+                .city-dropdown-empty { padding: 12px 18px; color: rgba(255,255,255,0.5); font-size: 13px; font-style: italic; }
+
+                .city-tag {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: rgba(255,255,255,0.1);
+                    padding: 6px 14px;
+                    border-radius: 30px;
+                    font-size: 13px;
+                    color: white;
+                    border: 1px solid rgba(255,255,255,0.2);
+                }
+                .btn-remove-tag {
+                    background: none;
+                    border: none;
+                    color: rgba(255,255,255,0.6);
+                    cursor: pointer;
+                    font-size: 16px;
+                    line-height: 1;
+                    padding: 0 0 2px 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                }
+                .btn-remove-tag:hover { color: #ffc107; }
+
                 .star-rating {
                     display: flex;
                     gap: 10px;

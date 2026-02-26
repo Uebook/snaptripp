@@ -133,86 +133,130 @@ export default function TimelineView({ dayPlans, onClose }: TimelineViewProps) {
                       <div style={{
                         flex: 1,
                         background: '#fff',
-                        padding: '1.5rem',
+                        padding: '1.2rem',
                         borderRadius: '12px',
                         border: '1px solid #e2e8f0',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                        transition: 'transform 0.2s, box-shadow 0.2s'
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '1.5rem',
+                        alignItems: 'stretch'
                       }}>
-                        {(item.data?.images?.[0] || item.data?.imageUrl) && (
-                          <img
-                            src={item.data.images?.[0] || item.data.imageUrl}
-                            alt={item.name}
-                            style={{
-                              width: '100%',
-                              height: '220px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                              marginBottom: '1rem'
-                            }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
-                        )}
-                        <h3 style={{
-                          margin: '0 0 0.5rem 0',
-                          fontSize: '1.4rem',
-                          color: '#031B4E',
-                          fontFamily: '"Playfair Display", serif'
-                        }}>
-                          {item.name}
-                        </h3>
-                        <p style={{
-                          margin: '0 0 1rem 0',
-                          fontSize: '0.85rem',
-                          color: '#64748b',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          fontWeight: '600'
-                        }}>
-                          {item.type}
-                        </p>
-                        {item.data && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {item.data.description && (
-                              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
-                                {item.data.description}
-                              </p>
-                            )}
-                            <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '0.9rem', color: '#64748b' }}>
-                              {item.data.rating && (
-                                <span>⭐ {item.data.rating}</span>
-                              )}
-                              {item.data.address && (
-                                <span>📍 {item.data.address}</span>
-                              )}
-                            </div>
+                        {item.data?.image_url && (
+                          <div style={{ flexShrink: 0, width: '220px', display: 'flex' }}>
+                            <img
+                              src={item.data.image_url}
+                              alt={item.name}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                minHeight: '180px',
+                                objectFit: 'cover',
+                                borderRadius: '8px'
+                              }}
+                            />
                           </div>
                         )}
-                        {item.coordinates && (
-                          <a
-                            href={`https://www.google.com/maps?q=${item.coordinates.lat},${item.coordinates.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              marginTop: '1rem',
-                              color: '#D4AF37',
-                              fontWeight: '600',
-                              textDecoration: 'none',
-                              fontSize: '0.9rem',
-                              padding: '6px 12px',
-                              background: 'rgba(212, 175, 55, 0.05)',
-                              borderRadius: '6px',
-                              transition: 'background 0.2s'
-                            }}
-                          >
-                            View on Maps ↗
-                          </a>
-                        )}
+
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                          <h3 style={{
+                            margin: '0 0 0.5rem 0',
+                            fontSize: '1.3rem',
+                            color: '#031B4E',
+                            fontFamily: '"Playfair Display", serif',
+                            fontWeight: 800
+                          }}>
+                            {item.name}
+                          </h3>
+
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '1rem' }}>
+                            <span style={{
+                              fontSize: '0.8rem',
+                              color: '#64748b',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px',
+                              fontWeight: '700'
+                            }}>
+                              {item.data?.categoryName || 'PLACE'}
+                            </span>
+
+                            {item.data?.reviewsCount ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', color: '#64748b' }}>
+                                <span style={{ color: '#f59e0b' }}>★</span>
+                                {item.data.reviewsCount} reviews
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {item.data?.description && (
+                            <p style={{
+                              fontSize: '0.95rem',
+                              color: '#334155',
+                              lineHeight: 1.5,
+                              margin: '0 0 1rem 0'
+                            }}>
+                              {item.data.description}
+                            </p>
+                          )}
+
+                          {(item.data?.address || item.data?.phone || item.data?.website) && (
+                            <div style={{ margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #f1f5f9', fontSize: '0.9rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {item.data.address && (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                  <span style={{ color: '#ef4444' }}>📍</span>
+                                  <span style={{ lineHeight: 1.4 }}>{item.data.address}</span>
+                                </div>
+                              )}
+                              {item.data.phone && (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <span style={{ color: '#64748b' }}>📞</span>
+                                  <span>{item.data.phone}</span>
+                                </div>
+                              )}
+                              {item.data.website && (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <span style={{ color: '#3b82f6' }}>🌐</span>
+                                  <a
+                                    href={item.data.website.startsWith('http') ? item.data.website : 'https://' + item.data.website}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ color: '#3b82f6', textDecoration: 'none', wordBreak: 'break-all' }}
+                                  >
+                                    Website
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {item.coordinates && (
+                            <a
+                              href={`https://www.google.com/maps?q=${item.coordinates.lat},${item.coordinates.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                color: '#D4AF37',
+                                fontWeight: '700',
+                                textDecoration: 'none',
+                                fontSize: '0.85rem',
+                                padding: '8px 12px',
+                                background: '#FFFDF5',
+                                borderRadius: '6px',
+                                transition: 'background 0.2s',
+                                border: '1px solid #fef3c7',
+                                marginTop: '8px',
+                                alignSelf: 'flex-start'
+                              }}
+                              onMouseOver={(e) => (e.target as HTMLAnchorElement).style.background = '#fef3c7'}
+                              onMouseOut={(e) => (e.target as HTMLAnchorElement).style.background = '#FFFDF5'}
+                            >
+                              View on Maps ↗
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
