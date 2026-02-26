@@ -547,31 +547,67 @@ function TripMapContent() {
 
         {/* Center: Map */}
         <div className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`} style={{ flex: 1, position: 'relative' }}>
+          {/* Map Overlays Container */}
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            zIndex: 1000,
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}>
+            {/* Floating Toggle Button */}
+            <button
+              onClick={() => setIsSidebarHidden(!isSidebarHidden)}
+              style={{
+                background: isSidebarHidden ? '#031B4E' : 'white',
+                color: isSidebarHidden ? 'white' : '#031B4E',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                border: isSidebarHidden ? 'none' : '1px solid #e2e8f0',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontFamily: '"Inter", sans-serif'
+              }}
+            >
+              {isSidebarHidden ? '📖 Open Planner' : '✖ Close Planner'}
+            </button>
 
-          {/* Floating Toggle Button */}
-          <button
-            onClick={() => setIsSidebarHidden(!isSidebarHidden)}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              left: '20px',
-              zIndex: 1000,
-              background: isSidebarHidden ? '#031B4E' : 'white',
-              color: isSidebarHidden ? 'white' : '#031B4E',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              border: isSidebarHidden ? 'none' : '1px solid #e2e8f0',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontFamily: '"Inter", sans-serif'
-            }}
-          >
-            {isSidebarHidden ? '📖 Open Planner' : '✖ Close Planner'}
-          </button>
+            {/* City Selector Dropdown */}
+            {places.length > 0 && (
+              <select
+                value={selectedCity || ''}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value || null)
+                  if (window.innerWidth <= 768) setActiveMobileTab('explore')
+                }}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  border: '1px solid #e2e8f0',
+                  background: 'white',
+                  color: '#031B4E',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  fontFamily: '"Inter", sans-serif',
+                  outline: 'none',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="">All Cities in {country || 'Country'}</option>
+                {Array.from(new Set(places.map(p => p.city))).filter(Boolean).sort().map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            )}
+          </div>
 
           <TripMap
             places={places}
