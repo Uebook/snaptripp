@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { toPng } from 'html-to-image'
 
 export default function TravelerIDCard() {
+    const cardRef = useRef<HTMLDivElement>(null)
     const [userProfile, setUserProfile] = useState<any>(null)
     const [stats, setStats] = useState({
         countries: 0,
@@ -19,10 +21,17 @@ export default function TravelerIDCard() {
                 // 1. Get User
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session && session.user) {
+                    // Fetch latest profile info (including updated avatar)
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('full_name, avatar_url')
+                        .eq('id', session.user.id)
+                        .single()
+
                     setUserProfile({
-                        name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Traveler',
+                        name: profileData?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Traveler',
                         email: session.user.email,
-                        avatar: session.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop'
+                        avatar: profileData?.avatar_url || session.user.user_metadata?.avatar_url || ''
                     })
                 }
 
@@ -92,9 +101,38 @@ export default function TravelerIDCard() {
     if (loading) {
         return <div style={{ color: 'white', textAlign: 'center', padding: '50px' }}>Generating Traveler ID...</div>
     }
+
+    // Generate a profile slug for the URL/QR
+    const profileSlug = userProfile?.name
+        ? userProfile.name.toLowerCase().replace(/\s+/g, '-')
+        : (userProfile?.email?.split('@')[0] || 'traveler')
+
+    const profileUrl = `snaptrip.com/${profileSlug}`
+
+    const handleDownload = async () => {
+        if (cardRef.current === null) return
+        try {
+            const dataUrl = await toPng(cardRef.current, { cacheBust: true, backgroundColor: '#0a192f' })
+            const link = document.createElement('a')
+            link.download = `traveler-id-${profileSlug}.png`
+            link.href = dataUrl
+            link.click()
+        } catch (err) {
+            console.error('oops, something went wrong!', err)
+        }
+    }
+
+    const handleCopyLink = () => {
+        const fullUrl = `${window.location.origin}/${profileSlug}`
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            alert('Profile link copied to clipboard!')
+        }).catch(err => {
+            console.error('Failed to copy: ', err)
+        })
+    }
     return (
         <div className="id-card-wrapper">
-            <div className="id-card-container">
+            <div className="id-card-container" ref={cardRef}>
                 {/* Header */}
                 <div className="card-header">
                     <div className="brand">
@@ -114,11 +152,30 @@ export default function TravelerIDCard() {
                     {/* Profile Section */}
                     <div className="profile-section">
                         <div className="profile-image-container">
-                            <img
-                                src={userProfile?.avatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop"}
-                                alt={userProfile?.name || "Traveler"}
-                                className="profile-image"
-                            />
+                            {userProfile?.avatar ? (
+                                <img
+                                    src={userProfile.avatar}
+                                    alt={userProfile?.name || "Traveler"}
+                                    className="profile-image"
+                                    onError={(e: any) => {
+                                        e.target.style.display = 'none'
+                                        e.target.nextSibling.style.display = 'flex'
+                                    }}
+                                />
+                            ) : null}
+                            <div className="dummy-icon" style={{
+                                display: userProfile?.avatar ? 'none' : 'flex',
+                                width: '100%',
+                                height: '100%',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(255,255,255,0.05)',
+                                color: 'rgba(255,255,255,0.3)',
+                                fontSize: '64px',
+                                borderRadius: 'inherit'
+                            }}>
+                                👤
+                            </div>
                         </div>
                         <h2 className="profile-name">{userProfile?.name || "Adventure Explorer"}</h2>
                         <p className="profile-title">{stats.countries > 10 ? 'Global Citizen' : 'Adventure Explorer'}</p>
@@ -181,11 +238,11 @@ export default function TravelerIDCard() {
 
                         <div className="qr-preview-container">
                             <div className="qr-code">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=snaptrip.com/sarah-anderson" alt="QR Code" />
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(profileUrl)}`} alt="QR Code" />
                             </div>
                             <div className="qr-text">
                                 <span className="qr-label">Scan to view profile</span>
-                                <span className="qr-url">snaptrip.com/sarah-anderson</span>
+                                <span className="qr-url">{profileUrl}</span>
                             </div>
                         </div>
                     </div>
@@ -195,11 +252,8 @@ export default function TravelerIDCard() {
                 <div className="card-footer">
                     <div className="share-text">Share Your Journey</div>
                     <div className="action-buttons">
-                        <button className="icon-btn">𝕏</button>
-                        <button className="icon-btn">📸</button>
-                        <button className="icon-btn">📘</button>
-                        <button className="icon-btn">🔗</button>
-                        <button className="download-btn">📥 DOWNLOAD</button>
+                        <button className="icon-btn" onClick={handleCopyLink} title="Copy Link">�</button>
+                        <button className="download-btn" onClick={handleDownload}>📥 DOWNLOAD</button>
                     </div>
                 </div>
             </div>

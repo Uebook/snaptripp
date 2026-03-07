@@ -21,52 +21,73 @@ export default function Dashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-
-  // Mock data for the demonstration based on design
-  const [trips] = useState<Trip[]>([
-    {
-      id: '1',
-      title: 'Romantic Paris Getaway',
-      country: 'France',
-      date_range: 'Mar 15-22, 2024',
-      places_count: 8,
-      travelers_count: 2,
-      status: 'Completed',
-      image_url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=400',
-      description: 'Explored the City of Light with visits to iconic landmarks, charming cafes, and romantic Seine river cruises. Unforgettable memories!'
-    },
-    {
-      id: '2',
-      title: 'Tokyo Adventure',
-      country: 'Japan',
-      date_range: 'Jun 10-20, 2024',
-      places_count: 15,
-      travelers_count: 1,
-      status: 'Upcoming',
-      image_url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=400',
-      description: 'Immersive journey through Japanese culture, from ancient temples to modern technology districts. Cherry blossom season awaits!'
-    },
-    {
-      id: '3',
-      title: 'Greek Island Hopping',
-      country: 'Greece',
-      date_range: 'Aug 5-18, 2023',
-      places_count: 5,
-      travelers_count: 4,
-      status: 'Completed',
-      image_url: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&q=80&w=400',
-      description: 'Magical Mediterranean adventure exploring Santorini, Mykonos, and hidden gems. Sunset views and authentic Greek cuisine!'
-    }
-  ])
+  const [profile, setProfile] = useState<any>(null)
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [stats, setStats] = useState({
+    totalTrips: 0,
+    countries: 0,
+    cities: 0,
+    reviews: 0
+  })
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const initDashboard = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
-      setUser(session.user)
-      setLoading(false)
+
+      const currentUser = session.user
+      setUser(currentUser)
+
+      try {
+        // 1. Fetch Profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single()
+        setProfile(profileData)
+
+        // 2. Fetch Stats
+        const statsRes = await fetch('/api/dashboard/stats', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+        const statsData = await statsRes.json()
+        if (statsData.success) {
+          setStats({
+            totalTrips: statsData.stats.totalTrips,
+            countries: statsData.stats.countries,
+            cities: statsData.stats.places, // Using places as cities
+            reviews: statsData.stats.reviews
+          })
+        }
+
+        // 3. Fetch Trips
+        const tripsRes = await fetch('/api/trips', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+        const tripsData = await tripsRes.json()
+        if (tripsData.success) {
+          const mappedTrips = tripsData.trips.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            country: t.country,
+            date_range: t.duration || 'Flexible',
+            places_count: t.days?.reduce((acc: number, d: any) => acc + (d.items?.length || 0), 0) || 0,
+            travelers_count: 1,
+            status: t.status || 'Upcoming',
+            image_url: t.image_url || `https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=400`,
+            description: t.description || `A wonderful trip to ${t.country}.`
+          }))
+          setTrips(mappedTrips)
+        }
+
+      } catch (err) {
+        console.error('Dashboard Init Error:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    checkAuth()
+    initDashboard()
   }, [router])
 
   if (loading) {
@@ -81,8 +102,11 @@ export default function Dashboard() {
     )
   }
 
-  const fullName = user?.user_metadata?.full_name || 'Sarah Anderson'
-  const email = user?.email || 'sarah.anderson@email.com'
+  const fullName = profile?.full_name || user?.user_metadata?.full_name || 'Traveler'
+  const email = user?.email || profile?.email || ''
+  const location = profile?.location || 'Add Location'
+  const bio = profile?.bio || 'No bio yet. Tell us about your travel passion!'
+  const avatarUrl = profile?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'
 
   return (
     <div className="profile-view-container">
@@ -92,11 +116,11 @@ export default function Dashboard() {
           <div className="profile-avatar-large">
             <div className="avatar-img-wrapper">
               <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150"
+                src={avatarUrl}
                 alt="Profile"
               />
             </div>
-            <button className="edit-photo-link">📷 Edit Photo</button>
+            <Link href="/dashboard/profile" className="edit-photo-link" style={{ textDecoration: 'none', display: 'inline-block' }}>📷 Edit Photo</Link>
           </div>
 
           <div className="profile-main-info">
@@ -106,14 +130,12 @@ export default function Dashboard() {
             </div>
 
             <div className="meta-info">
-              <span>📍 San Francisco, CA</span>
-              <span>📅 Member since 2022</span>
+              <span>📍 {location}</span>
+              <span>📅 Member since {new Date(profile?.created_at || user?.created_at).getFullYear()}</span>
               <span>✉️ {email}</span>
             </div>
 
-            <p className="profile-bio">
-              Passionate traveler exploring the world one destination at a time. Love discovering hidden gems, local cuisine, and connecting with people from different cultures. Always planning my next adventure!
-            </p>
+            <p className="profile-bio">{bio}</p>
 
             <div className="profile-actions">
               <Link href="/dashboard/profile" className="btn-edit-profile">✏️ Edit Profile</Link>
@@ -132,22 +154,22 @@ export default function Dashboard() {
             <div className="stat-item">
               <span className="stat-icon">✈️</span>
               <span className="stat-label">Total Trips</span>
-              <span className="stat-value">18</span>
+              <span className="stat-value">{stats.totalTrips}</span>
             </div>
             <div className="stat-item">
               <span className="stat-icon">🌍</span>
               <span className="stat-label">Countries</span>
-              <span className="stat-value">12</span>
+              <span className="stat-value">{stats.countries}</span>
             </div>
             <div className="stat-item">
               <span className="stat-icon">🏙️</span>
               <span className="stat-label">Cities Visited</span>
-              <span className="stat-value">45</span>
+              <span className="stat-value">{stats.cities}</span>
             </div>
             <div className="stat-item">
               <span className="stat-icon">⭐</span>
               <span className="stat-label">Reviews</span>
-              <span className="stat-value">32</span>
+              <span className="stat-value">{stats.reviews}</span>
             </div>
           </div>
 
@@ -173,7 +195,7 @@ export default function Dashboard() {
           </div>
 
           <div className="trips-list">
-            {trips.map(trip => (
+            {trips.length > 0 ? trips.map(trip => (
               <div key={trip.id} className="trip-feed-card">
                 <div className="trip-img">
                   <img src={trip.image_url} alt={trip.title} />
@@ -181,7 +203,7 @@ export default function Dashboard() {
                 <div className="trip-details">
                   <div className="trip-header">
                     <h3>{trip.title}</h3>
-                    <span className={`status-tag ${trip.status.toLowerCase()}`}>
+                    <span className={`status-tag ${trip.status.toLowerCase().replace(' ', '-')}`}>
                       {trip.status}
                     </span>
                   </div>
@@ -192,14 +214,19 @@ export default function Dashboard() {
                   </div>
                   <p className="trip-desc">{trip.description}</p>
                   <div className="trip-footer">
-                    <button className="btn-view-details">👁️ View Details</button>
+                    <button className="btn-view-details" onClick={() => router.push(`/trip-map?tripId=${trip.id}`)}>👁️ View Details</button>
                     <button className="btn-secondary-action">
                       {trip.status === 'Upcoming' ? '✏️ Edit Trip' : '🔁 Duplicate'}
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="empty-trips" style={{ textAlign: 'center', padding: '60px', background: 'white', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                <p style={{ color: '#64748b', marginBottom: '20px' }}>No trips planned yet.</p>
+                <Link href="/" className="btn-edit-profile" style={{ display: 'inline-block' }}>Start Planning Now</Link>
+              </div>
+            )}
           </div>
 
           {/* Bottom Tabs Mock */}

@@ -14,7 +14,12 @@ export default function ProfilePage() {
     location: '',
     bio: '',
     avatar_url: '',
-    created_at: ''
+    created_at: '',
+    preferences: {
+      email_notifications: true,
+      travel_recommendations: true,
+      public_profile: true
+    }
   })
   const [stats, setStats] = useState({
     trips: 0,
@@ -27,10 +32,15 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchUser() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      if (!session && !loading) {
+        // Only redirect if NOT loading and no session
+        // To be even safer for subagent, we'll log it first
+        console.log("No session found, redirecting...");
         router.push('/')
         return
       }
+
+      if (!session) return; // session should be checked by now
 
       setUser(session.user)
 
@@ -55,7 +65,12 @@ export default function ProfilePage() {
             location: profileData.location || '',
             bio: profileData.bio || '',
             avatar_url: profileData.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
-            created_at: profileData.created_at || session.user.created_at
+            created_at: profileData.created_at || session.user.created_at,
+            preferences: {
+              email_notifications: profileData.preferences?.email_notifications ?? true,
+              travel_recommendations: profileData.preferences?.travel_recommendations ?? true,
+              public_profile: profileData.preferences?.public_profile ?? true
+            }
           })
         } else {
           setProfile(prev => ({
@@ -93,6 +108,47 @@ export default function ProfilePage() {
     fetchUser()
   }, [router])
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+
+    try {
+      setIsSaving(true)
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      // Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // Update Profile state
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
+
+      // Update DB
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+      alert("Photo updated successfully!")
+
+    } catch (error: any) {
+      alert("Error uploading photo: " + error.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!user) return
     setIsSaving(true)
@@ -106,6 +162,7 @@ export default function ProfilePage() {
           phone: profile.phone,
           location: profile.location,
           bio: profile.bio,
+          preferences: profile.preferences,
           updated_at: new Date().toISOString()
         })
       if (error) throw error
@@ -144,7 +201,21 @@ export default function ProfilePage() {
                 alt="Profile"
               />
             </div>
-            <button className="btn-change-photo" onClick={() => alert("Photo upload feature coming soon!")}>↑ Change Photo</button>
+            <input
+              type="file"
+              id="avatar-upload"
+              hidden
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              disabled={isSaving}
+            />
+            <button
+              className="btn-change-photo"
+              onClick={() => document.getElementById('avatar-upload')?.click()}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Uploading...' : '↑ Change Photo'}
+            </button>
             <p className="photo-hint">JPG, PNG or GIF. Max size 2MB</p>
           </div>
 
@@ -244,7 +315,14 @@ export default function ProfilePage() {
                   <span className="pref-desc">Receive updates about your trips and new features</span>
                 </div>
                 <label className="toggle">
-                  <input type="checkbox" defaultChecked />
+                  <input
+                    type="checkbox"
+                    checked={profile.preferences.email_notifications}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev,
+                      preferences: { ...prev.preferences, email_notifications: e.target.checked }
+                    }))}
+                  />
                   <span className="slider"></span>
                 </label>
               </div>
@@ -254,7 +332,14 @@ export default function ProfilePage() {
                   <span className="pref-desc">Get personalized destination suggestions</span>
                 </div>
                 <label className="toggle">
-                  <input type="checkbox" defaultChecked />
+                  <input
+                    type="checkbox"
+                    checked={profile.preferences.travel_recommendations}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev,
+                      preferences: { ...prev.preferences, travel_recommendations: e.target.checked }
+                    }))}
+                  />
                   <span className="slider"></span>
                 </label>
               </div>
@@ -264,7 +349,14 @@ export default function ProfilePage() {
                   <span className="pref-desc">Make your profile visible to other travelers</span>
                 </div>
                 <label className="toggle">
-                  <input type="checkbox" defaultChecked />
+                  <input
+                    type="checkbox"
+                    checked={profile.preferences.public_profile}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev,
+                      preferences: { ...prev.preferences, public_profile: e.target.checked }
+                    }))}
+                  />
                   <span className="slider"></span>
                 </label>
               </div>

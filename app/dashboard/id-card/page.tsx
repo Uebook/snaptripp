@@ -12,34 +12,6 @@ export default function TravelerIDCardPage() {
             </div>
 
             <TravelerIDCard />
-
-            <div style={{ marginTop: '40px', display: 'flex', gap: '20px' }}>
-                <button style={{
-                    padding: '12px 30px',
-                    borderRadius: '12px',
-                    border: 'none',
-                    background: '#0a192f',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }}>
-                    📥 Download as PNG
-                </button>
-                <button style={{
-                    padding: '12px 30px',
-                    borderRadius: '12px',
-                    border: '1px solid #0a192f',
-                    background: 'white',
-                    color: '#0a192f',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                }}>
-                    🔗 Copy Profile Link
-                </button>
-            </div>
         </div>
     )
 }

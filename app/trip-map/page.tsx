@@ -36,6 +36,19 @@ interface Place {
   website?: string
   image_url?: string
   reviewsCount?: number
+  postalCode?: string
+  subTitle?: string
+  // Opening Hours
+  openingHours_0_day?: string; openingHours_1_day?: string; openingHours_2_day?: string; openingHours_3_day?: string; openingHours_4_day?: string; openingHours_5_day?: string; openingHours_6_day?: string;
+  openingHours_0_hours?: string; openingHours_1_hours?: string; openingHours_2_hours?: string; openingHours_3_hours?: string; openingHours_4_hours?: string; openingHours_5_hours?: string; openingHours_6_hours?: string;
+  // Accessibility
+  ai_Acc_0_entrance?: boolean; ai_Acc_1_entrance?: boolean; ai_Acc_2_entrance?: boolean; ai_Acc_3_entrance?: boolean; ai_Acc_4_entrance?: boolean;
+  ai_Acc_0_parking?: boolean; ai_Acc_1_parking?: boolean; ai_Acc_2_parking?: boolean; ai_Acc_3_parking?: boolean; ai_Acc_4_parking?: boolean;
+  ai_Acc_0_restroom?: boolean; ai_Acc_1_restroom?: boolean; ai_Acc_2_restroom?: boolean; ai_Acc_3_restroom?: boolean; ai_Acc_4_restroom?: boolean;
+  // Kids, Pets, Plan
+  ai_Chld_0_kids?: boolean; ai_Chld_1_kids?: boolean; ai_Chld_2_kids?: boolean; ai_Chld_3_kids?: boolean;
+  ai_Pets_0_dogs?: boolean; ai_Pets_1_dogs?: boolean; ai_Pets_2_dogs?: boolean;
+  ai_Plan_0_tickets?: boolean; ai_Plan_1_tickets?: boolean; ai_Plan_2_tickets?: boolean; ai_Plan_3_tickets?: boolean;
 }
 
 import { supabase } from '@/lib/supabase'
@@ -60,7 +73,8 @@ function TripMapContent() {
   const [showTimeline, setShowTimeline] = useState(false)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [daysCount, setDaysCount] = useState<number>(1)
-  const [isSidebarHidden, setIsSidebarHidden] = useState<boolean>(!!tripIdParam)
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(!tripIdParam)
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(!tripIdParam)
 
   // Auth & Saving State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -79,7 +93,7 @@ function TripMapContent() {
 
   // Mobile layout state
   const [activeMobileTab, setActiveMobileTab] = useState<'itinerary' | 'map' | 'explore'>('map')
-  const [selectedPlaceDetails, setSelectedPlaceDetails] = useState<Place | null>(null)
+  const [activeDetailsPlace, setActiveDetailsPlace] = useState<Place | null>(null)
 
   // Use refs for potential interaction if needed (though logic moved to TripMap)
   const markersRef = useRef<any[]>([])
@@ -338,6 +352,19 @@ function TripMapContent() {
     ))
   }
 
+  const handleRemoveGlobal = (placeId: number) => {
+    const itemId = `place-${placeId}`;
+    setDayPlans(dayPlans.map(day => ({
+      ...day,
+      items: day.items.filter(i => i.id !== itemId)
+    })))
+  }
+
+  const isPlaceInPlanGlobal = (placeId: number) => {
+    const itemId = `place-${placeId}`;
+    return dayPlans.some(day => day.items.some(item => item.data?.id === placeId || item.id === itemId));
+  }
+
   if (!country) {
     return (
       <div className="trip-map-page">
@@ -406,10 +433,24 @@ function TripMapContent() {
           </div>
         </div>
       )}
-      <div className={`trip-map-container ${isSidebarHidden ? 'fullscreen-map' : ''}`}>
+      <div
+        className="trip-map-container"
+        style={{
+          gridTemplateAreas: '"itinerary map guide"',
+          gridTemplateColumns: `${isLeftSidebarOpen ? 'var(--sidebar-left)' : '0px'} 1fr ${isRightSidebarOpen ? 'var(--sidebar-right)' : '0px'}`
+        }}
+      >
         {/* Left Sidebar: Your Itinerary / Day Planner */}
-        <div className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
-          <div className="itinerary-header-premium">
+        <div
+          className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${!isLeftSidebarOpen ? 'sidebar-hidden' : ''}`}
+          style={{ gridArea: 'itinerary' }}
+        >
+          <div className="itinerary-header-premium" style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsLeftSidebarOpen(false)}
+              className="panel-close-btn"
+              title="Close Panel"
+            >×</button>
             <h2 className="itinerary-title-premium">Your Itinerary</h2>
             <p className="itinerary-subtitle-premium">{dayPlans.length} Days Planned</p>
           </div>
@@ -450,7 +491,11 @@ function TripMapContent() {
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                           <button
                             className="view-site-btn-minimal"
-                            onClick={() => setSelectedPlaceDetails(item.data as Place)}
+                            onClick={() => {
+                              setActiveDetailsPlace(item.data as Place);
+                              setIsRightSidebarOpen(true);
+                              if (window.innerWidth <= 768) setActiveMobileTab('explore');
+                            }}
                             title="View Details"
                           >View</button>
                           <button
@@ -510,7 +555,11 @@ function TripMapContent() {
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                         <button
                           className="view-site-btn-minimal"
-                          onClick={() => setSelectedPlaceDetails(place)}
+                          onClick={() => {
+                            setActiveDetailsPlace(place);
+                            setIsRightSidebarOpen(true);
+                            if (window.innerWidth <= 768) setActiveMobileTab('explore');
+                          }}
                           title="View Details"
                         >View</button>
                         <button
@@ -546,7 +595,10 @@ function TripMapContent() {
         </div>
 
         {/* Center: Map */}
-        <div className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`} style={{ flex: 1, position: 'relative' }}>
+        <div
+          className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`}
+          style={{ flex: 1, position: 'relative', gridArea: 'map' }}
+        >
           {/* Map Overlays Container */}
           <div style={{
             position: 'absolute',
@@ -558,27 +610,6 @@ function TripMapContent() {
             alignItems: 'center',
             flexWrap: 'wrap'
           }}>
-            {/* Floating Toggle Button */}
-            <button
-              onClick={() => setIsSidebarHidden(!isSidebarHidden)}
-              style={{
-                background: isSidebarHidden ? '#031B4E' : 'white',
-                color: isSidebarHidden ? 'white' : '#031B4E',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                border: isSidebarHidden ? 'none' : '1px solid #e2e8f0',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontFamily: '"Inter", sans-serif'
-              }}
-            >
-              {isSidebarHidden ? '📖 Open Planner' : '✖ Close Planner'}
-            </button>
-
             {/* City Selector Dropdown */}
             {places.length > 0 && (
               <select
@@ -609,6 +640,22 @@ function TripMapContent() {
             )}
           </div>
 
+          {/* Floating Toggle Buttons on Edges */}
+          {!isLeftSidebarOpen && (
+            <button
+              onClick={() => setIsLeftSidebarOpen(true)}
+              className="edge-toggle-btn edge-left"
+              title="Open Itinerary"
+            >›</button>
+          )}
+          {!isRightSidebarOpen && (
+            <button
+              onClick={() => setIsRightSidebarOpen(true)}
+              className="edge-toggle-btn edge-right"
+              title="Open Country Info"
+            >‹</button>
+          )}
+
           <TripMap
             places={places}
             dayPlans={dayPlans}
@@ -619,131 +666,187 @@ function TripMapContent() {
               if (window.innerWidth <= 768) setActiveMobileTab('explore')
             }}
             onAddToPlan={(place) => handleAddToItinerary(place)}
+            onRemoveFromPlan={(placeId) => handleRemoveGlobal(placeId)}
+            onViewFullDetails={(place) => {
+              setActiveDetailsPlace(place);
+              setIsRightSidebarOpen(true);
+            }}
           />
         </div>
 
-        {/* Right Sidebar: Country Discovery (Permanent) */}
-        <div className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''} ${isSidebarHidden ? 'sidebar-hidden' : ''}`}>
-          <div className="country-discovery-view animate-fade-in">
-            <div className="country-hero-card">
-              <div className="country-hero-bg" style={{ backgroundImage: `url(${countryInfo?.cover_image_url || '/api/placeholder/400/300'})` }} />
-              <div className="hero-gradient-overlay" />
-              <div className="hero-text-overlay">
-                <h2>{country}</h2>
-                <span>TRAVEL GUIDE</span>
-              </div>
-            </div>
+        <div
+          className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''} ${!isRightSidebarOpen ? 'sidebar-hidden' : ''}`}
+          style={{ gridArea: 'guide' }}
+        >
+          {activeDetailsPlace ? (
+            <div className="place-details-sidebar animate-fade-in">
+              <button
+                onClick={() => setActiveDetailsPlace(null)}
+                className="panel-close-btn right-panel-close"
+                title="Back to Discovery"
+                style={{ zIndex: 100 }}
+              >←</button>
 
-            <div className="discovery-scroll-area">
-              <div className="info-accordion-stack">
-                <div className={`accordion-item ${activeAccordion === 'overview' ? 'active' : ''}`}>
-                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'overview' ? null : 'overview')}>
-                    <span className="icon">🌍</span>
-                    <span className="label">Brief Overview</span>
-                    <span className="arrow">{activeAccordion === 'overview' ? '−' : '+'}</span>
-                  </button>
-                  {activeAccordion === 'overview' && (
-                    <div className="accordion-content animate-slide-down">
-                      <p className="overview-text-premium">{countryInfo?.overview || `Explore the beauty and culture of ${country}.`}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className={`accordion-item ${activeAccordion === 'bucket' ? 'active' : ''}`}>
-                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'bucket' ? null : 'bucket')}>
-                    <span className="icon">✨</span>
-                    <span className="label">Must Do Bucket-List</span>
-                    <span className="arrow">{activeAccordion === 'bucket' ? '−' : '+'}</span>
-                  </button>
-                  {activeAccordion === 'bucket' && (
-                    <div className="accordion-content animate-slide-down">
-                      <div className="bucket-grid">
-                        {countryInfo?.bucket_list?.map((item: any, i: number) => (
-                          <div key={i} className="bucket-card-glass">
-                            {item.image_url && <img src={item.image_url} alt="" />}
-                            <p>{item.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={`accordion-item ${activeAccordion === 'foods' ? 'active' : ''}`}>
-                  <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'foods' ? null : 'foods')}>
-                    <span className="icon">🥘</span>
-                    <span className="label">Gastronomy Guide</span>
-                    <span className="arrow">{activeAccordion === 'foods' ? '−' : '+'}</span>
-                  </button>
-                  {activeAccordion === 'foods' && (
-                    <div className="accordion-content animate-slide-down">
-                      <div className="foods-list" style={{ padding: '0 16px 16px' }}>
-                        {countryInfo?.local_foods?.map((food: any, i: number) => (
-                          <div key={i} className="food-item-premium" style={{ marginBottom: '20px' }}>
-                            <h4 style={{ margin: '0 0 4px', color: 'var(--color-sapphire)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '1px' }}>{food.name}</h4>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-soft-slate)', lineHeight: '1.5' }}>{food.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              <div className="place-hero-sidebar">
+                <img src={activeDetailsPlace.image_url || '/api/placeholder/400/300'} alt={activeDetailsPlace.title} className="sidebar-hero-img" />
+                <div className="sidebar-hero-gradient" />
+                <div className="sidebar-hero-content">
+                  <span className="sidebar-category-badge">{activeDetailsPlace.categoryName || 'Explore'}</span>
+                  <h3>{activeDetailsPlace.title}</h3>
                 </div>
               </div>
 
-              <div className="quick-city-selector">
-                <h3 className="top-cities-header">Top Cities to Visit</h3>
-                <div className="city-grid-mini">
-                  {Array.from(new Set(places.map(p => p.city))).slice(0, 6).map(city => (
-                    <button key={city} className="city-card-glass" onClick={() => setSelectedCity(city)}>
-                      <span>{city}</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              <div className="sidebar-details-scroll">
+                <section className="sidebar-info-section">
+                  <p className="sidebar-description">{activeDetailsPlace.description || 'No detailed description available for this location.'}</p>
+
+                  <div className="sidebar-contact-list">
+                    {activeDetailsPlace.address && <div className="contact-row"><span>📍</span> {activeDetailsPlace.address}</div>}
+                    {activeDetailsPlace.phone && <div className="contact-row"><span>📞</span> {activeDetailsPlace.phone}</div>}
+                    {activeDetailsPlace.website && (
+                      <div className="contact-row">
+                        <span>🌐</span>
+                        <a href={activeDetailsPlace.website.startsWith('http') ? activeDetailsPlace.website : 'https://' + activeDetailsPlace.website} target="_blank" rel="noreferrer">Visit Website</a>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="sidebar-info-section">
+                  <h4 className="sidebar-section-title">Features</h4>
+                  <div className="sidebar-features-grid">
+                    {activeDetailsPlace.ai_Acc_0_entrance && <div className="side-feature-chip">Wheelchair Accessible</div>}
+                    {activeDetailsPlace.ai_Chld_0_kids && <div className="side-feature-chip">Kids Friendly</div>}
+                    {activeDetailsPlace.ai_Pets_0_dogs && <div className="side-feature-chip">Pets Allowed</div>}
+                  </div>
+                </section>
+
+                {(activeDetailsPlace as any).openingHours_0_day && (
+                  <section className="sidebar-info-section">
+                    <h4 className="sidebar-section-title">Opening Hours</h4>
+                    <div className="sidebar-hours-list">
+                      {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
+                        const day = (activeDetailsPlace as any)[`openingHours_${dayIdx}_day`];
+                        const hours = (activeDetailsPlace as any)[`openingHours_${dayIdx}_hours`];
+                        if (!day) return null;
+                        return (
+                          <div key={dayIdx} className="sidebar-hour-row">
+                            <span className="day">{day}</span>
+                            <span className="hours">{hours}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                <div style={{ padding: '24px 0 40px' }}>
+                  {isPlaceInPlanGlobal(activeDetailsPlace.id) ? (
+                    <button className="sidebar-btn-remove" onClick={() => handleRemoveGlobal(activeDetailsPlace!.id)}>
+                      ✕ Remove from Plan
                     </button>
-                  ))}
+                  ) : (
+                    <button className="sidebar-btn-add" onClick={() => handleAddToItinerary(activeDetailsPlace!)}>
+                      + Add to Plan
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="country-discovery-view animate-fade-in" style={{ position: 'relative' }}>
+              <button
+                onClick={() => setIsRightSidebarOpen(false)}
+                className="panel-close-btn right-panel-close"
+                title="Close Panel"
+                style={{ zIndex: 100 }}
+              >×</button>
+              <div className="country-hero-card">
+                <div className="country-hero-bg" style={{ backgroundImage: `url(${countryInfo?.cover_image_url || '/api/placeholder/400/300'})` }} />
+                <div className="hero-gradient-overlay" />
+                <div className="hero-text-overlay">
+                  <h2>{country}</h2>
+                  <span>COUNTRY INFO</span>
                 </div>
               </div>
 
-              <button onClick={() => router.push('/')} className="btn-secondary-outline back-home" style={{ marginTop: '24px' }}>
-                ← Main Menu
-              </button>
+              <div className="discovery-scroll-area">
+                <div className="info-accordion-stack">
+                  <div className={`accordion-item ${activeAccordion === 'overview' ? 'active' : ''}`}>
+                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'overview' ? null : 'overview')}>
+                      <span className="icon">🌍</span>
+                      <span className="label">Brief Overview</span>
+                      <span className="arrow">{activeAccordion === 'overview' ? '−' : '+'}</span>
+                    </button>
+                    {activeAccordion === 'overview' && (
+                      <div className="accordion-content animate-slide-down">
+                        <p className="overview-text-premium">{countryInfo?.overview || `Explore the beauty and culture of ${country}.`}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`accordion-item ${activeAccordion === 'bucket' ? 'active' : ''}`}>
+                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'bucket' ? null : 'bucket')}>
+                      <span className="icon">✨</span>
+                      <span className="label">Must Do Bucket-List</span>
+                      <span className="arrow">{activeAccordion === 'bucket' ? '−' : '+'}</span>
+                    </button>
+                    {activeAccordion === 'bucket' && (
+                      <div className="accordion-content animate-slide-down">
+                        <div className="bucket-grid">
+                          {countryInfo?.bucket_list?.map((item: any, i: number) => (
+                            <div key={i} className="bucket-card-glass">
+                              {item.image_url && <img src={item.image_url} alt="" />}
+                              <p>{item.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={`accordion-item ${activeAccordion === 'foods' ? 'active' : ''}`}>
+                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'foods' ? null : 'foods')}>
+                      <span className="icon">🥘</span>
+                      <span className="label">Gastronomy Guide</span>
+                      <span className="arrow">{activeAccordion === 'foods' ? '−' : '+'}</span>
+                    </button>
+                    {activeAccordion === 'foods' && (
+                      <div className="accordion-content animate-slide-down">
+                        <div className="foods-list" style={{ padding: '0 16px 16px' }}>
+                          {countryInfo?.local_foods?.map((food: any, i: number) => (
+                            <div key={i} className="food-item-premium" style={{ marginBottom: '20px' }}>
+                              <h4 style={{ margin: '0 0 4px', color: 'var(--color-sapphire)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '1px' }}>{food.name}</h4>
+                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-soft-slate)', lineHeight: '1.5' }}>{food.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="quick-city-selector">
+                  <h3 className="top-cities-header">Top Cities to Visit</h3>
+                  <div className="city-grid-mini">
+                    {Array.from(new Set(places.map(p => p.city))).slice(0, 6).map(city => (
+                      <button key={city} className="city-card-glass" onClick={() => setSelectedCity(city)}>
+                        <span>{city}</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button onClick={() => router.push('/')} className="btn-secondary-outline back-home" style={{ marginTop: '24px' }}>
+                  ← Main Menu
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Place Details Modal (looks like map popup) */}
-      {selectedPlaceDetails && (
-        <div className="place-modal-overlay" onClick={() => setSelectedPlaceDetails(null)}>
-          <div className="place-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="place-modal-close" onClick={() => setSelectedPlaceDetails(null)}>×</button>
-            <div style={{ minWidth: '280px', maxWidth: '320px' }}>
-              {selectedPlaceDetails.image_url ? <img src={selectedPlaceDetails.image_url} alt="" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} /> : null}
-              <h3 style={{ margin: '0', fontSize: '17px', color: '#031B4E' }}>{selectedPlaceDetails.title}</h3>
-              {selectedPlaceDetails.reviewsCount ? <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', marginBottom: '8px' }}>
-                <span style={{ color: '#f59e0b', fontSize: '14px' }}>★</span>
-                <span style={{ fontSize: '13px', color: '#666' }}>{selectedPlaceDetails.reviewsCount} reviews</span>
-              </div> : null}
-              <p style={{ margin: '8px 0', fontSize: '13px', color: '#555' }}>{(selectedPlaceDetails.description && selectedPlaceDetails.description.length > 100) ? selectedPlaceDetails.description.substring(0, 100) + '...' : (selectedPlaceDetails.description || '')}</p>
-
-              {(selectedPlaceDetails.website || selectedPlaceDetails.phone || selectedPlaceDetails.address) ? (
-                <div style={{ margin: '12px 0', paddingTop: '12px', borderTop: '1px solid #eee', fontSize: '12px', color: '#666', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {selectedPlaceDetails.address ? <div style={{ display: 'flex', gap: '6px', alignItems: 'start' }}><span style={{ fontSize: '14px' }}>📍</span> <span style={{ lineHeight: '1.4' }}>{selectedPlaceDetails.address}</span></div> : null}
-                  {selectedPlaceDetails.phone ? <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>📞</span> <span>{selectedPlaceDetails.phone}</span></div> : null}
-                  {selectedPlaceDetails.website ? <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>🌐</span> <a href={selectedPlaceDetails.website.startsWith('http') ? selectedPlaceDetails.website : 'https://' + selectedPlaceDetails.website} target="_blank" rel="noreferrer" style={{ color: '#667eea', textDecoration: 'none', wordBreak: 'break-all' }}>Website</a></div> : null}
-                </div>
-              ) : null}
-
-              <button
-                style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', marginTop: '12px', transition: 'opacity 0.2s' }}
-                onClick={() => { handleAddToItinerary(selectedPlaceDetails); setSelectedPlaceDetails(null); }}
-                onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
-                onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
-              >
-                + Add to Plan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Mobile Bottom Navigation */}
       <div className="mobile-bottom-nav">
@@ -1590,6 +1693,104 @@ function TripMapContent() {
           transition: all 0.25s;
         }
 
+        .sidebar.sidebar-hidden {
+          display: none !important;
+        }
+
+        .panel-close-btn {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: var(--color-ice);
+          border: 1px solid #e2e8f0;
+          color: var(--color-sapphire);
+          font-size: 20px;
+          font-weight: bold;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          z-index: 10;
+        }
+
+        .panel-close-btn:hover {
+          background: #fef2f2;
+          color: #ef4444;
+          border-color: #fca5a5;
+        }
+
+        .right-panel-close {
+          top: 15px;
+          right: 15px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+        }
+
+        .panel-open-btn {
+          background: white;
+          color: #031B4E;
+          padding: 10px 16px;
+          border-radius: 8px;
+          font-weight: bold;
+          border: 1px solid #e2e8f0;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-family: "Inter", sans-serif;
+          transition: all 0.2s;
+          font-weight: 700;
+        }
+
+        .panel-open-btn:hover {
+          background: var(--color-sapphire);
+          color: white;
+          transform: translateY(-2px);
+        }
+
+        .edge-toggle-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 24px;
+          height: 60px;
+          background: white;
+          border: 1px solid #e2e8f0;
+          color: #031B4E;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          font-weight: bold;
+          cursor: pointer;
+          z-index: 1100;
+          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .edge-toggle-btn:hover {
+          background: var(--color-sapphire);
+          color: white;
+          width: 32px;
+        }
+
+        .edge-left {
+          left: 0;
+          border-left: none;
+          border-radius: 0 8px 8px 0;
+        }
+
+        .edge-right {
+          right: 0;
+          border-right: none;
+          border-radius: 8px 0 0 8px;
+        }
+
         .accordion-item.active .accordion-trigger .arrow {
           background: #D4AF37;
           color: #fff;
@@ -1751,42 +1952,179 @@ function TripMapContent() {
           display: none !important;
         }
 
-        .place-modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0,0,0,0.4);
-          backdrop-filter: blur(4px);
+        /* Place Details Sidebar */
+        .place-details-sidebar {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 99999;
-          padding: 20px;
+          flex-direction: column;
+          height: 100%;
+          background: #fff;
         }
 
-        .place-modal-content {
-          background: white;
-          border-radius: 16px;
-          padding: 16px;
+        .place-hero-sidebar {
           position: relative;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-          animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          height: 280px;
+          flex-shrink: 0;
         }
 
-        @keyframes modalPopUp {
-          from { opacity: 0; transform: scale(0.95) translateY(10px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
+        .sidebar-hero-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
-        .place-modal-close {
+        .sidebar-hero-gradient {
           position: absolute;
-          top: 10px; right: 10px;
-          width: 24px; height: 24px;
-          border: none; background: rgba(0,0,0,0.05); color: #666;
-          border-radius: 50%; font-size: 18px; line-height: 1;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; z-index: 10;
+          inset: 0;
+          background: linear-gradient(to bottom, transparent 30%, rgba(3, 27, 78, 0.9) 100%);
         }
-        .place-modal-close:hover { background: rgba(0,0,0,0.1); color: #000; }
+
+        .sidebar-hero-content {
+          position: absolute;
+          bottom: 24px;
+          left: 24px;
+          right: 24px;
+          color: #fff;
+        }
+
+        .sidebar-category-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          background: var(--color-gold);
+          color: #031B4E;
+          border-radius: 20px;
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 12px;
+        }
+
+        .sidebar-hero-content h3 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 900;
+          line-height: 1.2;
+        }
+
+        .sidebar-details-scroll {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          scrollbar-width: thin;
+        }
+
+        .sidebar-info-section {
+          margin-bottom: 32px;
+        }
+
+        .sidebar-description {
+          font-size: 14px;
+          line-height: 1.7;
+          color: #475569;
+          margin: 0 0 24px;
+        }
+
+        .sidebar-contact-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .contact-row {
+          display: flex;
+          gap: 12px;
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.5;
+        }
+
+        .contact-row span:first-child {
+          width: 20px;
+          flex-shrink: 0;
+        }
+
+        .contact-row a {
+          color: #667eea;
+          text-decoration: none;
+          font-weight: 600;
+        }
+
+        .sidebar-section-title {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          color: #1e293b;
+          font-weight: 800;
+          margin: 0 0 16px;
+        }
+
+        .sidebar-features-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .side-feature-chip {
+          padding: 6px 14px;
+          background: #f1f5f9;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #475569;
+        }
+
+        .sidebar-hours-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .sidebar-hour-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 13px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .sidebar-hour-row .day { color: #64748b; }
+        .sidebar-hour-row .hours { color: #1e293b; font-weight: 600; }
+
+        .sidebar-btn-add {
+          width: 100%;
+          padding: 16px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-weight: 800;
+          font-size: 15px;
+          cursor: pointer;
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+          transition: all 0.3s;
+        }
+
+        .sidebar-btn-remove {
+          width: 100%;
+          padding: 16px;
+          background: #fff;
+          color: #ef4444;
+          border: 2px solid #fee2e2;
+          border-radius: 12px;
+          font-weight: 800;
+          font-size: 15px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+
+        .sidebar-btn-add:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 24px rgba(102, 126, 234, 0.35);
+        }
+
+        .sidebar-btn-remove:hover {
+          background: #fef2f2;
+        }
 
         /* Save Trip Modal Styles */
         .save-modal-overlay {

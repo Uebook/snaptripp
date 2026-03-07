@@ -34,7 +34,7 @@ export default function SiteFooter() {
           <h4 style={{ fontSize: '1.1rem', marginBottom: '25px', fontWeight: '700' }}>Explore</h4>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {['How it Works', 'Planner', 'Explore Map'].map((item) => {
-              const href = item === 'How it Works' ? '/how-it-works' : `/${item.toLowerCase().replace(' ', '-')}`;
+              const href = item === 'How it Works' ? '/how-it-works' : item === 'Explore Map' ? '/trip-map' : `/${item.toLowerCase().replace(' ', '-')}`;
               return (
                 <li key={item} style={{ marginBottom: '15px' }}>
                   <Link href={href} style={{ color: 'rgba(255, 255, 255, 0.7)', textDecoration: 'none', fontSize: '0.95rem', transition: 'color 0.2s' }}>

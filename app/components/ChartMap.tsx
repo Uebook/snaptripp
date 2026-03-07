@@ -42,32 +42,18 @@ const intensityColors = {
     default: 'rgba(255, 255, 255, 0.05)' // Not visited (dark mode adjusted)
 }
 
-const mockCountryData: Record<string, CountryStats> = {
-    'Japan': {
-        name: 'Japan',
-        code: 'JP',
-        intensity: 'thoroughly',
-        sightseeing: 4.8,
-        localPeople: 4.6,
-        serviceQuality: 4.9,
-        safety: 5.0,
-        price: 3.5,
-        reviews: [
-            {
-                user: 'Sarah Mitchell',
-                avatar: 'https://i.pravatar.cc/150?u=sarah',
-                date: '2 weeks ago',
-                text: 'Japan exceeded all my expectations! The blend of ancient traditions and modern technology is fascinating.',
-                rating: 5
-            },
-            {
-                user: 'David Chen',
-                avatar: 'https://i.pravatar.cc/150?u=david',
-                date: '1 month ago',
-                text: 'Visited Kyoto and Osaka during cherry blossom season. The temples are breathtaking and the cultural experiences are authentic.',
-                rating: 4
-            }
-        ]
+// Dynamic Stats from DB
+interface AggregateStats {
+    [countryName: string]: {
+        name: string;
+        intensity: 'corner' | 'thoroughly' | 'bit' | 'visited';
+        sightseeing: number;
+        localPeople: number;
+        serviceQuality: number;
+        safety: number;
+        price: number;
+        reviewCount: number;
+        cityCount: number;
     }
 }
 
@@ -88,6 +74,7 @@ function MapResizer() {
 
 export default function ChartMap() {
     const [geoData, setGeoData] = useState<any>(null)
+    const [stats, setStats] = useState<AggregateStats>({})
     const [selectedCountry, setSelectedCountry] = useState<CountryStats | null>(null)
     const [showLegend, setShowLegend] = useState(true)
 
@@ -196,7 +183,12 @@ export default function ChartMap() {
             const data = await res.json();
             if (data.success) {
                 alert("Review posted successfully!");
-                setSelectedCountry(null); // close modal or refresh country stats
+                setSelectedCountry(null);
+
+                // Refresh global stats to update map colors and modal defaults
+                const statsRes = await fetch('/api/reviews/stats');
+                const statsData = await statsRes.json();
+                if (statsData.success) setStats(statsData.stats);
             } else {
                 alert("Failed to post review: " + data.error);
             }
@@ -209,18 +201,26 @@ export default function ChartMap() {
     }
 
     useEffect(() => {
+        // Fetch GeoJSON
         fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
             .then(res => res.json())
             .then(data => setGeoData(data))
+
+        // Fetch Global Stats
+        fetch('/api/reviews/stats')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) setStats(data.stats)
+            })
     }, [])
 
     const onEachCountry = (feature: any, layer: any) => {
-        const countryName = feature.properties.ADMIN
-        const stats = mockCountryData[countryName]
+        const countryName = feature.properties.ADMIN || feature.properties.name
+        const countryStats = stats[countryName]
 
         layer.setStyle({
-            fillColor: stats ? intensityColors[stats.intensity] : intensityColors.default,
-            fillOpacity: stats ? 0.8 : 0.3,
+            fillColor: countryStats ? intensityColors[countryStats.intensity] : intensityColors.default,
+            fillOpacity: countryStats ? 0.8 : 0.3,
             color: 'rgba(255, 255, 255, 0.1)',
             weight: 1
         })
@@ -237,24 +237,56 @@ export default function ChartMap() {
             mouseout: (e: any) => {
                 const l = e.target
                 l.setStyle({
-                    fillOpacity: stats ? 0.8 : 0.3,
+                    fillOpacity: countryStats ? 0.8 : 0.3,
                     weight: 1,
                     color: 'rgba(255, 255, 255, 0.1)'
                 })
             },
-            click: (e: any) => {
-                const finalCountryName = countryName || feature.properties.name || 'Unknown Country';
-                setSelectedCountry(stats || {
+            click: async (e: any) => {
+                const finalCountryName = countryName || 'Unknown Country';
+                const iso2 = feature.properties['ISO3166-1-Alpha-2'] || feature.properties.iso_a2 || '';
+                const iso3 = feature.properties['ISO3166-1-Alpha-3'] || feature.properties.iso_a3 || '';
+
+                const baseStats = countryStats || {
                     name: finalCountryName,
-                    code: feature.properties.ISO_A3 || '',
-                    intensity: 'visited',
+                    code: iso2,
+                    intensity: 'visited' as const,
                     sightseeing: 0,
                     localPeople: 0,
                     serviceQuality: 0,
                     safety: 0,
                     price: 0,
                     reviews: []
-                })
+                };
+
+                setSelectedCountry({
+                    ...baseStats,
+                    code: iso2,
+                    reviews: [] // Load these dynamically
+                });
+
+                // Fetch real reviews for this country
+                try {
+                    const res = await fetch(`/api/reviews?country=${encodeURIComponent(finalCountryName)}`);
+                    const data = await res.json();
+                    if (data.success) {
+                        setSelectedCountry(prev => {
+                            if (!prev || (prev.name !== finalCountryName)) return prev;
+                            return {
+                                ...prev,
+                                reviews: data.reviews.map((r: any) => ({
+                                    user: r.user_id.substring(0, 8),
+                                    avatar: `https://i.pravatar.cc/150?u=${r.user_id}`,
+                                    date: new Date(r.created_at).toLocaleDateString(),
+                                    text: r.review_text,
+                                    rating: r.sightseeing_rating
+                                }))
+                            };
+                        });
+                    }
+                } catch (err) {
+                    console.error("Error fetching country reviews:", err);
+                }
             }
         })
     }
@@ -332,7 +364,23 @@ export default function ChartMap() {
                             </div>
                             <div className="country-info">
                                 <h2 style={{ color: 'white' }}>{selectedCountry.name}</h2>
-                                <div className="rating-summary">Global average rating: <span>★★★★★ 4.8</span></div>
+                                <div className="rating-summary">
+                                    Global average rating:
+                                    <span>
+                                        {' ★'.repeat(Math.round(
+                                            (selectedCountry.sightseeing +
+                                                selectedCountry.localPeople +
+                                                selectedCountry.serviceQuality +
+                                                selectedCountry.safety +
+                                                selectedCountry.price) / 5 || 0
+                                        ))}
+                                        {((selectedCountry.sightseeing +
+                                            selectedCountry.localPeople +
+                                            selectedCountry.serviceQuality +
+                                            selectedCountry.safety +
+                                            selectedCountry.price) / 5 || 0).toFixed(1)}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,14 +8,16 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const country = searchParams.get('country');
 
+        console.log('API Fetch Places for country:', country);
+
         if (!country) {
             return NextResponse.json({ error: 'Country parameter is required' }, { status: 400 });
         }
 
         // Get all places for the selected country with coordinates
-        const { data: places, error: placesError } = await supabase
+        const { data: places, error: placesError } = await supabaseAdmin
             .from('places')
-            .select('id, title, city, country, location_lat, location_lng, categoryName, description, address, phone, website, image_url, reviewsCount')
+            .select('*')
             .eq('country', country)
             .not('location_lat', 'is', null)
             .not('location_lng', 'is', null)
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
         if (placesError) throw placesError;
 
         // Also fetch country info from destinations table
-        const { data: destination, error: destError } = await supabase
+        const { data: destination, error: destError } = await supabaseAdmin
             .from('destinations')
             .select('*')
             .eq('name', country)

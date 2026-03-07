@@ -1,42 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { supabase as adminSupabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-// GET: Fetch reviews for user
+// GET: Fetch reviews (either by country or for the current user)
 export async function GET(request: NextRequest) {
     try {
+        const { searchParams } = new URL(request.url);
+        const country = searchParams.get('country');
+
+        if (country) {
+            // Fetch all reviews for this country (public data)
+            const { data, error } = await supabaseAdmin
+                .from('traveler_reviews')
+                .select('*')
+                .eq('country', country)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) throw error;
+            return NextResponse.json({ success: true, reviews: data });
+        }
+
+        // If no country, fetch reviews for current user (requires auth)
         const token = request.headers.get('Authorization')?.split(' ')[1];
         if (!token) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: { user }, error: authError } = await adminSupabase.auth.getUser(token);
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            }
-        );
-
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('traveler_reviews')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
-        if (error) {
-            throw error;
-        }
-
+        if (error) throw error;
         return NextResponse.json({ success: true, reviews: data });
 
     } catch (error: any) {
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: { user }, error: authError } = await adminSupabase.auth.getUser(token);
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
         if (authError || !user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
