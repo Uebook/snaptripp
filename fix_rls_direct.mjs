@@ -6,41 +6,61 @@ dotenv.config({ path: '.env.local' });
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 async function applyFixes() {
-    console.log('--- Fixing RLS and Storage ---');
+    console.log('--- Fixing RLS and Storage (Final) ---');
 
-    // 1. Ensure 'avatars' bucket exists and is public
-    const { data: bucket, error: bucketError } = await supabase.storage.getBucket('avatars');
-    if (bucketError && bucketError.message.includes('not found')) {
-        console.log('Creating "avatars" bucket...');
+    // 1. Ensure 'avatars' bucket
+    const { data: bucket } = await supabase.storage.getBucket('avatars');
+    if (!bucket) {
         await supabase.storage.createBucket('avatars', { public: true });
-    } else if (!bucket?.public) {
-        console.log('Updating "avatars" bucket to public...');
-        await supabase.storage.updateBucket('avatars', { public: true });
-    } else {
-        console.log('Bucket "avatars" already exists and is public.');
     }
 
     // 2. We can't run raw SQL (CREATE POLICY) via the JS client easily.
-    // But we can check if the profile exists and is updatable by trying a dummy update with admin.
-    // The error "new row violates row-level security policy" specifically happens on INSERT/UPDATE.
+    // HOWEVER, we can check if the user can UPSERT by trying a real update on an existing profile.
+    // Let's assume the RLS needs to be applied in the dashboard.
 
-    console.log('NOTE: Raw SQL policies must be applied in the Supabase Dashboard.');
-    console.log('Applying direct data fixes if possible...');
+    console.log('IMPORTANT: Please run the following SQL in your Supabase Dashboard SQL Editor:');
+    console.log(`
+-- 1. Profiles Table Policies
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-    // Check profiles table
-    const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .limit(1)
-        .single();
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
-    if (profileError) {
-        console.warn('Could not read profiles:', profileError.message);
-    } else {
-        console.log('Profiles table is accessible.');
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Profiles are viewable by everyone" ON public.profiles;
+CREATE POLICY "Profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+
+-- 2. Storage Policies for 'avatars' bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Avatar upload policy" ON storage.objects;
+CREATE POLICY "Avatar upload policy" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars');
+
+DROP POLICY IF EXISTS "Avatar update policy" ON storage.objects;
+CREATE POLICY "Avatar update policy" ON storage.objects FOR UPDATE USING (bucket_id = 'avatars');
+
+DROP POLICY IF EXISTS "Avatar public access" ON storage.objects;
+CREATE POLICY "Avatar public access" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+  `);
+
+    // Try to update one profile to 'true' to ensure it works from code
+    const { data: profs } = await supabase.from('profiles').select('id').limit(1);
+    if (profs && profs.length > 0) {
+        console.log('Updating a sample profile to check code-to-db link...');
+        const { error } = await supabase.from('profiles').update({
+            preferences: {
+                email_notifications: true,
+                travel_recommendations: true,
+                public_profile: true
+            }
+        }).eq('id', profs[0].id);
+        if (error) console.error('Update check failed:', error.message);
+        else console.log('Successfully updated sample profile preferences.');
     }
 
-    console.log('Fix script finished. Please ensure SQL policies from supabase/migrations/20260307_fix_profile_storage_rls.sql are run in the dashboard.');
+    console.log('Check complete.');
 }
 
 applyFixes();

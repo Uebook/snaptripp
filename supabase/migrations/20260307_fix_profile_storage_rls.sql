@@ -3,6 +3,19 @@
 -- Enable RLS (just in case)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+-- Allow users to insert their own profile
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert own profile'
+    ) THEN
+        CREATE POLICY "Users can insert own profile" 
+        ON public.profiles 
+        FOR INSERT 
+        WITH CHECK (auth.uid() = id);
+    END IF;
+END $$;
+
 -- Allow users to update their own profile
 DO $$
 BEGIN
