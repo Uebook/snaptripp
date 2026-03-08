@@ -1,95 +1,228 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
+
+const ITEMS_PER_PAGE = 10
 
 export default function AdminLocations() {
     // Countries State
-    const [countries, setCountries] = useState([
-        { id: 1, name: 'India', code: 'IN', statesCount: 28 },
-        { id: 2, name: 'United States', code: 'US', statesCount: 50 },
-    ])
-    const [countryForm, setCountryForm] = useState({ name: '', code: '' })
+    const [countries, setCountries] = useState<any[]>([])
+    const [countryCount, setCountryCount] = useState(0)
+    const [countryPage, setCountryPage] = useState(0)
+    const [countrySearch, setCountrySearch] = useState('')
+    const [countryForm, setCountryForm] = useState({ name: '', iso2: '', phone_code: '' })
     const [editCountryId, setEditCountryId] = useState<number | null>(null)
+    const [isLoadingCountries, setIsLoadingCountries] = useState(false)
 
     // States State
-    const [states, setStates] = useState([
-        { id: 1, name: 'Maharashtra', country: 'India', citiesCount: 35 },
-        { id: 2, name: 'California', country: 'United States', citiesCount: 480 },
-    ])
-    const [stateForm, setStateForm] = useState({ name: '', country: '' })
+    const [states, setStates] = useState<any[]>([])
+    const [stateCount, setStateCount] = useState(0)
+    const [statePage, setStatePage] = useState(0)
+    const [stateSearch, setStateSearch] = useState('')
+    const [selectedCountryId, setSelectedCountryId] = useState<number | 'all'>('all')
+    const [stateForm, setStateForm] = useState({ name: '', country_id: '', state_code: '' })
     const [editStateId, setEditStateId] = useState<number | null>(null)
+    const [isLoadingStates, setIsLoadingStates] = useState(false)
 
     // Cities State
-    const [cities, setCities] = useState([
-        { id: 1, name: 'Mumbai', state: 'Maharashtra', country: 'India' },
-        { id: 2, name: 'Los Angeles', state: 'California', country: 'United States' },
-    ])
-    const [cityForm, setCityForm] = useState({ name: '', state: '', country: '' })
+    const [cities, setCities] = useState<any[]>([])
+    const [cityCount, setCityCount] = useState(0)
+    const [cityPage, setCityPage] = useState(0)
+    const [citySearch, setCitySearch] = useState('')
+    const [selectedStateId, setSelectedStateId] = useState<number | 'all'>('all')
+    const [cityForm, setCityForm] = useState({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' })
     const [editCityId, setEditCityId] = useState<number | null>(null)
+    const [isLoadingCities, setIsLoadingCities] = useState(false)
+
+    // All Countries for selects
+    const [allCountriesList, setAllCountriesList] = useState<any[]>([])
+    const [allStatesList, setAllStatesList] = useState<any[]>([])
+
+    // Load static data for dropdowns
+    useEffect(() => {
+        const loadDropdownData = async () => {
+            const { data: cData } = await supabase.from('countries').select('id, name').order('name')
+            if (cData) setAllCountriesList(cData)
+        }
+        loadDropdownData()
+    }, [])
+
+    useEffect(() => {
+        if (cityForm.country_id || stateForm.country_id) {
+            const cId = cityForm.country_id || stateForm.country_id
+            supabase.from('states').select('id, name').eq('country_id', cId).order('name')
+                .then(({ data }) => {
+                    if (data) setAllStatesList(data)
+                })
+        }
+    }, [cityForm.country_id, stateForm.country_id])
+
+    // Fetch Countries
+    const fetchCountries = useCallback(async () => {
+        setIsLoadingCountries(true)
+        try {
+            let query = supabase.from('countries').select('*', { count: 'exact' })
+
+            if (countrySearch) {
+                query = query.ilike('name', `%${countrySearch}%`)
+            }
+
+            const from = countryPage * ITEMS_PER_PAGE
+            const to = from + ITEMS_PER_PAGE - 1
+
+            const { data, count, error } = await query
+                .order('name')
+                .range(from, to)
+
+            if (error) throw error
+            setCountries(data || [])
+            setCountryCount(count || 0)
+        } catch (err) {
+            console.error('Fetch countries error:', err)
+        } finally {
+            setIsLoadingCountries(false)
+        }
+    }, [countryPage, countrySearch])
+
+    // Fetch States
+    const fetchStates = useCallback(async () => {
+        setIsLoadingStates(true)
+        try {
+            let query = supabase.from('states').select('*, countries(name)', { count: 'exact' })
+
+            if (stateSearch) {
+                query = query.ilike('name', `%${stateSearch}%`)
+            }
+            if (selectedCountryId !== 'all') {
+                query = query.eq('country_id', selectedCountryId)
+            }
+
+            const from = statePage * ITEMS_PER_PAGE
+            const to = from + ITEMS_PER_PAGE - 1
+
+            const { data, count, error } = await query
+                .order('name')
+                .range(from, to)
+
+            if (error) throw error
+            setStates(data || [])
+            setStateCount(count || 0)
+        } catch (err) {
+            console.error('Fetch states error:', err)
+        } finally {
+            setIsLoadingStates(false)
+        }
+    }, [statePage, stateSearch, selectedCountryId])
+
+    // Fetch Cities
+    const fetchCities = useCallback(async () => {
+        setIsLoadingCities(true)
+        try {
+            let query = supabase.from('cities').select('*, countries(name), states(name)', { count: 'exact' })
+
+            if (citySearch) {
+                query = query.ilike('name', `%${citySearch}%`)
+            }
+            if (selectedStateId !== 'all') {
+                query = query.eq('state_id', selectedStateId)
+            }
+
+            const from = cityPage * ITEMS_PER_PAGE
+            const to = from + ITEMS_PER_PAGE - 1
+
+            const { data, count, error } = await query
+                .order('name')
+                .range(from, to)
+
+            if (error) throw error
+            setCities(data || [])
+            setCityCount(count || 0)
+        } catch (err) {
+            console.error('Fetch cities error:', err)
+        } finally {
+            setIsLoadingCities(false)
+        }
+    }, [cityPage, citySearch, selectedStateId])
+
+    useEffect(() => { fetchCountries() }, [fetchCountries])
+    useEffect(() => { fetchStates() }, [fetchStates])
+    useEffect(() => { fetchCities() }, [fetchCities])
 
     // Handlers for Countries
-    const handleSaveCountry = () => {
-        if (!countryForm.name || !countryForm.code) return
-        if (editCountryId !== null) {
-            setCountries(countries.map(c => c.id === editCountryId ? { ...c, ...countryForm } : c))
-            setEditCountryId(null)
-        } else {
-            const newCountry = { id: Date.now(), ...countryForm, statesCount: 0 }
-            setCountries([...countries, newCountry])
-        }
-        setCountryForm({ name: '', code: '' })
+    const handleSaveCountry = async () => {
+        if (!countryForm.name || !countryForm.iso2) return
+        try {
+            if (editCountryId !== null) {
+                const { error } = await supabase.from('countries').update(countryForm).eq('id', editCountryId)
+                if (error) throw error
+                setEditCountryId(null)
+            } else {
+                const { error } = await supabase.from('countries').insert([{ ...countryForm, id: Date.now() % 2147483647 }])
+                if (error) throw error
+            }
+            setCountryForm({ name: '', iso2: '', phone_code: '' })
+            fetchCountries()
+        } catch (err: any) { alert(err.message) }
     }
 
-    const handleEditCountry = (c: any) => {
-        setCountryForm({ name: c.name, code: c.code })
-        setEditCountryId(c.id)
-    }
-
-    const handleDeleteCountry = (id: number) => {
-        setCountries(countries.filter(c => c.id !== id))
+    const handleDeleteCountry = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this country and its associated states and cities?')) return
+        const { error } = await supabase.from('countries').delete().eq('id', id)
+        if (error) alert(error.message)
+        else fetchCountries()
     }
 
     // Handlers for States
-    const handleSaveState = () => {
-        if (!stateForm.name || !stateForm.country) return
-        if (editStateId !== null) {
-            setStates(states.map(s => s.id === editStateId ? { ...s, ...stateForm } : s))
-            setEditStateId(null)
-        } else {
-            const newState = { id: Date.now(), ...stateForm, citiesCount: 0 }
-            setStates([...states, newState])
-        }
-        setStateForm({ name: '', country: '' })
+    const handleSaveState = async () => {
+        if (!stateForm.name || !stateForm.country_id) return
+        try {
+            if (editStateId !== null) {
+                const { error } = await supabase.from('states').update(stateForm).eq('id', editStateId)
+                if (error) throw error
+                setEditStateId(null)
+            } else {
+                const { error } = await supabase.from('states').insert([{ ...stateForm, id: Date.now() % 2147483647 }])
+                if (error) throw error
+            }
+            setStateForm({ name: '', country_id: '', state_code: '' })
+            fetchStates()
+        } catch (err: any) { alert(err.message) }
     }
 
-    const handleEditState = (s: any) => {
-        setStateForm({ name: s.name, country: s.country })
-        setEditStateId(s.id)
-    }
-
-    const handleDeleteState = (id: number) => {
-        setStates(states.filter(s => s.id !== id))
+    const handleDeleteState = async (id: number) => {
+        if (!confirm('Delete this state?')) return
+        const { error } = await supabase.from('states').delete().eq('id', id)
+        if (error) alert(error.message)
+        else fetchStates()
     }
 
     // Handlers for Cities
-    const handleSaveCity = () => {
-        if (!cityForm.name || !cityForm.state || !cityForm.country) return
-        if (editCityId !== null) {
-            setCities(cities.map(c => c.id === editCityId ? { ...c, ...cityForm } : c))
-            setEditCityId(null)
-        } else {
-            const newCity = { id: Date.now(), ...cityForm }
-            setCities([...cities, newCity])
-        }
-        setCityForm({ name: '', state: '', country: '' })
+    const handleSaveCity = async () => {
+        if (!cityForm.name || !cityForm.country_id) return
+        try {
+            const payload = {
+                ...cityForm,
+                latitude: cityForm.latitude ? parseFloat(cityForm.latitude) : null,
+                longitude: cityForm.longitude ? parseFloat(cityForm.longitude) : null
+            }
+            if (editCityId !== null) {
+                const { error } = await supabase.from('cities').update(payload).eq('id', editCityId)
+                if (error) throw error
+                setEditCityId(null)
+            } else {
+                const { error } = await supabase.from('cities').insert([{ ...payload, id: Date.now() % 2147483647 }])
+                if (error) throw error
+            }
+            setCityForm({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' })
+            fetchCities()
+        } catch (err: any) { alert(err.message) }
     }
 
-    const handleEditCity = (c: any) => {
-        setCityForm({ name: c.name, state: c.state, country: c.country })
-        setEditCityId(c.id)
-    }
-
-    const handleDeleteCity = (id: number) => {
-        setCities(cities.filter(c => c.id !== id))
+    const handleDeleteCity = async (id: number) => {
+        if (!confirm('Delete this city?')) return
+        const { error } = await supabase.from('cities').delete().eq('id', id)
+        if (error) alert(error.message)
+        else fetchCities()
     }
 
     return (
@@ -98,9 +231,19 @@ export default function AdminLocations() {
                 {/* Countries Card */}
                 <div className="admin-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h3>Countries</h3>
+                        <div>
+                            <h3>Countries ({countryCount})</h3>
+                            <div style={{ marginTop: '8px' }}>
+                                <input
+                                    className="admin-search"
+                                    placeholder="Search Countries..."
+                                    value={countrySearch}
+                                    onChange={(e) => { setCountrySearch(e.target.value); setCountryPage(0); }}
+                                    style={{ width: '200px', fontSize: '13px' }}
+                                />
+                            </div>
+                        </div>
                         <button className="admin-button" onClick={handleSaveCountry}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                             {editCountryId !== null ? 'Update Country' : 'Add Country'}
                         </button>
                     </div>
@@ -114,70 +257,93 @@ export default function AdminLocations() {
                         />
                         <input
                             className="admin-search"
-                            placeholder="Code"
-                            style={{ width: '80px' }}
-                            value={countryForm.code}
-                            onChange={(e) => setCountryForm({ ...countryForm, code: e.target.value })}
+                            placeholder="ISO2"
+                            style={{ width: '60px' }}
+                            value={countryForm.iso2}
+                            onChange={(e) => setCountryForm({ ...countryForm, iso2: e.target.value })}
                         />
                         {editCountryId !== null && (
-                            <button className="admin-button outline" onClick={() => { setEditCountryId(null); setCountryForm({ name: '', code: '' }); }}>Cancel</button>
+                            <button className="admin-button outline" onClick={() => { setEditCountryId(null); setCountryForm({ name: '', iso2: '', phone_code: '' }); }}>Cancel</button>
                         )}
                     </div>
                     <table className="admin-table">
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Code</th>
-                                <th>States</th>
+                                <th>ISO2</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {countries.map(c => (
+                            {isLoadingCountries ? <tr><td colSpan={3}>Loading...</td></tr> : countries.map(c => (
                                 <tr key={c.id}>
-                                    <td style={{ fontWeight: '600' }}>{c.name}</td>
-                                    <td>{c.code}</td>
-                                    <td>{c.statesCount}</td>
+                                    <td style={{ fontWeight: '600' }}>{c.name} {c.emoji}</td>
+                                    <td>{c.iso2}</td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '4px' }}>
-                                            <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleEditCountry(c)}>Edit</button>
-                                            <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteCountry(c.id)}>Delete</button>
+                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => { setEditCountryId(c.id); setCountryForm({ name: c.name, iso2: c.iso2, phone_code: c.phone_code }); }}>Edit</button>
+                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteCountry(c.id)}>Del</button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {/* Pagination */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+                        <button className="admin-button outline" disabled={countryPage === 0} onClick={() => setCountryPage(p => p - 1)}>Prev</button>
+                        <span style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>Page {countryPage + 1} of {Math.ceil(countryCount / ITEMS_PER_PAGE)}</span>
+                        <button className="admin-button outline" disabled={(countryPage + 1) * ITEMS_PER_PAGE >= countryCount} onClick={() => setCountryPage(p => p + 1)}>Next</button>
+                    </div>
                 </div>
 
                 {/* States Card */}
                 <div className="admin-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h3>States</h3>
+                        <div>
+                            <h3>States ({stateCount})</h3>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                <select
+                                    className="admin-search"
+                                    style={{ width: '120px', fontSize: '12px' }}
+                                    value={selectedCountryId}
+                                    onChange={(e) => { setSelectedCountryId(e.target.value === 'all' ? 'all' : parseInt(e.target.value)); setStatePage(0); }}
+                                >
+                                    <option value="all">All Countries</option>
+                                    {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                                <input
+                                    className="admin-search"
+                                    placeholder="Search States..."
+                                    value={stateSearch}
+                                    onChange={(e) => { setStateSearch(e.target.value); setStatePage(0); }}
+                                    style={{ width: '120px', fontSize: '12px' }}
+                                />
+                            </div>
+                        </div>
                         <button className="admin-button" onClick={handleSaveState}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z" /><circle cx="12" cy="10" r="3" /></svg>
                             {editStateId !== null ? 'Update State' : 'Add State'}
                         </button>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
                         <select
                             className="admin-search"
                             style={{ flex: 1 }}
-                            value={stateForm.country}
-                            onChange={(e) => setStateForm({ ...stateForm, country: e.target.value })}
+                            value={stateForm.country_id}
+                            onChange={(e) => setStateForm({ ...stateForm, country_id: e.target.value })}
                         >
                             <option value="">Country</option>
-                            {countries.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         <input
                             className="admin-search"
-                            placeholder="Name"
+                            placeholder="State Name"
                             style={{ flex: 1 }}
                             value={stateForm.name}
                             onChange={(e) => setStateForm({ ...stateForm, name: e.target.value })}
                         />
                         {editStateId !== null && (
-                            <button className="admin-button outline" onClick={() => { setEditStateId(null); setStateForm({ name: '', country: '' }); }}>Cancel</button>
+                            <button className="admin-button outline" onClick={() => { setEditStateId(null); setStateForm({ name: '', country_id: '', state_code: '' }); }}>Cancel</button>
                         )}
                     </div>
                     <table className="admin-table">
@@ -189,52 +355,76 @@ export default function AdminLocations() {
                             </tr>
                         </thead>
                         <tbody>
-                            {states.map(s => (
+                            {isLoadingStates ? <tr><td colSpan={3}>Loading...</td></tr> : states.map(s => (
                                 <tr key={s.id}>
                                     <td style={{ fontWeight: '600' }}>{s.name}</td>
-                                    <td>{s.country}</td>
+                                    <td>{s.countries?.name}</td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '4px' }}>
-                                            <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleEditState(s)}>Edit</button>
-                                            <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteState(s.id)}>Delete</button>
+                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => { setEditStateId(s.id); setStateForm({ name: s.name, country_id: s.country_id, state_code: s.state_code }); }}>Edit</button>
+                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteState(s.id)}>Del</button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {/* Pagination */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+                        <button className="admin-button outline" disabled={statePage === 0} onClick={() => setStatePage(p => p - 1)}>Prev</button>
+                        <span style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>Page {statePage + 1} of {Math.ceil(stateCount / ITEMS_PER_PAGE)}</span>
+                        <button className="admin-button outline" disabled={(statePage + 1) * ITEMS_PER_PAGE >= stateCount} onClick={() => setStatePage(p => p + 1)}>Next</button>
+                    </div>
                 </div>
             </div>
 
             {/* Cities Card */}
             <div className="admin-card" style={{ marginTop: '32px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <h3>Cities</h3>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div>
+                        <h3>Cities ({cityCount})</h3>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                            <input
+                                className="admin-search"
+                                placeholder="Search Cities..."
+                                value={citySearch}
+                                onChange={(e) => { setCitySearch(e.target.value); setCityPage(0); }}
+                                style={{ width: '200px' }}
+                            />
+                            <select
+                                className="admin-search"
+                                style={{ width: '180px' }}
+                                value={selectedStateId}
+                                onChange={(e) => { setSelectedStateId(e.target.value === 'all' ? 'all' : parseInt(e.target.value)); setCityPage(0); }}
+                            >
+                                <option value="all">All States</option>
+                                {allStatesList.length > 0 ? allStatesList.map(s => <option key={s.id} value={s.id}>{s.name}</option>) : <option disabled>Select State</option>}
+                            </select>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '600px' }}>
                         <select
                             className="admin-search"
-                            style={{ width: '150px' }}
-                            value={cityForm.country}
-                            onChange={(e) => setCityForm({ ...cityForm, country: e.target.value })}
+                            style={{ width: '130px' }}
+                            value={cityForm.country_id}
+                            onChange={(e) => setCityForm({ ...cityForm, country_id: e.target.value })}
                         >
                             <option value="">Country</option>
-                            {countries.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         <select
                             className="admin-search"
-                            style={{ width: '150px' }}
-                            value={cityForm.state}
-                            onChange={(e) => setCityForm({ ...cityForm, state: e.target.value })}
+                            style={{ width: '130px' }}
+                            value={cityForm.state_id}
+                            onChange={(e) => setCityForm({ ...cityForm, state_id: e.target.value })}
                         >
                             <option value="">State</option>
-                            {states.filter(s => !cityForm.country || s.country === cityForm.country).map(s => (
-                                <option key={s.id} value={s.name}>{s.name}</option>
-                            ))}
+                            {allStatesList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                         <input
                             className="admin-search"
                             placeholder="City Name"
-                            style={{ width: '200px' }}
+                            style={{ width: '150px' }}
                             value={cityForm.name}
                             onChange={(e) => setCityForm({ ...cityForm, name: e.target.value })}
                         />
@@ -242,7 +432,7 @@ export default function AdminLocations() {
                             {editCityId !== null ? 'Update City' : 'Add City'}
                         </button>
                         {editCityId !== null && (
-                            <button className="admin-button outline" onClick={() => { setEditCityId(null); setCityForm({ name: '', state: '', country: '' }); }}>Cancel</button>
+                            <button className="admin-button outline" onClick={() => { setEditCityId(null); setCityForm({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' }); }}>Cancel</button>
                         )}
                     </div>
                 </div>
@@ -252,25 +442,42 @@ export default function AdminLocations() {
                             <th>City</th>
                             <th>State</th>
                             <th>Country</th>
+                            <th>Coordinates</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {cities.map(city => (
+                        {isLoadingCities ? <tr><td colSpan={5}>Loading...</td></tr> : cities.map(city => (
                             <tr key={city.id}>
                                 <td style={{ fontWeight: '600' }}>{city.name}</td>
-                                <td>{city.state}</td>
-                                <td>{city.country}</td>
+                                <td>{city.states?.name}</td>
+                                <td>{city.countries?.name}</td>
+                                <td style={{ fontSize: '11px', color: '#64748b' }}>{city.latitude}, {city.longitude}</td>
                                 <td>
                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                        <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleEditCity(city)}>Edit</button>
-                                        <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteCity(city.id)}>Delete</button>
+                                        <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => {
+                                            setEditCityId(city.id);
+                                            setCityForm({
+                                                name: city.name,
+                                                state_id: city.state_id.toString(),
+                                                country_id: city.country_id.toString(),
+                                                latitude: city.latitude?.toString() || '',
+                                                longitude: city.longitude?.toString() || ''
+                                            });
+                                        }}>Edit</button>
+                                        <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteCity(city.id)}>Del</button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                {/* Pagination */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+                    <button className="admin-button outline" disabled={cityPage === 0} onClick={() => setCityPage(p => p - 1)}>Prev</button>
+                    <span style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>Page {cityPage + 1} of {Math.ceil(cityCount / ITEMS_PER_PAGE)}</span>
+                    <button className="admin-button outline" disabled={(cityPage + 1) * ITEMS_PER_PAGE >= cityCount} onClick={() => setCityPage(p => p + 1)}>Next</button>
+                </div>
             </div>
         </div>
     )

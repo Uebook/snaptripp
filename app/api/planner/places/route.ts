@@ -8,24 +8,21 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const country = searchParams.get('country');
 
-        console.log('API Fetch Places for country:', country);
-
         if (!country) {
             return NextResponse.json({ error: 'Country parameter is required' }, { status: 400 });
         }
 
-        // Get all places for the selected country with coordinates
+        // Fetch ALL data from the places table for the selected country
+        // This ensures the map only displays REAL places from the DB
         const { data: places, error: placesError } = await supabaseAdmin
             .from('places')
             .select('*')
             .eq('country', country)
-            .not('location_lat', 'is', null)
-            .not('location_lng', 'is', null)
-            .limit(200);
+            .order('city', { ascending: true });
 
         if (placesError) throw placesError;
 
-        // Also fetch country info from destinations table
+        // Fetch country info from destinations table for UI context
         const { data: destination, error: destError } = await supabaseAdmin
             .from('destinations')
             .select('*')
@@ -33,15 +30,11 @@ export async function GET(request: NextRequest) {
             .eq('type', 'country')
             .single();
 
-        // Don't throw if destination not found, just return null
-        const countryInfo = destError ? null : destination;
-
         return NextResponse.json({
             success: true,
             places: places || [],
-            countryInfo
+            countryInfo: destError ? null : destination
         });
-
 
     } catch (error: any) {
         console.error('Fetch Places Error:', error);

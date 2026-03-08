@@ -1,7 +1,6 @@
-'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { validateUsername, checkUsernameAvailability, generateUsernameSuggestions } from '@/lib/utils/username'
 
 interface AuthModalProps {
     isOpen: boolean
@@ -14,13 +13,67 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [fullName, setFullName] = useState('')
+    const [username, setUsername] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Username validation state
+    const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
+    const [usernameError, setUsernameError] = useState<string>('')
+    const [suggestions, setSuggestions] = useState<string[]>([])
+
+    useEffect(() => {
+        if (isLogin || !username) {
+            setUsernameStatus('idle')
+            setUsernameError('')
+            setSuggestions([])
+            return
+        }
+
+        const timer = setTimeout(async () => {
+            const validation = validateUsername(username)
+            if (!validation.isValid) {
+                setUsernameStatus('invalid')
+                setUsernameError(validation.error || 'Invalid username')
+                setSuggestions([])
+                return
+            }
+
+            setUsernameStatus('checking')
+            const isAvailable = await checkUsernameAvailability(username)
+
+            if (isAvailable) {
+                setUsernameStatus('available')
+                setUsernameError('')
+                setSuggestions([])
+            } else {
+                setUsernameStatus('taken')
+                setUsernameError('Taken')
+                const s = await generateUsernameSuggestions(username)
+                setSuggestions(s)
+            }
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [username, isLogin])
 
     if (!isOpen) return null
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!isLogin) {
+            const validation = validateUsername(username)
+            if (!validation.isValid) {
+                setError(validation.error || 'Invalid username')
+                return
+            }
+            if (usernameStatus === 'taken' || usernameStatus === 'checking') {
+                setError('Please choose an available username.')
+                return
+            }
+        }
+
         setLoading(true)
         setError(null)
 
@@ -31,8 +84,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     password,
                 })
                 if (error) throw error
-                onSuccess()
-                onClose()
                 onSuccess()
                 onClose()
             } else {
@@ -61,6 +112,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     options: {
                         data: {
                             full_name: fullName,
+                            username: username.toLowerCase().trim(),
                         },
                     },
                 })
@@ -130,7 +182,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 2000,
+            zIndex: 99999,
         }}>
             <div style={{
                 backgroundColor: 'white',
@@ -174,24 +226,94 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Full Name</label>
-                            <input
-                                type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                required={!isLogin}
-                                placeholder="John Doe"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    borderRadius: '6px',
-                                    border: '1px solid #d1d5db',
-                                    color: '#111827',
-                                    backgroundColor: 'white',
-                                }}
-                            />
-                        </div>
+                        <>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Full Name</label>
+                                <input
+                                    type="text"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    required={!isLogin}
+                                    placeholder="John Doe"
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        borderRadius: '6px',
+                                        border: '1px solid #d1d5db',
+                                        color: '#111827',
+                                        backgroundColor: 'white',
+                                    }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Username</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+                                        required={!isLogin}
+                                        placeholder="unique_handle"
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${usernameStatus === 'taken' || usernameStatus === 'invalid' ? '#ef4444' : usernameStatus === 'available' ? '#10b981' : '#d1d5db'}`,
+                                            color: '#111827',
+                                            backgroundColor: 'white',
+                                            paddingRight: '2.5rem'
+                                        }}
+                                    />
+                                    {usernameStatus !== 'idle' && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            color: usernameStatus === 'available' ? '#10b981' : (usernameStatus === 'taken' || usernameStatus === 'invalid') ? '#ef4444' : '#64748b'
+                                        }}>
+                                            {usernameStatus === 'available' && '✓'}
+                                            {usernameStatus === 'checking' && '◌'}
+                                            {(usernameStatus === 'taken' || usernameStatus === 'invalid') && '✕'}
+                                        </div>
+                                    )}
+                                </div>
+                                {usernameError && usernameStatus !== 'available' && (
+                                    <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#ef4444' }}>
+                                        ✕ {usernameError}
+                                    </div>
+                                )}
+                                {usernameStatus === 'available' && (
+                                    <div style={{ fontSize: '0.8rem', marginTop: '4px', color: '#10b981' }}>
+                                        ✓ This username is available!
+                                    </div>
+                                )}
+                                {suggestions.length > 0 && (
+                                    <div style={{ marginTop: '8px', fontSize: '0.8rem' }}>
+                                        <div style={{ color: '#666', marginBottom: '4px' }}>Suggestions:</div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                            {suggestions.map(s => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    onClick={() => setUsername(s)}
+                                                    style={{
+                                                        background: '#f3f4f6',
+                                                        border: '1px solid #d1d5db',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '12px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
 
                     <div style={{ marginBottom: '1rem' }}>
@@ -235,7 +357,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || (!isLogin && usernameStatus !== 'available')}
                         style={{
                             width: '100%',
                             padding: '0.75rem',
@@ -244,8 +366,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                             border: 'none',
                             borderRadius: '6px',
                             fontWeight: '600',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.7 : 1,
+                            cursor: (loading || (!isLogin && usernameStatus !== 'available')) ? 'not-allowed' : 'pointer',
+                            opacity: (loading || (!isLogin && usernameStatus !== 'available')) ? 0.7 : 1,
                         }}
                     >
                         {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}

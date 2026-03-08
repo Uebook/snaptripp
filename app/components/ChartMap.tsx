@@ -92,7 +92,6 @@ export default function ChartMap() {
     const [selectedCities, setSelectedCities] = useState<string[]>([])
     const [customCityInput, setCustomCityInput] = useState('')
     const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
-    const [countryMapCenter, setCountryMapCenter] = useState<[number, number]>([20, 0])
 
     // Load places for selected country to display in mini map
     useEffect(() => {
@@ -110,19 +109,6 @@ export default function ChartMap() {
                     if (data.success && data.places && data.places.length > 0) {
                         setCountryPlaces(data.places);
 
-                        // Calculate center
-                        let sumLat = 0, sumLng = 0;
-                        let validCount = 0;
-                        data.places.forEach((p: any) => {
-                            if (p.location_lat && p.location_lng) {
-                                sumLat += p.location_lat;
-                                sumLng += p.location_lng;
-                                validCount++;
-                            }
-                        });
-                        if (validCount > 0) {
-                            setCountryMapCenter([sumLat / validCount, sumLng / validCount]);
-                        }
                     }
                 })
         }
@@ -140,17 +126,14 @@ export default function ChartMap() {
         }
     }
 
-    const handleAddCustomCity = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        const cityToAdd = customCityInput.trim();
-        if (cityToAdd && !selectedCities.includes(cityToAdd)) {
-            setSelectedCities(prev => [...prev, cityToAdd]);
-            setCustomCityInput('');
-        }
-    }
 
     const handlePostReview = async () => {
         if (!selectedCountry) return;
+
+        if (selectedCities.length === 0) {
+            alert("Please select at least one city you visited.");
+            return;
+        }
 
         try {
             setIsSubmitting(true);
@@ -469,29 +452,21 @@ export default function ChartMap() {
                                             }}
                                             onFocus={() => setIsCityDropdownOpen(true)}
                                             onBlur={() => setTimeout(() => setIsCityDropdownOpen(false), 200)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCity(e)}
-                                            placeholder={`e.g. ${selectedCountry.name === 'Japan' ? 'Tokyo' : (selectedCountry.name === 'France' ? 'Paris' : 'Capital City')}`}
+                                            placeholder={`Search cities in ${selectedCountry.name}...`}
                                             className="custom-city-input"
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={handleAddCustomCity}
-                                            className="btn-add-city"
-                                            disabled={!customCityInput.trim()}
-                                        >
-                                            Add
-                                        </button>
 
                                         {/* Dropdown Menu */}
                                         {isCityDropdownOpen && (
                                             <div className="city-dropdown-menu">
                                                 {Array.from(new Set(countryPlaces.map(p => p.city)))
-                                                    .filter(city => city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city))
+                                                    .filter(city => city && city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city))
                                                     .map(city => (
                                                         <div
                                                             key={city}
                                                             className="city-dropdown-item"
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 setSelectedCities(prev => [...prev, city]);
                                                                 setCustomCityInput('');
                                                                 setIsCityDropdownOpen(false);
@@ -501,13 +476,10 @@ export default function ChartMap() {
                                                         </div>
                                                     ))
                                                 }
-                                                {customCityInput.trim() && !Array.from(new Set(countryPlaces.map(p => p.city))).some(c => c.toLowerCase() === customCityInput.toLowerCase()) && (
-                                                    <div className="city-dropdown-item custom-add" onClick={handleAddCustomCity}>
-                                                        Add &quot;{customCityInput}&quot; (Custom)
+                                                {Array.from(new Set(countryPlaces.map(p => p.city))).filter(city => city && city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city)).length === 0 && (
+                                                    <div className="city-dropdown-empty">
+                                                        {customCityInput.trim() ? "No cities found" : "Type to search cities..."}
                                                     </div>
-                                                )}
-                                                {Array.from(new Set(countryPlaces.map(p => p.city))).filter(city => city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city)).length === 0 && !customCityInput.trim() && (
-                                                    <div className="city-dropdown-empty">Type to search or add a custom city...</div>
                                                 )}
                                             </div>
                                         )}
@@ -525,70 +497,6 @@ export default function ChartMap() {
                                     )}
                                 </div>
 
-                                {countryPlaces.length > 0 && (
-                                    <div className="city-selector-section" style={{ marginBottom: '25px' }}>
-                                        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>Select cities you visited:</p>
-                                        <div style={{ height: '200px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                            <MapContainer
-                                                center={countryMapCenter}
-                                                zoom={4}
-                                                scrollWheelZoom={false}
-                                                style={{ height: '100%', width: '100%' }}
-                                            >
-                                                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-
-                                                {countryPlaces.map((place, idx) => {
-                                                    const isSelected = selectedCities.includes(place.city);
-                                                    const iconHtml = `<div style="
-                                                        background: ${isSelected ? '#ffc107' : 'rgba(255,255,255,0.2)'};
-                                                        color: ${isSelected ? '#000' : '#fff'};
-                                                        border-radius: 50%;
-                                                        width: 24px;
-                                                        height: 24px;
-                                                        display: flex;
-                                                        align-items: center;
-                                                        justify-content: center;
-                                                        font-weight: bold;
-                                                        font-size: 10px;
-                                                        border: 2px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.5)'};
-                                                        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-                                                    "></div>`;
-
-                                                    const icon = L.divIcon({
-                                                        className: 'custom-city-marker',
-                                                        html: iconHtml,
-                                                        iconSize: [24, 24],
-                                                    });
-
-                                                    return (
-                                                        <Marker
-                                                            key={idx}
-                                                            position={[place.location_lat, place.location_lng]}
-                                                            icon={icon}
-                                                            eventHandlers={{
-                                                                click: () => handleCityToggle(place.city)
-                                                            }}
-                                                        >
-                                                            <Popup>
-                                                                <div style={{ color: '#000', fontWeight: 'bold' }}>
-                                                                    {place.city}
-                                                                    <br />
-                                                                    <button
-                                                                        onClick={() => handleCityToggle(place.city)}
-                                                                        style={{ marginTop: '5px', background: isSelected ? '#dc3545' : '#198754', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
-                                                                    >
-                                                                        {isSelected ? 'Remove' : 'Select'}
-                                                                    </button>
-                                                                </div>
-                                                            </Popup>
-                                                        </Marker>
-                                                    )
-                                                })}
-                                                <MapResizer />
-                                            </MapContainer>
-                                        </div>
-                                    </div>
-                                )}
 
                                 <textarea
                                     value={reviewText}

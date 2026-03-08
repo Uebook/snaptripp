@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import styles from './ProfilePage.module.css'
+import { validateUsername, checkUsernameAvailability, generateUsernameSuggestions } from '@/lib/utils/username'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
@@ -19,7 +21,8 @@ export default function ProfilePage() {
       email_notifications: true,
       travel_recommendations: true,
       public_profile: true
-    }
+    },
+    username: ''
   })
   const [stats, setStats] = useState({
     trips: 0,
@@ -27,25 +30,36 @@ export default function ProfilePage() {
   })
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Username validation state
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
+  const [usernameError, setUsernameError] = useState<string>('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [initialUsername, setInitialUsername] = useState('')
+
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  })
   const router = useRouter()
 
   useEffect(() => {
     async function fetchUser() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session && !loading) {
-        // Only redirect if NOT loading and no session
-        // To be even safer for subagent, we'll log it first
         console.log("No session found, redirecting...");
         router.push('/')
         return
       }
 
-      if (!session) return; // session should be checked by now
+      if (!session) return;
 
       setUser(session.user)
 
       try {
-        // Fetch Profile from DB
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -57,6 +71,15 @@ export default function ProfilePage() {
           const firstName = names[0] || ''
           const lastName = names.slice(1).join(' ') || ''
 
+          let dbPrefs = profileData.preferences
+          if (typeof dbPrefs === 'string' && dbPrefs.trim().startsWith('{')) {
+            try {
+              dbPrefs = JSON.parse(dbPrefs)
+            } catch (e) {
+              console.error("Failed to parse preferences string:", e)
+            }
+          }
+
           setProfile({
             first_name: firstName,
             last_name: lastName,
@@ -67,11 +90,13 @@ export default function ProfilePage() {
             avatar_url: profileData.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
             created_at: profileData.created_at || session.user.created_at,
             preferences: {
-              email_notifications: profileData.preferences?.email_notifications ?? true,
-              travel_recommendations: profileData.preferences?.travel_recommendations ?? true,
-              public_profile: profileData.preferences?.public_profile ?? true
-            }
+              email_notifications: dbPrefs?.email_notifications ?? true,
+              travel_recommendations: dbPrefs?.travel_recommendations ?? true,
+              public_profile: dbPrefs?.public_profile ?? true
+            },
+            username: profileData.username || ''
           })
+          setInitialUsername(profileData.username || '')
         } else {
           setProfile(prev => ({
             ...prev,
@@ -81,7 +106,6 @@ export default function ProfilePage() {
           }))
         }
 
-        // Fetch Stats
         const { count: tripsCount } = await supabase
           .from('trips')
           .select('*', { count: 'exact', head: true })
@@ -108,6 +132,44 @@ export default function ProfilePage() {
     fetchUser()
   }, [router])
 
+  // Real-time username validation
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      const username = profile.username.toLowerCase().trim()
+
+      if (!username || username === initialUsername) {
+        setUsernameStatus('idle')
+        setUsernameError('')
+        setSuggestions([])
+        return
+      }
+
+      const validation = validateUsername(username)
+      if (!validation.isValid) {
+        setUsernameStatus('invalid')
+        setUsernameError(validation.error || 'Invalid username')
+        setSuggestions([])
+        return
+      }
+
+      setUsernameStatus('checking')
+      const isAvailable = await checkUsernameAvailability(username)
+
+      if (isAvailable) {
+        setUsernameStatus('available')
+        setUsernameError('')
+        setSuggestions([])
+      } else {
+        setUsernameStatus('taken')
+        setUsernameError('This username is already taken.')
+        const s = await generateUsernameSuggestions(username)
+        setSuggestions(s)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [profile.username, initialUsername])
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
@@ -118,22 +180,18 @@ export default function ProfilePage() {
       const fileName = `${user.id}-${Math.random()}.${fileExt}`
       const filePath = `avatars/${fileName}`
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
-      // Get Public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      // Update Profile state
       setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
 
-      // Update DB
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -151,6 +209,20 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) return
+
+    // Final check on username
+    if (profile.username !== initialUsername) {
+      const validation = validateUsername(profile.username)
+      if (!validation.isValid) {
+        alert(validation.error)
+        return
+      }
+      if (usernameStatus === 'taken' || usernameStatus === 'checking') {
+        alert("Please choose an available username first.")
+        return
+      }
+    }
+
     setIsSaving(true)
     try {
       const { error } = await supabase
@@ -162,44 +234,78 @@ export default function ProfilePage() {
           phone: profile.phone,
           location: profile.location,
           bio: profile.bio,
+          username: profile.username.toLowerCase().trim(),
           preferences: profile.preferences,
           updated_at: new Date().toISOString()
         })
       if (error) throw error
+      setInitialUsername(profile.username.toLowerCase().trim())
       alert("Profile saved successfully!")
     } catch (error: any) {
-      alert("Failed to save profile: " + error.message)
+      console.error("Failed to save profile:", error)
+      alert("Failed to save profile: " + (error.message || "Unknown error"))
     } finally {
       setIsSaving(false)
     }
   }
 
-  if (loading) return <div style={{ padding: '40px' }}>Loading profile...</div>
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert("Passwords do not match!")
+      return
+    }
+    if (passwordData.newPassword.length < 6) {
+      alert("Password must be at least 6 characters long.")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      })
+      if (error) throw error
+      alert("Password updated successfully!")
+      setShowPasswordForm(false)
+      setPasswordData({ newPassword: '', confirmPassword: '' })
+    } catch (error: any) {
+      alert("Error updating password: " + error.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles["loading-container"]}>
+        <div className={styles["spinner"]}></div>
+        <h2>Loading your profile...</h2>
+        <p>Please wait while we fetch your adventure details.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="profile-edit-body">
-      <header className="profile-edit-header">
-        <div className="header-text">
+    <div className={styles["profile-edit-body"]}>
+      <header className={styles["profile-edit-header"]}>
+        <div className={styles["header-text"]}>
           <h1>Edit Profile</h1>
           <p>Update your personal information and preferences</p>
         </div>
-        <div className="header-buttons">
-          <button className="btn-cancel" onClick={() => router.push('/dashboard')}>Cancel</button>
-          <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+        <div className={styles["header-buttons"]}>
+          <button className={styles["btn-cancel"]} onClick={() => router.push('/dashboard')}>Cancel</button>
+          <button className={styles["btn-save"]} onClick={handleSave} disabled={isSaving || (usernameStatus !== 'available' && usernameStatus !== 'idle')}>
             {isSaving ? 'Saving...' : '✓ Save Changes'}
           </button>
         </div>
       </header>
 
-      <div className="profile-edit-grid">
-        {/* Left Column: Photo & Stats */}
-        <div className="edit-left-column">
-          <div className="photo-card">
-            <div className="avatar-preview">
-              <img
-                src={profile.avatar_url}
-                alt="Profile"
-              />
+      <div className={styles["profile-edit-grid"]}>
+        <div className={styles["edit-left-column"]}>
+          <div className={styles["photo-card"]}>
+            <div className={styles["avatar-preview"]}>
+              <img src={profile.avatar_url} alt="Profile" />
             </div>
             <input
               type="file"
@@ -210,39 +316,37 @@ export default function ProfilePage() {
               disabled={isSaving}
             />
             <button
-              className="btn-change-photo"
+              className={styles["btn-change-photo"]}
               onClick={() => document.getElementById('avatar-upload')?.click()}
               disabled={isSaving}
             >
               {isSaving ? 'Uploading...' : '↑ Change Photo'}
             </button>
-            <p className="photo-hint">JPG, PNG or GIF. Max size 2MB</p>
+            <p className={styles["photo-hint"]}>JPG, PNG or GIF. Max size 2MB</p>
           </div>
 
-          <div className="account-stats-card">
+          <div className={styles["account-stats-card"]}>
             <h3>Account Stats</h3>
-            <div className="stat-row">
-              <span className="label">Trips Planned</span>
-              <span className="value">{stats.trips}</span>
+            <div className={styles["stat-row"]}>
+              <span className={styles["label"]}>Trips Planned</span>
+              <span className={styles["value"]}>{stats.trips}</span>
             </div>
-            <div className="stat-row border-top">
-              <span className="label">Countries Visited</span>
-              <span className="value">{stats.countries}</span>
+            <div className={`${styles["stat-row"]} ${styles["border-top"]}`}>
+              <span className={styles["label"]}>Countries Visited</span>
+              <span className={styles["value"]}>{stats.countries}</span>
             </div>
-            <div className="stat-row border-top">
-              <span className="label">Member Since</span>
-              <span className="value">{new Date(profile.created_at).getFullYear() || '-'}</span>
+            <div className={`${styles["stat-row"]} ${styles["border-top"]}`}>
+              <span className={styles["label"]}>Member Since</span>
+              <span className={styles["value"]}>{new Date(profile.created_at).getFullYear() || '-'}</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Forms */}
-        <div className="edit-right-column">
-          {/* Personal Info */}
-          <div className="form-card">
+        <div className={styles["edit-right-column"]}>
+          <div className={styles["form-card"]}>
             <h3>Personal Information</h3>
-            <div className="form-grid">
-              <div className="input-group">
+            <div className={styles["form-grid"]}>
+              <div className={styles["input-group"]}>
                 <label>First Name</label>
                 <input
                   type="text"
@@ -250,7 +354,7 @@ export default function ProfilePage() {
                   onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
                 />
               </div>
-              <div className="input-group">
+              <div className={styles["input-group"]}>
                 <label>Last Name</label>
                 <input
                   type="text"
@@ -258,10 +362,10 @@ export default function ProfilePage() {
                   onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
                 />
               </div>
-              <div className="input-group full-width">
+              <div className={`${styles["input-group"]} ${styles["full-width"]}`}>
                 <label>Email Address</label>
-                <div className="icon-input">
-                  <span className="input-icon">✉️</span>
+                <div className={styles["icon-input"]}>
+                  <span className={styles["input-icon"]}>✉️</span>
                   <input
                     type="email"
                     value={profile.email}
@@ -269,10 +373,75 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="input-group">
+              <div className={`${styles["input-group"]} ${styles["full-width"]}`}>
+                <label>Username (Public Profile Handle)</label>
+                <div className={styles["icon-input"]}>
+                  <span className={styles["input-icon"]}>@</span>
+                  <input
+                    type="text"
+                    value={profile.username}
+                    onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, '') }))}
+                    placeholder="your-unique-handle"
+                    style={{
+                      borderColor:
+                        usernameStatus === 'available' ? '#10b981' :
+                          (usernameStatus === 'taken' || usernameStatus === 'invalid') ? '#ef4444' :
+                            undefined
+                    }}
+                  />
+                  {usernameStatus !== 'idle' && (
+                    <span className={`${styles["verification-badge"]} ${usernameStatus === 'available' ? styles.success :
+                        (usernameStatus === 'taken' || usernameStatus === 'invalid') ? styles.error :
+                          styles.checking
+                      }`}>
+                      {usernameStatus === 'available' && '✓'}
+                      {usernameStatus === 'checking' && '◌'}
+                      {(usernameStatus === 'taken' || usernameStatus === 'invalid') && '✕'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Username Feedback logic */}
+                {usernameStatus === 'checking' && (
+                  <div className={styles["field-feedback"]}>
+                    <div className={styles["spinner-small"]}></div>
+                    <span>Checking availability...</span>
+                  </div>
+                )}
+                {usernameStatus === 'available' && (
+                  <div className={`${styles["field-feedback"]} ${styles["feedback-success"]}`}>
+                    ✓ This username is available!
+                  </div>
+                )}
+                {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
+                  <div className={`${styles["field-feedback"]} ${styles["feedback-error"]}`}>
+                    ✕ {usernameError}
+                  </div>
+                )}
+
+                {suggestions.length > 0 && (
+                  <div className={styles["suggestions-container"]}>
+                    <p>Suggestions:</p>
+                    <div className={styles["suggestions-list"]}>
+                      {suggestions.map(s => (
+                        <span
+                          key={s}
+                          className={styles["suggestion-chip"]}
+                          onClick={() => setProfile(prev => ({ ...prev, username: s }))}
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className={styles["field-hint"]}>Your public profile will be at snaptrip.com/{profile.username || 'username'}</p>
+              </div>
+              <div className={styles["input-group"]}>
                 <label>Phone Number</label>
-                <div className="icon-input">
-                  <span className="input-icon">📞</span>
+                <div className={styles["icon-input"]}>
+                  <span className={styles["input-icon"]}>📞</span>
                   <input
                     type="tel"
                     value={profile.phone}
@@ -281,10 +450,10 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="input-group">
+              <div className={styles["input-group"]}>
                 <label>Location</label>
-                <div className="icon-input">
-                  <span className="input-icon">📍</span>
+                <div className={styles["icon-input"]}>
+                  <span className={styles["input-icon"]}>📍</span>
                   <input
                     type="text"
                     value={profile.location}
@@ -293,7 +462,7 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="input-group full-width">
+              <div className={`${styles["input-group"]} ${styles["full-width"]}`}>
                 <label>Bio</label>
                 <textarea
                   rows={4}
@@ -305,16 +474,15 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Preferences */}
-          <div className="form-card">
+          <div className={styles["form-card"]}>
             <h3>Preferences</h3>
-            <div className="preferences-list">
-              <div className="pref-item">
-                <div className="pref-text">
-                  <span className="pref-label">Email Notifications</span>
-                  <span className="pref-desc">Receive updates about your trips and new features</span>
+            <div className={styles["preferences-list"]}>
+              <div className={styles["pref-item"]}>
+                <div className={styles["pref-text"]}>
+                  <span className={styles["pref-label"]}>Email Notifications</span>
+                  <span className={styles["pref-desc"]}>Receive updates about your trips and new features</span>
                 </div>
-                <label className="toggle">
+                <label className={styles["toggle"]}>
                   <input
                     type="checkbox"
                     checked={profile.preferences.email_notifications}
@@ -323,15 +491,15 @@ export default function ProfilePage() {
                       preferences: { ...prev.preferences, email_notifications: e.target.checked }
                     }))}
                   />
-                  <span className="slider"></span>
+                  <span className={styles["slider"]}></span>
                 </label>
               </div>
-              <div className="pref-item divider">
-                <div className="pref-text">
-                  <span className="pref-label">Travel Recommendations</span>
-                  <span className="pref-desc">Get personalized destination suggestions</span>
+              <div className={`${styles["pref-item"]} ${styles["divider"]}`}>
+                <div className={styles["pref-text"]}>
+                  <span className={styles["pref-label"]}>Travel Recommendations</span>
+                  <span className={styles["pref-desc"]}>Get personalized destination suggestions</span>
                 </div>
-                <label className="toggle">
+                <label className={styles["toggle"]}>
                   <input
                     type="checkbox"
                     checked={profile.preferences.travel_recommendations}
@@ -340,15 +508,15 @@ export default function ProfilePage() {
                       preferences: { ...prev.preferences, travel_recommendations: e.target.checked }
                     }))}
                   />
-                  <span className="slider"></span>
+                  <span className={styles["slider"]}></span>
                 </label>
               </div>
-              <div className="pref-item divider">
-                <div className="pref-text">
-                  <span className="pref-label">Public Profile</span>
-                  <span className="pref-desc">Make your profile visible to other travelers</span>
+              <div className={`${styles["pref-item"]} ${styles["divider"]}`}>
+                <div className={styles["pref-text"]}>
+                  <span className={styles["pref-label"]}>Public Profile</span>
+                  <span className={styles["pref-desc"]}>Make your profile visible to other travelers</span>
                 </div>
-                <label className="toggle">
+                <label className={styles["toggle"]}>
                   <input
                     type="checkbox"
                     checked={profile.preferences.public_profile}
@@ -357,272 +525,71 @@ export default function ProfilePage() {
                       preferences: { ...prev.preferences, public_profile: e.target.checked }
                     }))}
                   />
-                  <span className="slider"></span>
+                  <span className={styles["slider"]}></span>
                 </label>
               </div>
             </div>
           </div>
 
-          {/* Security */}
-          <div className="form-card security-card">
+          <div className={`${styles["form-card"]} ${styles["security-card"]}`}>
             <h3>🛡️ Security Settings</h3>
-            <div className="security-actions">
-              <button className="btn-outline">🔓 Change Password</button>
-              <button className="btn-outline">📱 Enable 2FA</button>
+            <div className={styles["security-actions"]}>
+              <button
+                className={styles["btn-outline"]}
+                onClick={() => setShowPasswordForm(!showPasswordForm)}
+              >
+                {showPasswordForm ? '✕ Cancel' : '🔓 Change Password'}
+              </button>
             </div>
+
+            {showPasswordForm && (
+              <form onSubmit={handlePasswordChange} className={styles["password-form"]}>
+                <div className={styles["input-group"]}>
+                  <label>New Password</label>
+                  <div className={styles["password-input-wrapper"]}>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      placeholder="Min. 6 characters"
+                    />
+                    <button
+                      type="button"
+                      className={styles["toggle-password"]}
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+                <div className={styles["input-group"]}>
+                  <label>Confirm New Password</label>
+                  <div className={styles["password-input-wrapper"]}>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Repeat new password"
+                    />
+                    <button
+                      type="button"
+                      className={styles["toggle-password"]}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" className={styles["btn-save"]} disabled={isSaving}>
+                  {isSaving ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .profile-edit-body {
-          padding: 40px;
-          background: #f8fafc;
-          min-height: 100vh;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .profile-edit-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 40px;
-        }
-
-        .header-text h1 {
-          font-size: 2rem;
-          color: #0a192f;
-          margin: 0 0 8px 0;
-          font-weight: 700;
-        }
-
-        .header-text p {
-          color: #64748b;
-          font-size: 1rem;
-          margin: 0;
-        }
-
-        .header-buttons {
-          display: flex;
-          gap: 12px;
-        }
-
-        .btn-cancel {
-          background: white;
-          border: 1px solid #e2e8f0;
-          color: #64748b;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .btn-save {
-          background: #0ea5e9;
-          color: white;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .profile-edit-grid {
-          display: grid;
-          grid-template-columns: 320px 1fr;
-          gap: 30px;
-          max-width: 1200px;
-        }
-
-        .photo-card, .account-stats-card, .form-card {
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-          border: 1px solid #edf2f7;
-          margin-bottom: 30px;
-        }
-
-        .photo-card {
-          text-align: center;
-        }
-
-        .avatar-preview {
-          width: 120px;
-          height: 120px;
-          border-radius: 20px;
-          border: 3px solid #0ea5e9;
-          overflow: hidden;
-          margin: 0 auto 20px;
-        }
-
-        .avatar-preview img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .btn-change-photo {
-          background: white;
-          border: 1px solid #0ea5e9;
-          color: #0ea5e9;
-          padding: 8px 20px;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          margin-bottom: 12px;
-        }
-
-        .photo-hint {
-          font-size: 11px;
-          color: #94a3b8;
-          margin: 0;
-        }
-
-        .account-stats-card h3, .form-card h3 {
-          font-size: 1.1rem;
-          color: #0a192f;
-          margin: 0 0 24px 0;
-          font-weight: 700;
-        }
-
-        .stat-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 15px 0;
-        }
-
-        .stat-row.border-top {
-          border-top: 1px solid #f1f5f9;
-        }
-
-        .stat-row .label { color: #64748b; font-size: 0.9rem; }
-        .stat-row .value { font-weight: 800; color: #0ea5e9; }
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-
-        .input-group.full-width {
-          grid-column: span 2;
-        }
-
-        .input-group label {
-          display: block;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: #0a192f;
-          margin-bottom: 8px;
-        }
-
-        .input-group input, .input-group textarea {
-          width: 100%;
-          padding: 12px 16px;
-          border-radius: 8px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          font-size: 0.95rem;
-          outline: none;
-          transition: all 0.2s;
-        }
-
-        .input-group input:focus, .input-group textarea:focus {
-          border-color: #0ea5e9;
-          background: white;
-        }
-
-        .icon-input {
-          position: relative;
-        }
-
-        .input-icon {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 1.1rem;
-          pointer-events: none;
-        }
-
-        .icon-input input {
-          padding-left: 44px;
-        }
-
-        .preferences-list {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .pref-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 0;
-        }
-
-        .pref-item.divider {
-          border-top: 1px solid #f1f5f9;
-        }
-
-        .pref-text { display: flex; flex-direction: column; gap: 4px; }
-        .pref-label { font-weight: 700; color: #0a192f; font-size: 0.95rem; }
-        .pref-desc { font-size: 0.85rem; color: #64748b; }
-
-        .toggle {
-          position: relative;
-          display: inline-block;
-          width: 44px;
-          height: 24px;
-        }
-
-        .toggle input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background-color: #e2e8f0;
-          transition: .4s;
-          border-radius: 24px;
-        }
-
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 18px; width: 18px;
-          left: 3px; bottom: 3px;
-          background-color: white;
-          transition: .4s;
-          border-radius: 50%;
-        }
-
-        input:checked + .slider { background-color: #0ea5e9; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .security-card {
-          background: #f0f9ff;
-          border: 1px solid #bae6fd;
-        }
-
-        .security-actions {
-          display: flex;
-          gap: 15px;
-        }
-
-        .btn-outline {
-          background: white;
-          border: 1px solid #0ea5e9;
-          color: #0ea5e9;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-weight: 600;
-          font-size: 0.85rem;
-          cursor: pointer;
-        }
-      `}</style>
     </div>
   )
 }

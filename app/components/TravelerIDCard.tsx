@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toPng } from 'html-to-image'
+import styles from './TravelerIDCard.module.css'
 
-export default function TravelerIDCard() {
+export default function TravelerIDCard({ username }: { username?: string }) {
     const cardRef = useRef<HTMLDivElement>(null)
     const [userProfile, setUserProfile] = useState<any>(null)
     const [stats, setStats] = useState({
@@ -14,39 +15,72 @@ export default function TravelerIDCard() {
     })
     const [topDestinations, setTopDestinations] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         async function fetchTravelerData() {
             try {
-                // 1. Get User
-                const { data: { session } } = await supabase.auth.getSession()
-                if (session && session.user) {
-                    // Fetch latest profile info (including updated avatar)
-                    const { data: profileData } = await supabase
+                let targetUserId: string | null = null
+                let profileSlug = username || ''
+
+                // 1. Get Target User
+                if (username) {
+                    const { data: profileData, error: profileError } = await supabase
                         .from('profiles')
-                        .select('full_name, avatar_url')
-                        .eq('id', session.user.id)
+                        .select('id, full_name, avatar_url, username')
+                        .eq('username', username)
                         .single()
 
+                    if (profileError || !profileData) {
+                        setError('Profile not found or is private.')
+                        setLoading(false)
+                        return
+                    }
+
+                    targetUserId = profileData.id
                     setUserProfile({
-                        name: profileData?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Traveler',
-                        email: session.user.email,
-                        avatar: profileData?.avatar_url || session.user.user_metadata?.avatar_url || ''
+                        name: profileData.full_name || username,
+                        avatar: profileData.avatar_url || '',
+                        username: profileData.username || username
                     })
+                    profileSlug = profileData.username || username
+                } else {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    if (session && session.user) {
+                        const { data: profileData } = await supabase
+                            .from('profiles')
+                            .select('id, full_name, avatar_url, username')
+                            .eq('id', session.user.id)
+                            .single()
+
+                        targetUserId = session.user.id
+                        setUserProfile({
+                            name: profileData?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Traveler',
+                            email: session.user.email,
+                            avatar: profileData?.avatar_url || session.user.user_metadata?.avatar_url || '',
+                            username: profileData?.username
+                        })
+                        profileSlug = profileData?.username || (userProfile?.name?.toLowerCase().replace(/\s+/g, '-')) || 'traveler'
+                    }
                 }
 
-                // 2. Fetch Reviews (Countries & Cities)
-                const reviewsRes = await fetch('/api/reviews', {
-                    headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-                })
-                const reviewsData = await reviewsRes.json()
+                if (!targetUserId) {
+                    setLoading(false)
+                    return
+                }
+
+                // 2. Fetch Reviews (Countries & Cities) - Using SQL directly if no API bearer needed or update API to accept userId
+                const { data: reviewsData } = await supabase
+                    .from('traveler_reviews')
+                    .select('*')
+                    .eq('user_id', targetUserId)
 
                 let uniqueCountries = new Set<string>()
                 let totalCities = 0
                 let destMap = new Map<string, { count: number, cities: Set<string> }>()
 
-                if (reviewsData.success && reviewsData.reviews) {
-                    reviewsData.reviews.forEach((rev: any) => {
+                if (reviewsData) {
+                    reviewsData.forEach((rev: any) => {
                         uniqueCountries.add(rev.country)
 
                         const cities = rev.selected_cities || []
@@ -76,16 +110,15 @@ export default function TravelerIDCard() {
                 setTopDestinations(sortedDest)
 
                 // 3. Fetch Trips (for Trips Completed)
-                const tripsRes = await fetch('/api/trips', {
-                    headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-                })
-                const tripsData = await tripsRes.json()
-                const maxTrips = tripsData.success && tripsData.trips ? tripsData.trips.length : 0
+                const { count: tripsCount } = await supabase
+                    .from('trips')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', targetUserId)
 
                 setStats({
                     countries: uniqueCountries.size,
                     cities: totalCities,
-                    trips: maxTrips
+                    trips: tripsCount || 0
                 })
 
             } catch (err) {
@@ -96,18 +129,24 @@ export default function TravelerIDCard() {
         }
 
         fetchTravelerData()
-    }, [])
+    }, [username])
 
     if (loading) {
         return <div style={{ color: 'white', textAlign: 'center', padding: '50px' }}>Generating Traveler ID...</div>
     }
 
-    // Generate a profile slug for the URL/QR
-    const profileSlug = userProfile?.name
-        ? userProfile.name.toLowerCase().replace(/\s+/g, '-')
-        : (userProfile?.email?.split('@')[0] || 'traveler')
+    if (error) {
+        return (
+            <div style={{ color: 'white', textAlign: 'center', padding: '100px 20px' }}>
+                <h2 style={{ fontSize: '2rem', marginBottom: '20px' }}>📡 {error}</h2>
+                <p style={{ opacity: 0.7 }}>The traveler may have set their profile to private or changed their handle.</p>
+            </div>
+        )
+    }
 
-    const profileUrl = `snaptrip.com/${profileSlug}`
+    // Use actual username if available, fallback to a clean version of the name
+    const profileSlug = username || userProfile?.username || (userProfile?.name?.toLowerCase().replace(/[^a-z0-9._]/g, '')) || 'traveler'
+    const profileUrl = `${profileSlug}`
 
     const handleDownload = async () => {
         if (cardRef.current === null) return
@@ -130,90 +169,108 @@ export default function TravelerIDCard() {
             console.error('Failed to copy: ', err)
         })
     }
+
+    const handleSocialShare = (platform: string) => {
+        const fullUrl = encodeURIComponent(`${window.location.origin}/${profileSlug}`)
+        const text = encodeURIComponent(`Check out my verified Traveler ID on SnapTrip! 🌍`)
+
+        let url = ''
+        switch (platform) {
+            case 'facebook':
+                url = `https://www.facebook.com/sharer/sharer.php?u=${fullUrl}`
+                break
+            case 'twitter':
+                url = `https://twitter.com/intent/tweet?url=${fullUrl}&text=${text}`
+                break
+            case 'whatsapp':
+                url = `https://api.whatsapp.com/send?text=${text}%20${fullUrl}`
+                break
+            case 'instagram':
+                // Instagram doesn't have a direct web sharer for URL, usually handled via mobile app
+                // For web, we just copy to clipboard and notify
+                handleCopyLink()
+                alert('Profile link copied! Share it on your Instagram story or bio. 📸')
+                return
+        }
+
+        if (url) {
+            window.open(url, '_blank', 'noopener,noreferrer')
+        }
+    }
     return (
-        <div className="id-card-wrapper">
-            <div className="id-card-container" ref={cardRef}>
+        <div className={styles["id-card-wrapper"]}>
+            <div className={styles["id-card-container"]} ref={cardRef}>
                 {/* Header */}
-                <div className="card-header">
-                    <div className="brand">
-                        <div className="brand-logo">
+                <div className={styles["card-header"]}>
+                    <div className={styles.brand}>
+                        <div className={styles["brand-logo"]}>
                             <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
                                 <path d="M21 16.5L12 21L3 16.5V7.5L12 3L21 7.5V16.5Z" />
                             </svg>
                         </div>
-                        <span className="brand-name">SnapTrip</span>
+                        <span className={styles["brand-name"]}>SnapTrip</span>
                     </div>
-                    <div className="id-badge">
+                    <div className={styles["id-badge"]}>
                         🆔 TRAVELER ID
                     </div>
                 </div>
 
-                <div className="card-main-grid">
+                <div className={styles["card-main-grid"]}>
                     {/* Profile Section */}
-                    <div className="profile-section">
-                        <div className="profile-image-container">
+                    <div className={styles["profile-section"]}>
+                        <div className={styles["profile-image-container"]}>
                             {userProfile?.avatar ? (
                                 <img
                                     src={userProfile.avatar}
                                     alt={userProfile?.name || "Traveler"}
-                                    className="profile-image"
+                                    className={styles["profile-image"]}
                                     onError={(e: any) => {
                                         e.target.style.display = 'none'
                                         e.target.nextSibling.style.display = 'flex'
                                     }}
                                 />
                             ) : null}
-                            <div className="dummy-icon" style={{
-                                display: userProfile?.avatar ? 'none' : 'flex',
-                                width: '100%',
-                                height: '100%',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'rgba(255,255,255,0.05)',
-                                color: 'rgba(255,255,255,0.3)',
-                                fontSize: '64px',
-                                borderRadius: 'inherit'
-                            }}>
+                            <div className={styles["dummy-icon"]} style={{ display: userProfile?.avatar ? 'none' : 'flex' }}>
                                 👤
                             </div>
                         </div>
-                        <h2 className="profile-name">{userProfile?.name || "Adventure Explorer"}</h2>
-                        <p className="profile-title">{stats.countries > 10 ? 'Global Citizen' : 'Adventure Explorer'}</p>
-                        <div className="elite-badge">
+                        <h2 className={styles["profile-name"]}>{userProfile?.name || "Adventure Explorer"}</h2>
+                        <p className={styles["profile-title"]}>{stats.countries > 10 ? 'Global Citizen' : 'Adventure Explorer'}</p>
+                        <div className={styles["elite-badge"]}>
                             {stats.countries > 15 ? '🎖️ Platinum Traveler' : '🏅 Gold Traveler'}
                         </div>
                     </div>
 
                     {/* Stats & Destinations Section */}
-                    <div className="stats-dest-section">
+                    <div className={styles["stats-dest-section"]}>
                         {/* Stats Row */}
-                        <div className="stats-grid">
+                        <div className={styles["stats-grid"]}>
                             {[
                                 { label: 'Countries Visited', val: stats.countries.toString(), color: '#ffc107' },
                                 { label: 'Cities Explored', val: stats.cities.toString(), color: '#22d3ee' },
                                 { label: 'Trips Planned', val: stats.trips.toString(), color: '#fb7185' },
                             ].map(stat => (
-                                <div key={stat.label} className="stat-box" style={{ '--accent': stat.color } as any}>
-                                    <div className="stat-value">{stat.val}</div>
-                                    <div className="stat-label">{stat.label}</div>
+                                <div key={stat.label} className={styles["stat-box"]}>
+                                    <div className={styles["stat-value"]} style={{ color: stat.color }}>{stat.val}</div>
+                                    <div className={styles["stat-label"]}>{stat.label}</div>
                                 </div>
                             ))}
                         </div>
 
                         {/* Top Destinations */}
-                        <div className="destinations-container">
-                            <h3 className="section-title">
+                        <div className={styles["destinations-container"]}>
+                            <h3 className={styles["section-title"]}>
                                 🗺️ Top Destinations
                             </h3>
-                            <div className="destinations-list">
+                            <div className={styles["destinations-list"]}>
                                 {topDestinations.length > 0 ? topDestinations.map(dest => (
-                                    <div key={dest.rank} className="destination-item">
-                                        <div className="rank-circle">{dest.rank}</div>
-                                        <div className="dest-info">
-                                            <div className="dest-name">{dest.name}</div>
-                                            <div className="dest-cities">{dest.cities}</div>
+                                    <div key={dest.rank} className={styles["destination-item"]}>
+                                        <div className={styles["rank-circle"]}>{dest.rank}</div>
+                                        <div className={styles["dest-info"]}>
+                                            <div className={styles["dest-name"]}>{dest.name}</div>
+                                            <div className={styles["dest-cities"]}>{dest.cities}</div>
                                         </div>
-                                        <div className="city-count-badge">
+                                        <div className={styles["city-count-badge"]}>
                                             🏙️ {dest.count}
                                         </div>
                                     </div>
@@ -225,450 +282,65 @@ export default function TravelerIDCard() {
                     </div>
 
                     {/* Map & QR Section */}
-                    <div className="map-qr-section">
-                        <h3 className="map-title">My Travel Map</h3>
-                        <div className="mini-map-container">
-                            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400" alt="Travel Map" className="map-image" />
-                            <div className="map-overlay">
-                                <div className="map-pin pin-1">📍</div>
-                                <div className="map-pin pin-2">📍</div>
-                                <div className="map-pin pin-3">📍</div>
+                    <div className={styles["map-qr-section"]}>
+                        <h3 className={styles["map-title"]}>My Travel Map</h3>
+                        <div className={styles["mini-map-container"]}>
+                            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400" alt="Travel Map" className={styles["map-image"]} />
+                            <div className={styles["map-overlay"]}>
+                                <div className={`${styles["map-pin"]} ${styles["pin-1"]}`}>📍</div>
+                                <div className={`${styles["map-pin"]} ${styles["pin-2"]}`}>📍</div>
+                                <div className={`${styles["map-pin"]} ${styles["pin-3"]}`}>📍</div>
                             </div>
                         </div>
 
-                        <div className="qr-preview-container">
-                            <div className="qr-code">
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(profileUrl)}`} alt="QR Code" />
+                        <div className={styles["qr-preview-container"]}>
+                            <div className={styles["qr-code"]}>
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/' + profileSlug)}`} alt="QR Code" />
                             </div>
-                            <div className="qr-text">
-                                <span className="qr-label">Scan to view profile</span>
-                                <span className="qr-url">{profileUrl}</span>
+                            <div className={styles["qr-text"]}>
+                                <span className={styles["qr-label"]}>Scan to view profile</span>
+                                <span className={styles["qr-url"]}>snaptrip.com/{profileSlug}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="card-footer">
-                    <div className="share-text">Share Your Journey</div>
-                    <div className="action-buttons">
-                        <button className="icon-btn" onClick={handleCopyLink} title="Copy Link">�</button>
-                        <button className="download-btn" onClick={handleDownload}>📥 DOWNLOAD</button>
+                {/* Footer Actions - Inside Card (No download icons) */}
+                <div className={styles["card-footer"]}>
+                    <div className={styles["share-text"]}>SnapTrip Premium Traveler</div>
+                    <div className={styles["premium-badges"]}>
+                        <span>Verified 2024</span>
+                        <span>•</span>
+                        <span>Global Access</span>
                     </div>
                 </div>
             </div>
 
-            <style jsx>{`
-                .id-card-wrapper {
-                    width: 100%;
-                    max-width: 1100px;
-                    padding: clamp(10px, 3vw, 30px);
-                    margin: 0 auto;
-                }
-                .id-card-container {
-                    background: #0a192f;
-                    background: linear-gradient(135deg, #0a192f 0%, #0d213f 100%);
-                    border-radius: clamp(20px, 5vw, 40px);
-                    padding: clamp(25px, 6vw, 60px);
-                    color: white;
-                    font-family: 'Inter', sans-serif;
-                    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
-                    position: relative;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    overflow: hidden;
-                    width: 100%;
-                }
-                .id-card-container::after {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    right: -20%;
-                    width: clamp(300px, 50vw, 500px);
-                    height: clamp(300px, 50vw, 500px);
-                    background: radial-gradient(circle, rgba(34, 211, 238, 0.05) 0%, transparent 70%);
-                    pointer-events: none;
-                }
-                .card-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: clamp(30px, 5vw, 60px);
-                    flex-wrap: wrap;
-                    gap: 20px;
-                }
-                .brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                }
-                .brand-logo {
-                    background: #22d3ee;
-                    width: clamp(32px, 4vw, 42px);
-                    height: clamp(32px, 4vw, 42px);
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 8px 16px rgba(34, 211, 238, 0.3);
-                }
-                .brand-name {
-                    font-size: clamp(1.4rem, 4vw, 2rem);
-                    font-weight: 900;
-                    letter-spacing: -1px;
-                }
-                .id-badge {
-                    background: #ffc107;
-                    color: #000;
-                    padding: 8px 18px;
-                    border-radius: 25px;
-                    font-weight: 900;
-                    font-size: clamp(11px, 2vw, 13px);
-                    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-                }
-                .card-main-grid {
-                    display: grid;
-                    grid-template-columns: minmax(200px, 260px) 1fr minmax(220px, 280px);
-                    gap: clamp(20px, 4vw, 50px);
-                }
-                .profile-image-container {
-                    width: 100%;
-                    max-width: 200px;
-                    aspect-ratio: 1 / 1;
-                    border-radius: clamp(30px, 8vw, 50px);
-                    border: 4px solid #ffc107;
-                    padding: clamp(6px, 1.5vw, 10px);
-                    margin: 0 auto 25px;
-                    position: relative;
-                    box-shadow: 0 15px 35px rgba(255, 193, 7, 0.2);
-                }
-                .profile-image {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: clamp(20px, 6vw, 40px);
-                    display: block;
-                }
-                .profile-section {
-                    text-align: center;
-                }
-                .profile-name {
-                    font-size: clamp(1.5rem, 4vw, 2rem);
-                    font-weight: 900;
-                    margin: 0 0 8px 0;
-                    letter-spacing: -0.5px;
-                }
-                .profile-title {
-                    color: #22d3ee;
-                    font-size: clamp(12px, 2vw, 14px);
-                    font-weight: 600;
-                    margin-bottom: 25px;
-                    opacity: 0.9;
-                }
-                .elite-badge {
-                    background: rgba(255, 193, 7, 0.1);
-                    color: #ffc107;
-                    padding: 6px 20px;
-                    border-radius: 30px;
-                    font-weight: 800;
-                    font-size: clamp(10px, 1.8vw, 12px);
-                    display: inline-block;
-                    border: 1px solid rgba(255, 193, 7, 0.2);
-                    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.05);
-                }
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: clamp(10px, 2vw, 20px);
-                    margin-bottom: clamp(30px, 5vw, 50px);
-                }
-                .stat-box {
-                    background: rgba(255, 255, 255, 0.03);
-                    padding: clamp(15px, 3vw, 25px) clamp(10px, 2vw, 15px);
-                    border-radius: clamp(20px, 4vw, 30px);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    text-align: center;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                .stat-box:hover {
-                    transform: translateY(-8px);
-                    background: rgba(255, 255, 255, 0.06);
-                    border-color: var(--accent);
-                    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-                }
-                .stat-value {
-                    font-size: clamp(1.4rem, 4vw, 2.6rem);
-                    font-weight: 900;
-                    color: var(--accent);
-                    line-height: 1;
-                    margin-bottom: 8px;
-                }
-                .stat-label {
-                    font-size: clamp(8px, 1.5vw, 11px);
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    opacity: 0.5;
-                    font-weight: 700;
-                }
-                .section-title {
-                    font-size: clamp(11px, 1.8vw, 14px);
-                    color: #ffc107;
-                    text-transform: uppercase;
-                    letter-spacing: clamp(1px, 0.3vw, 3px);
-                    margin-bottom: 25px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-weight: 900;
-                }
-                .destinations-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                }
-                .destination-item {
-                    background: rgba(255, 255, 255, 0.02);
-                    padding: clamp(10px, 2vw, 16px) clamp(12px, 2.5vw, 20px);
-                    border-radius: clamp(15px, 3vw, 24px);
-                    border: 1px solid rgba(255, 255, 255, 0.04);
-                    display: flex;
-                    align-items: center;
-                    gap: clamp(10px, 2vw, 20px);
-                    transition: all 0.2s;
-                    cursor: default;
-                }
-                .destination-item:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                    transform: translateX(5px);
-                }
-                .rank-circle {
-                    width: clamp(24px, 4vw, 32px);
-                    height: clamp(24px, 4vw, 32px);
-                    background: #ffc107;
-                    color: #000;
-                    border-radius: 50%;
-                    font-weight: 900;
-                    font-size: clamp(12px, 2vw, 15px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
-                    flex-shrink: 0;
-                }
-                .dest-name {
-                    font-weight: 800;
-                    font-size: clamp(14px, 2.5vw, 17px);
-                    margin-bottom: 2px;
-                }
-                .dest-cities {
-                    font-size: clamp(10px, 1.8vw, 12px);
-                    color: rgba(255, 255, 255, 0.5);
-                }
-                .city-count-badge {
-                    background: rgba(34, 211, 238, 0.08);
-                    color: #22d3ee;
-                    padding: 4px 10px;
-                    border-radius: 10px;
-                    font-size: clamp(9px, 1.5vw, 11px);
-                    font-weight: 800;
-                    margin-left: auto;
-                    border: 1px solid rgba(34, 211, 238, 0.1);
-                    white-space: nowrap;
-                }
-                .map-title {
-                    text-align: center;
-                    font-size: clamp(10px, 1.8vw, 13px);
-                    color: rgba(255, 255, 255, 0.4);
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    margin-bottom: 20px;
-                    font-weight: 700;
-                }
-                .mini-map-container {
-                    width: 100%;
-                    height: clamp(150px, 20vw, 200px);
-                    border-radius: clamp(15px, 3.5vw, 30px);
-                    overflow: hidden;
-                    position: relative;
-                    background: #001a33;
-                    margin-bottom: 30px;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-                .map-image {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    opacity: 0.7;
-                    filter: grayscale(0.5) contrast(1.2);
-                }
-                .map-pin {
-                    position: absolute;
-                    font-size: clamp(18px, 3vw, 24px);
-                    filter: drop-shadow(0 0 10px rgba(255, 193, 7, 0.5));
-                    animation: float 3s ease-in-out infinite;
-                }
-                .pin-1 { top: 30%; left: 45%; animation-delay: 0s; }
-                .pin-2 { top: 55%; left: 65%; animation-delay: 1s; }
-                .pin-3 { top: 40%; left: 80%; animation-delay: 2s; }
+            {/* External Actions - Outside CardRef (Not captured in PNG) */}
+            <div className={styles["external-actions"]}>
+                <div className={styles["share-section"]}>
+                    <span className={styles["section-label"]}>Share Your Journey</span>
+                    <div className={styles["social-buttons"]}>
+                        <button className={styles["social-btn"]} onClick={() => handleSocialShare('facebook')} title="Facebook">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+                        </button>
+                        <button className={styles["social-btn"]} onClick={() => handleSocialShare('twitter')} title="Twitter/X">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                        </button>
+                        <button className={styles["social-btn"]} onClick={() => handleSocialShare('whatsapp')} title="WhatsApp">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.431 5.623 1.435h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                        </button>
+                        <button className={styles["social-btn"]} onClick={() => handleSocialShare('instagram')} title="Instagram">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.106.29 2.6.482.654.254 1.122.556 1.613 1.047.49.49.793.959 1.047 1.613.192.494.42 1.234.482 2.6.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.29 2.106-.482 2.6-.254.654-.556 1.122-1.047 1.613-.49.49-.959.793-1.613 1.047-.494.192-1.234.42-2.6.482-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.106-.29-2.6-.482-.654-.254-1.122-.556-1.613-1.047-.49-.49-.793-.959-1.047-1.613-.192-.494-.42-1.234-.482-2.6-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.062-1.366.29-2.106.482-2.6.254-.654.556-1.122 1.047-1.613.49-.49.959-.793 1.613-1.047.494-.192 1.234-.42 2.6-.482 1.266-.058 1.646-.07 4.85-.07zM12 0C8.741 0 8.333.014 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.132 5.775.072 7.053.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126s1.384 1.078 2.126 1.384c.766.296 1.636.499 2.913.558C8.333 23.986 8.741 24 12 24s3.667-.014 4.947-.072c1.277-.06 2.148-.261 2.913-.558.788-.306 1.459-.717 2.126-1.384s1.078-1.384 1.384-2.126c.296-.766.499-1.636.558-2.913.058-1.28.072-1.687.072-4.947s-.014-3.667-.072-4.947c-.06-1.277-.261-2.148-.558-2.913-.306-.788-.717-1.459-1.384-2.126S18.65 1.03 17.86.724c-.765-.297-1.636-.499-2.913-.558C15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg>
+                        </button>
+                    </div>
+                </div>
 
-                @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-5px); }
-                }
-                
-                .qr-preview-container {
-                    display: flex;
-                    align-items: center;
-                    gap: clamp(10px, 2vw, 20px);
-                    padding: clamp(15px, 3vw, 25px);
-                    background: rgba(255, 255, 255, 0.02);
-                    border-radius: 25px;
-                    border: 1px solid rgba(255, 255, 255, 0.04);
-                }
-                .qr-code {
-                    background: white;
-                    padding: 6px;
-                    border-radius: 12px;
-                    width: clamp(60px, 10vw, 80px);
-                    height: clamp(60px, 10vw, 80px);
-                    flex-shrink: 0;
-                    box-shadow: 0 10px 20px rgba(255,255,255,0.05);
-                }
-                .qr-code img {
-                    width: 100%;
-                    height: 100%;
-                }
-                .qr-label {
-                    display: block;
-                    font-size: clamp(9px, 1.5vw, 11px);
-                    color: rgba(255,255,255,0.4);
-                    margin-bottom: 4px;
-                    font-weight: 600;
-                }
-                .qr-url {
-                    font-size: clamp(10px, 1.8vw, 13px);
-                    font-weight: 800;
-                    color: white;
-                }
-                .card-footer {
-                    margin-top: clamp(30px, 6vw, 60px);
-                    padding-top: clamp(20px, 4vw, 40px);
-                    border-top: 1px solid rgba(255, 255, 255, 0.06);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 20px;
-                    flex-wrap: wrap;
-                }
-                .share-text {
-                    font-size: clamp(11px, 1.8vw, 13px);
-                    color: rgba(255, 255, 255, 0.4);
-                    font-weight: 700;
-                    letter-spacing: 1px;
-                }
-                .action-buttons {
-                    display: flex;
-                    gap: clamp(8px, 1.5vw, 12px);
-                    align-items: center;
-                    flex-wrap: wrap;
-                }
-                .icon-btn, .download-btn {
-                    width: clamp(36px, 5vw, 46px);
-                    height: clamp(36px, 5vw, 46px);
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    background: rgba(255, 255, 255, 0.04);
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: clamp(14px, 2.5vw, 18px);
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                .icon-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: #22d3ee;
-                    transform: translateY(-3px);
-                }
-                .download-btn {
-                    background: #ffc107;
-                    color: #000;
-                    width: auto;
-                    padding: 0 clamp(15px, 3vw, 25px);
-                    font-weight: 900;
-                    font-size: clamp(11px, 1.8vw, 13px);
-                    border: none;
-                }
-                .download-btn:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
-                    background: #ffcb32;
-                }
-                
-                /* Responsiveness - Breakpoints */
-                @media (max-width: 1024px) {
-                    .card-main-grid {
-                        grid-template-columns: minmax(200px, 1fr) 1.5fr;
-                    }
-                    .map-qr-section {
-                        grid-column: span 2;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 30px;
-                        align-items: start;
-                    }
-                    .mini-map-container {
-                        margin-bottom: 0;
-                    }
-                }
-                
-                @media (max-width: 768px) {
-                    .card-main-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    .map-qr-section {
-                        grid-column: span 1;
-                        grid-template-columns: 1fr;
-                    }
-                    .mini-map-container {
-                        height: 200px;
-                    }
-                    .qr-preview-container {
-                        flex-direction: row;
-                        text-align: left;
-                    }
-                    .profile-image-container {
-                        max-width: 180px;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .id-card-container {
-                        padding: 25px 20px;
-                    }
-                    .card-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 15px;
-                    }
-                    .stats-grid {
-                        grid-template-columns: 1fr;
-                        gap: 15px;
-                    }
-                    .qr-preview-container {
-                        flex-direction: column;
-                        text-align: center;
-                    }
-                    .card-footer {
-                        flex-direction: column;
-                        align-items: center;
-                        text-align: center;
-                    }
-                    .action-buttons {
-                        justify-content: center;
-                    }
-                }
-            `}</style>
+                <div className={styles["action-group"]}>
+                    <button className={styles["external-icon-btn"]} onClick={handleCopyLink} title="Copy Link">🔗 Copy Profile Link</button>
+                    <button className={styles["external-download-btn"]} onClick={handleDownload}>📥 Download Card Image</button>
+                </div>
+            </div>
         </div>
     )
 }

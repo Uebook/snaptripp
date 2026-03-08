@@ -1,13 +1,63 @@
-export default function AdminDashboard() {
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import Link from 'next/link'
+
+// Set revalidate to 0 to always fetch fresh data on the server
+export const revalidate = 0
+
+export default async function AdminDashboard() {
+  let totalUsers = 0
+  let activeTrips = 0
+  let recentSignups: any[] = []
+
+  try {
+    // Fetch Total Users bypassing RLS
+    const { count: userCount } = await supabaseAdmin
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+    totalUsers = userCount || 0
+
+    // Fetch Active Trips (assuming upcoming/current trips are 'active')
+    const today = new Date().toISOString()
+    const { count: tripCount } = await supabaseAdmin
+      .from('trips')
+      .select('*', { count: 'exact', head: true })
+      .gte('end_date', today)
+    activeTrips = tripCount || 0
+
+    // Fetch Recent Signups (from profiles, ordered by created_at)
+    const { data: signups } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, created_at, location')
+      .order('created_at', { ascending: false })
+      .limit(3)
+    recentSignups = signups || []
+
+  } catch (err) {
+    console.error('Failed to load dashboard data:', err)
+  }
+
   const stats = [
-    { label: 'Total Users', value: '24,892', trend: '+12%', up: true, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> },
-    { label: 'Active Trips', value: '1,240', trend: '+5%', up: true, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> },
+    { label: 'Total Users', value: totalUsers.toLocaleString(), trend: '+12%', up: true, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> },
+    { label: 'Active Trips', value: activeTrips.toLocaleString(), trend: '+5%', up: true, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> },
     { label: 'Revenue', value: '$45,200', trend: '+18%', up: true, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> },
     { label: 'Tickets', value: '14', trend: '-20%', up: false, icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg> },
   ]
 
+  const formatTimeAgo = (dateString: string) => {
+    if (!dateString) return 'Unknown'
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    if (diffInHours < 24) return `${diffInHours} hours ago`
+    return `${Math.floor(diffInHours / 24)} days ago`
+  }
+
   return (
     <div className="admin-dashboard">
+      <div style={{ marginBottom: '16px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 800, margin: 0, background: 'linear-gradient(90deg, #0ea5e9, #38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome back, Admin</h1>
+        <p style={{ color: 'var(--admin-muted)', marginTop: '8px', fontSize: '15px' }}>Here&apos;s what&apos;s happening on Snaptrip today.</p>
+      </div>
       <div className="admin-grid">
         {stats.map((stat, i) => (
           <div key={i} className="admin-card">
@@ -16,7 +66,13 @@ export default function AdminDashboard() {
                 <div className="card-label">{stat.label}</div>
                 <div className="card-value">{stat.value}</div>
               </div>
-              <div style={{ color: 'var(--admin-accent)', background: 'rgba(14, 165, 233, 0.1)', padding: '10px', borderRadius: '12px' }}>
+              <div style={{
+                color: '#fff',
+                background: `linear-gradient(135deg, var(--admin-accent) 0%, #38bdf8 100%)`,
+                padding: '12px',
+                borderRadius: '16px',
+                boxShadow: '0 8px 16px var(--admin-accent-glow)'
+              }}>
                 {stat.icon}
               </div>
             </div>
@@ -35,7 +91,7 @@ export default function AdminDashboard() {
         <div className="admin-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h3>Recent Signups</h3>
-            <button className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px' }}>View All</button>
+            <Link href="/admin/users" className="admin-button outline" style={{ padding: '6px 12px', fontSize: '12px', textDecoration: 'none' }}>View All</Link>
           </div>
           <table className="admin-table">
             <thead>
@@ -47,24 +103,18 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontWeight: '600' }}>Rahul Varma</td>
-                <td>Mumbai, India</td>
-                <td>2 hours ago</td>
-                <td><span className="badge success">Verified</span></td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: '600' }}>Sarah Miller</td>
-                <td>New York, USA</td>
-                <td>4 hours ago</td>
-                <td><span className="badge success">Verified</span></td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: '600' }}>Chen Wei</td>
-                <td>Beijing, China</td>
-                <td>Yesterday</td>
-                <td><span className="badge warning">Pending</span></td>
-              </tr>
+              {recentSignups.length > 0 ? (
+                recentSignups.map(user => (
+                  <tr key={user.id}>
+                    <td style={{ fontWeight: '600' }}>{user.full_name || 'Anonymous User'}</td>
+                    <td>{user.location || 'Not Specified'}</td>
+                    <td>{formatTimeAgo(user.created_at)}</td>
+                    <td><span className="badge success">Verified</span></td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>No recent signups found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

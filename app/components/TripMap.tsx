@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.markercluster'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { DayPlan } from './DayPlanner'
 
 // Fix for default marker icon in Next.js - Using more robust CDN links
@@ -50,33 +53,36 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
 
     // Persistent LayerGroups
     const cityLayerRef = useRef<L.LayerGroup>(L.layerGroup())
-    const placeLayerRef = useRef<L.LayerGroup>(L.layerGroup())
+    const placeLayerRef = useRef<any>(null)
     const tripLayerRef = useRef<L.LayerGroup>(L.layerGroup())
 
-    const [zoomLevel, setZoomLevel] = useState<number>(6)
     const lastFittedRef = useRef<string>('')
-    const CITY_ZOOM_THRESHOLD = 10.5
 
     // Initialize map
     useEffect(() => {
         if (!mapContainerRef.current) return
         if (!mapRef.current) {
             mapRef.current = L.map(mapContainerRef.current, {
-                scrollWheelZoom: false, // Disable zoom on scroll as requested
+                scrollWheelZoom: true, // Enabled native zoom as requested
                 doubleClickZoom: true,
                 zoomControl: true
-            }).setView([53.3498, -6.2603], 6) // Start centered on Ireland at city-level view
+            }).setView([53.3498, -6.2603], 6)
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19,
             }).addTo(mapRef.current)
 
-            mapRef.current.on('zoom', () => {
-                if (!mapRef.current) return
-                const newZoom = mapRef.current.getZoom()
-                setZoomLevel(newZoom)
-            })
+            // Setup MarkerCluster group for places
+            placeLayerRef.current = (L as any).markerClusterGroup({
+                showCoverageOnHover: false,
+                maxClusterRadius: 60,
+                iconCreateFunction: function (cluster: any) {
+                    const count = cluster.getChildCount();
+                    const iconHtml = `<div style="background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); color: white; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; border: 3px solid white; box-shadow: 0 6px 15px rgba(14, 165, 233, 0.4);">${count}</div>`;
+                    return L.divIcon({ html: iconHtml, className: 'custom-cluster-marker', iconSize: [44, 44] });
+                }
+            });
 
             const resizeObserver = new ResizeObserver(() => {
                 mapRef.current?.invalidateSize()
@@ -208,34 +214,34 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
             })
         })
 
-    }, [places, dayPlans, onCityClick, onAddToPlan, onRemoveFromPlan, selectedCity]) // Added selectedCity to dependency
+    }, [places, dayPlans, onCityClick, onAddToPlan, onRemoveFromPlan, selectedCity])
 
-    // Visibility Management
+    // Visibility Management (Strictly managed by state, NOT map zoom, to prevent overlap)
     useEffect(() => {
-        if (!mapRef.current) return
-        const syncLayer = (layer: L.LayerGroup, shouldBeVisible: boolean) => {
+        if (!mapRef.current || !placeLayerRef.current) return
+        const syncLayer = (layer: any, shouldBeVisible: boolean) => {
             const hasLayer = mapRef.current?.hasLayer(layer)
-            if (shouldBeVisible && !hasLayer) layer.addTo(mapRef.current!)
-            else if (!shouldBeVisible && hasLayer) layer.remove()
+            if (shouldBeVisible && !hasLayer) mapRef.current?.addLayer(layer)
+            else if (!shouldBeVisible && hasLayer) mapRef.current?.removeLayer(layer)
         }
 
-        if (zoomLevel < CITY_ZOOM_THRESHOLD) {
+        if (isSavedTripView) {
+            // Saved trip: show route markers only
+            syncLayer(cityLayerRef.current, false)
+            syncLayer(placeLayerRef.current, false)
+            syncLayer(tripLayerRef.current, true)
+        } else if (selectedCity) {
+            // Local view: show clustered places only
+            syncLayer(cityLayerRef.current, false)
+            syncLayer(tripLayerRef.current, false)
+            syncLayer(placeLayerRef.current, true)
+        } else {
+            // Explore view: show decluttered cities only
             syncLayer(cityLayerRef.current, true)
             syncLayer(placeLayerRef.current, false)
             syncLayer(tripLayerRef.current, false)
-            // Auto clear selected city if zoom out far
-            if (zoomLevel < 7 && selectedCity && onCityClick) onCityClick('')
-        } else {
-            syncLayer(cityLayerRef.current, false)
-            if (isSavedTripView) {
-                syncLayer(placeLayerRef.current, false)
-                syncLayer(tripLayerRef.current, true)
-            } else {
-                syncLayer(placeLayerRef.current, true)
-                syncLayer(tripLayerRef.current, false)
-            }
         }
-    }, [zoomLevel, isSavedTripView, selectedCity, onCityClick])
+    }, [isSavedTripView, selectedCity])
 
     // Fit bounds
     useEffect(() => {
