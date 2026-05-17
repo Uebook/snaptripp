@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AuthModal from './AuthModal'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 export default function SiteHeader() {
   const [user, setUser] = useState<any>(null)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     // Check active session
@@ -30,48 +31,44 @@ export default function SiteHeader() {
     router.push('/')
   }
 
+  const getLinkClass = (path: string) => {
+    return pathname === path ? 'active' : ''
+  }
+
   return (
-    <header className="home-header" style={{ backgroundColor: '#0a192f', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-      <div className="home-nav" style={{ maxWidth: '1200px', margin: '0 auto', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link href="/" className="home-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ backgroundColor: '#ffc107', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '18px' }}>
-            🚀
-          </div>
-          <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>SnapTrip</span>
+    <header className="home-header">
+      <div className="header-container">
+        <Link href="/" className="logo-container">
+          <span className="logo-text">SnapTrip</span>
         </Link>
 
-        <nav className="home-links" style={{ display: 'flex', gap: '2rem' }}>
-          <Link href="/how-it-works" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500, opacity: 0.9 }}>How It Works</Link>
-          <Link href="/about" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500, opacity: 0.9 }}>About</Link>
-          <Link href="/blog" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500, opacity: 0.9 }}>Blog</Link>
-          <Link href="/contact" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500, opacity: 0.9 }}>Contact</Link>
-          {user && (
-            <Link href="/dashboard" style={{ color: '#ffc107', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 600, opacity: 1 }}>Dashboard</Link>
-          )}
+        <nav className="nav-links">
+          <Link href="/plan" className={getLinkClass('/plan')}>Plan Your Trip</Link>
+          <Link href="/blog" className={getLinkClass('/blog')}>Blog</Link>
+          <Link href="/explore" className={getLinkClass('/explore')}>Country Guide</Link>
+          <Link href="/how-it-works" className={getLinkClass('/how-it-works')}>How SnapTrip Work</Link>
         </nav>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="header-actions">
           {user ? (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.9rem', color: 'white', opacity: 0.8 }}>
-                {user.user_metadata?.full_name?.split(' ')[0] || 'User'}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="home-cta"
-                style={{ backgroundColor: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                Logout
+            <div className="user-profile">
+              <button onClick={handleLogout} className="logout-link">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="home-cta"
-              style={{ backgroundColor: '#ffc107', color: '#000', border: 'none', padding: '10px 24px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              Get Started
-            </button>
+            <Link href="/login" className="profile-icon-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+            </Link>
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster'
@@ -68,8 +68,8 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 zoomControl: true
             }).setView([53.3498, -6.2603], 6)
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
+            L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia3Jvbm9zYW51aiIsImEiOiJjbW1oaXozOWQwNGZkMnBzN3V5dWNodzVoIn0.2lA72tk0dUkLIANsYmbPQg', {
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 maxZoom: 19,
             }).addTo(mapRef.current)
 

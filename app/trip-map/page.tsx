@@ -7,7 +7,7 @@ import '@fontsource/inter/400.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/800.css';
 
-import { useEffect, useState, useRef, Suspense } from 'react'
+import React, { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import SiteHeader from '../components/SiteHeader'
@@ -21,6 +21,9 @@ const TripMap = dynamic(() => import('../components/TripMap'), {
   ssr: false,
   loading: () => <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e9ecef' }}>Loading map...</div>
 })
+
+import { supabase } from '@/lib/supabase'
+import AuthModal from '../components/AuthModal'
 
 interface Place {
   id: number
@@ -50,9 +53,6 @@ interface Place {
   ai_Pets_0_dogs?: boolean; ai_Pets_1_dogs?: boolean; ai_Pets_2_dogs?: boolean;
   ai_Plan_0_tickets?: boolean; ai_Plan_1_tickets?: boolean; ai_Plan_2_tickets?: boolean; ai_Plan_3_tickets?: boolean;
 }
-
-import { supabase } from '@/lib/supabase'
-import AuthModal from '../components/AuthModal'
 
 function TripMapContent() {
   const searchParams = useSearchParams()
@@ -178,7 +178,7 @@ function TripMapContent() {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
-      setIsAuthModalOpen(true)
+      router.push('/login')
       return
     }
 
@@ -229,7 +229,6 @@ function TripMapContent() {
     } finally {
       setIsSaving(false)
     }
-
   }
 
   // Planner Handlers
@@ -292,9 +291,6 @@ function TripMapContent() {
     newDays[lastDayIndex].items.push(item);
     setDayPlans(newDays);
   }
-
-
-
 
   const getOthers = () => {
     if (!selectedCity) return [];
@@ -363,7 +359,9 @@ function TripMapContent() {
   const isPlaceInPlanGlobal = (placeId: number) => {
     const itemId = `place-${placeId}`;
     return dayPlans.some(day => day.items.some(item => item.data?.id === placeId || item.id === itemId));
-  }
+  };
+
+  const selectedCityData = selectedCity ? places.find(p => p.city === selectedCity) : null;
 
   if (!country) {
     return (
@@ -377,13 +375,11 @@ function TripMapContent() {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
-  const selectedCityData = selectedCity ? places.find(p => p.city === selectedCity) : null;
-
   return (
-    <div className={`trip-map-page ${activeMobileTab === 'explore' && selectedCity ? 'mobile-explore-fullscreen' : ''}`}>
+    <div className="trip-map-page">
       <div className="trip-map-header-wrapper">
         <SiteHeader />
       </div>
@@ -392,12 +388,11 @@ function TripMapContent() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
-          setIsAuthModalOpen(false)
-          handleSaveTripClick()
+          setIsAuthModalOpen(false);
+          handleSaveTripClick();
         }}
       />
 
-      {/* Save Trip Title Modal */}
       {isSaveTitleModalOpen && (
         <div className="save-modal-overlay" onClick={() => setIsSaveTitleModalOpen(false)}>
           <div className="save-modal-content" onClick={e => e.stopPropagation()}>
@@ -433,228 +428,134 @@ function TripMapContent() {
           </div>
         </div>
       )}
+
+      {/* ─── Main Grid ─────────────────────────────────────────────────────── */}
       <div
         className="trip-map-container"
         style={{
-          gridTemplateAreas: '"itinerary map guide"',
-          gridTemplateColumns: `${isLeftSidebarOpen ? 'var(--sidebar-left)' : '0px'} 1fr ${isRightSidebarOpen ? 'var(--sidebar-right)' : '0px'}`
+          gridTemplateAreas: dayPlans.length > 0 ? '"guide map" "itinerary itinerary"' : '"guide map"',
+          gridTemplateColumns: '450px 1fr',
+          gridTemplateRows: dayPlans.length > 0 ? '1fr 320px' : '1fr'
         }}
       >
-        {/* Left Sidebar: Your Itinerary / Day Planner */}
-        <div
-          className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${!isLeftSidebarOpen ? 'sidebar-hidden' : ''}`}
-          style={{ gridArea: 'itinerary' }}
-        >
-          <div className="itinerary-header-premium" style={{ position: 'relative' }}>
-            <button
-              onClick={() => setIsLeftSidebarOpen(false)}
-              className="panel-close-btn"
-              title="Close Panel"
-            >×</button>
-            <h2 className="itinerary-title-premium">Your Itinerary</h2>
-            <p className="itinerary-subtitle-premium">{dayPlans.length} Days Planned</p>
-          </div>
 
-          <div className="itinerary-scroller-premium">
-            {dayPlans.length > 0 ? (
-              dayPlans.map((day) => (
+        {/* ── Left Sidebar / Itinerary (bottom row when dayPlans exist) ── */}
+        {dayPlans.length > 0 && (
+          <div
+            className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${!isLeftSidebarOpen ? 'sidebar-hidden' : ''}`}
+            style={{ gridArea: 'itinerary' }}
+          >
+            <div className="itinerary-header-horizontal">
+              <div className="itinerary-info-horizontal">
+                <div className="itinerary-title-horizontal">
+                  <span>Your Itinerary</span>
+                  <h4>{country?.toUpperCase()} TRIP • {dayPlans.length} DAYS</h4>
+                </div>
+              </div>
+              <div className="itinerary-actions-horizontal">
+                <button className="btn-confirm-itinerary">CONFIRM ITINERARY</button>
+                <button className="btn-share-itinerary" onClick={handleSaveTripClick}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-12-4l4-4 4 4m-4-4v12" />
+                  </svg>
+                  Share
+                </button>
+              </div>
+            </div>
+
+            <div className="itinerary-scroller-premium">
+              {dayPlans.map((day, idx) => (
                 <div
                   key={day.id}
-                  className={`day-card-premium animate-slide-up ${dragOverDayId === day.id ? 'drag-over' : ''}`}
+                  className={`day-card-premium ${dragOverDayId === day.id ? 'drag-over' : ''}`}
                   onDragOver={(e) => { e.preventDefault(); setDragOverDayId(day.id) }}
                   onDragLeave={() => setDragOverDayId(null)}
                   onDrop={() => handleDropOnDay(day.id)}
                 >
-                  <div className="day-card-header">
-                    <h3 className="day-label-modern">{day.title}</h3>
-                    <span className="day-drop-hint">Drop here</span>
+                  <div className="day-card-header" style={{ borderBottom: '1px solid #F3F4F6', padding: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="step-number" style={{ width: '28px', height: '28px', fontSize: '14px' }}>{idx + 1}</div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <h3 className="day-label-modern" style={{ margin: 0, fontSize: '15px' }}>{day.title}</h3>
+                        <span style={{ fontSize: '11px', color: '#9CA3AF' }}>Oct {14 + idx}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="site-list-premium">
+                  <div className="site-list-premium" style={{ padding: '16px', gap: '12px', display: 'flex', flexDirection: 'column' }}>
                     {day.items.map(item => (
                       <div
                         key={item.id}
-                        className={`site-entry-premium draggable-entry ${dragItem?.itemId === item.id ? 'is-dragging' : ''}`}
-                        draggable
-                        onDragStart={() => handleDragStart(item.id, day.id)}
-                        onDragEnd={() => { setDragItem(null); setDragOverDayId(null) }}
+                        className="site-entry-premium"
+                        style={{ padding: '10px', background: '#FAFAFA', borderRadius: '8px', border: '1px solid #E5E7EB' }}
                       >
-                        <div className="drag-handle-minimal">⠿</div>
-                        <div className="entry-content-minimal">
-                          {item.data?.image_url && (
-                            <img src={item.data.image_url} alt="" className="entry-thumbnail-img" />
-                          )}
-                          <div className="entry-text-stack">
-                            <span className="entry-name-minimal">{item.name}</span>
-                            <span className="entry-category-minimal">{item.data?.categoryName || 'Attraction'}</span>
-                          </div>
+                        <img src={item.data?.image_url || '/api/placeholder/40/40'} alt="" style={{ width: '36px', height: '36px', borderRadius: '6px' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                          <div style={{ fontSize: '11px', color: '#6B7280' }}>09:00 AM • {item.data?.city}</div>
                         </div>
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <button
-                            className="view-site-btn-minimal"
-                            onClick={() => {
-                              setActiveDetailsPlace(item.data as Place);
-                              setIsRightSidebarOpen(true);
-                              if (window.innerWidth <= 768) setActiveMobileTab('explore');
-                            }}
-                            title="View Details"
-                          >View</button>
-                          <button
-                            className="entry-remove-btn"
-                            style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fef2f2', color: '#ef4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
-                            onClick={() => handleRemoveFromDay(day.id, item.id)}
-                            title="Remove"
-                          >×</button>
-                        </div>
+                        <button
+                          onClick={() => handleRemoveFromDay(day.id, item.id)}
+                          style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '18px' }}
+                        >×</button>
                       </div>
                     ))}
-                    {day.items.length === 0 && (
-                      <div className="day-empty-drop">Drop a place here</div>
-                    )}
+                    <div
+                      className="day-empty-drop"
+                      style={{ border: '2px dashed #E5E7EB', borderRadius: '8px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '12px', gap: '8px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>+</span> ADD ATTRACTION
+                    </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="empty-itinerary-state">
-                <div className="empty-icon-box">📅</div>
-                <p>Your plan is empty. Select a city on the right to start adding amazing places!</p>
-              </div>
-            )}
-
-            {getOthers().length > 0 && (
-              <div
-                className={`day-card-premium others-card animate-slide-up ${dragOverDayId === 'suggested' ? 'drag-over' : ''}`}
-                onDragOver={(e) => { e.preventDefault(); setDragOverDayId('suggested') }}
-                onDragLeave={() => setDragOverDayId(null)}
-                onDrop={() => handleDropOnDay('suggested')}
-              >
-                <div className="day-card-header">
-                  <h3 className="day-label-modern">Suggested Additions</h3>
-                  <span className="day-drop-hint">Drop here to remove</span>
-                </div>
-                <div className="site-list-premium">
-                  {getOthers().slice(0, 8).map(place => (
-                    <div
-                      key={place.id}
-                      className={`site-entry-minimal draggable-entry ${dragItem?.itemId === place.id.toString() ? 'is-dragging' : ''}`}
-                      draggable
-                      onDragStart={() => handleDragStart(place.id.toString(), 'suggested')}
-                      onDragEnd={() => { setDragItem(null); setDragOverDayId(null) }}
-                    >
-                      <div className="drag-handle-minimal">⠿</div>
-                      <div className="entry-content-minimal">
-                        {place.image_url ? (
-                          <img src={place.image_url} alt="" className="entry-thumbnail-img" />
-                        ) : (
-                          <div className="entry-thumbnail-placeholder" />
-                        )}
-                        <div className="entry-text-stack">
-                          <span className="entry-name-minimal" style={{ opacity: 0.9 }}>{place.title}</span>
-                          <span className="entry-category-minimal">{place.categoryName || 'Attraction'}</span>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <button
-                          className="view-site-btn-minimal"
-                          onClick={() => {
-                            setActiveDetailsPlace(place);
-                            setIsRightSidebarOpen(true);
-                            if (window.innerWidth <= 768) setActiveMobileTab('explore');
-                          }}
-                          title="View Details"
-                        >View</button>
-                        <button
-                          className="add-site-btn-minimal"
-                          title="Add to Itinerary"
-                          onClick={() => handleAddToItinerary(place)}
-                        >+</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
+        )}
 
-          <div className="itinerary-footer-actions">
-            <button
-              className="btn-timeline-floating"
-              onClick={() => setShowTimeline(true)}
-              disabled={dayPlans.length === 0}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              View Total Timeline
-            </button>
-            <button
-              className="btn-save-trip-primary"
-              onClick={handleSaveTripClick}
-              disabled={isSaving || dayPlans.length === 0}
-            >
-              {isSaving ? 'Saving...' : 'Save Trip'}
-            </button>
-          </div>
-        </div>
-
-        {/* Center: Map */}
+        {/* ── Center: Map ─────────────────────────────────────────────────── */}
         <div
           className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`}
           style={{ flex: 1, position: 'relative', gridArea: 'map' }}
         >
-          {/* Map Overlays Container */}
-          <div style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            zIndex: 1000,
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}>
-            {/* City Selector Dropdown */}
-            {places.length > 0 && (
-              <select
-                value={selectedCity || ''}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value || null)
-                  if (window.innerWidth <= 768) setActiveMobileTab('explore')
-                }}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  border: '1px solid #e2e8f0',
-                  background: 'white',
-                  color: '#031B4E',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  fontFamily: '"Inter", sans-serif',
-                  outline: 'none',
-                  minWidth: '150px'
-                }}
-              >
-                <option value="">All Cities in {country || 'Country'}</option>
-                {Array.from(new Set(places.map(p => p.city))).filter(Boolean).sort().map(city => (
-                  <option key={city} value={city}>{city}</option>
+          {/* Popular Attractions Carousel (when no plan) */}
+          {dayPlans.length === 0 && (
+            <div className="popular-attractions-carousel animate-fade-in">
+              <div className="carousel-header">
+                <span style={{ color: '#F6B800', fontSize: '18px' }}>✨</span>
+                <h3>Popular attractions</h3>
+              </div>
+              <div className="carousel-track">
+                {[
+                  { title: 'Milan: Duomo di Milano', desc: '5 Locations • 3 Days', img: '/images/explore_japan.png' },
+                  { title: 'Art Capital: Florence', desc: '8 Locations • 4 Days', img: '/images/hero_city.png' },
+                  { title: 'Roman Holidays', desc: '12 Locations • 5 Days', img: '/images/explore_japan.png' }
+                ].map((item, i) => (
+                  <div key={i} className="popular-card">
+                    <img src={item.img} alt="" />
+                    <div className="popular-card-info">
+                      <h4>{item.title}</h4>
+                      <p>{item.desc}</p>
+                    </div>
+                  </div>
                 ))}
-              </select>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
 
-          {/* Floating Toggle Buttons on Edges */}
-          {!isLeftSidebarOpen && (
-            <button
-              onClick={() => setIsLeftSidebarOpen(true)}
-              className="edge-toggle-btn edge-left"
-              title="Open Itinerary"
-            >›</button>
-          )}
-          {!isRightSidebarOpen && (
-            <button
-              onClick={() => setIsRightSidebarOpen(true)}
-              className="edge-toggle-btn edge-right"
-              title="Open Country Info"
-            >‹</button>
-          )}
+          {/* Weather Widget */}
+          <div className="weather-widget">
+            <div className="weather-main">
+              <span style={{ fontSize: '32px' }}>⛅</span>
+              <div className="weather-info">
+                <div className="weather-temp">24°C</div>
+                <strong>{country}</strong>
+                <span>Sunny</span>
+              </div>
+            </div>
+            <div className="weather-footer">
+              Best time to visit: <span>April - June</span>
+            </div>
+          </div>
 
           <TripMap
             places={places}
@@ -672,8 +573,9 @@ function TripMapContent() {
               setIsRightSidebarOpen(true);
             }}
           />
-        </div>
+        </div> {/* ← closes trip-map-main-wrapper div */}
 
+        {/* ── Right Sidebar: Guide / Place Details ────────────────────────── */}
         <div
           className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''} ${!isRightSidebarOpen ? 'sidebar-hidden' : ''}`}
           style={{ gridArea: 'guide' }}
@@ -755,100 +657,126 @@ function TripMapContent() {
             </div>
           ) : (
             <div className="country-discovery-view animate-fade-in" style={{ position: 'relative' }}>
-              <button
-                onClick={() => setIsRightSidebarOpen(false)}
-                className="panel-close-btn right-panel-close"
-                title="Close Panel"
-                style={{ zIndex: 100 }}
-              >×</button>
-              <div className="country-hero-card">
-                <div className="country-hero-bg" style={{ backgroundImage: `url(${countryInfo?.cover_image_url || '/api/placeholder/400/300'})` }} />
-                <div className="hero-gradient-overlay" />
-                <div className="hero-text-overlay">
-                  <h2>{country}</h2>
-                  <span>COUNTRY INFO</span>
+              <div className="welcome-header">
+                <h1>Welcome to <i>{country}</i></h1>
+                <p>Explore the best experiences, plan your days, and build your perfect itinerary.</p>
+              </div>
+
+              <div className="controls-row">
+                <div className="country-select-minimal">
+                  <span style={{ fontSize: '18px' }}>🇮🇹</span>
+                  {country}
+                  <span style={{ fontSize: '10px', marginLeft: '4px' }}>▼</span>
+                </div>
+                <div className="days-counter-minimal">
+                  <span>Days</span>
+                  <button className="counter-btn" onClick={() => setDaysCount(Math.max(1, daysCount - 1))}>-</button>
+                  <strong>{daysCount}</strong>
+                  <button className="counter-btn" onClick={() => setDaysCount(daysCount + 1)}>+</button>
+                </div>
+                <div className="search-bar-minimal">
+                  <input
+                    type="text"
+                    placeholder={`Search ${selectedCity || country}...`}
+                    value={selectedCity || ''}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                  />
+                  <span style={{ color: '#F6B800' }}>🔍</span>
                 </div>
               </div>
 
               <div className="discovery-scroll-area">
-                <div className="info-accordion-stack">
-                  <div className={`accordion-item ${activeAccordion === 'overview' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'overview' ? null : 'overview')}>
-                      <span className="icon">🌍</span>
-                      <span className="label">Brief Overview</span>
-                      <span className="arrow">{activeAccordion === 'overview' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'overview' && (
-                      <div className="accordion-content animate-slide-down">
-                        <p className="overview-text-premium">{countryInfo?.overview || `Explore the beauty and culture of ${country}.`}</p>
-                      </div>
-                    )}
-                  </div>
+                {selectedCity ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3 style={{ fontSize: '18px', margin: 0 }}>Nearby results</h3>
+                      <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Showing {places.filter(p => p.city === selectedCity).length} results</span>
+                    </div>
 
-                  <div className={`accordion-item ${activeAccordion === 'bucket' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'bucket' ? null : 'bucket')}>
-                      <span className="icon">✨</span>
-                      <span className="label">Must Do Bucket-List</span>
-                      <span className="arrow">{activeAccordion === 'bucket' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'bucket' && (
-                      <div className="accordion-content animate-slide-down">
-                        <div className="bucket-grid">
-                          {countryInfo?.bucket_list?.map((item: any, i: number) => (
-                            <div key={i} className="bucket-card-glass">
-                              {item.image_url && <img src={item.image_url} alt="" />}
-                              <p>{item.text}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: '#111827' }}>Curation Spotlight</span>
+                      <span style={{ fontSize: '11px', color: '#F6B800', fontWeight: '700', letterSpacing: '1px' }}>VIEW GALLERY</span>
+                    </div>
+
+                    {places.filter(p => p.city === selectedCity).map(place => (
+                      <div key={place.id} className="attraction-card-editorial">
+                        <div className="card-top">
+                          <img src={place.image_url || '/api/placeholder/100/100'} alt="" className="card-img" />
+                          <div className="card-main-info">
+                            <h4>{place.title}</h4>
+                            <span className="card-category">{place.categoryName || 'Attraction'}</span>
+                            <div className="card-meta">
+                              <span className="card-rating">★ 4.9</span>
+                              <span>(2,841)</span>
+                              <span>• Open until 7PM</span>
                             </div>
-                          ))}
+                          </div>
+                          <button
+                            className="card-action-btn"
+                            onClick={() => handleAddToItinerary(place)}
+                          >
+                            {isPlaceInPlanGlobal(place.id) ? '✓' : '+'}
+                          </button>
+                        </div>
+                        <div className="card-footer-info" onClick={() => setActiveDetailsPlace(place)}>
+                          MORE INFO <span style={{ marginLeft: '4px', fontSize: '14px' }}>▾</span>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className={`accordion-item ${activeAccordion === 'foods' ? 'active' : ''}`}>
-                    <button className="accordion-trigger" onClick={() => setActiveAccordion(activeAccordion === 'foods' ? null : 'foods')}>
-                      <span className="icon">🥘</span>
-                      <span className="label">Gastronomy Guide</span>
-                      <span className="arrow">{activeAccordion === 'foods' ? '−' : '+'}</span>
-                    </button>
-                    {activeAccordion === 'foods' && (
-                      <div className="accordion-content animate-slide-down">
-                        <div className="foods-list" style={{ padding: '0 16px 16px' }}>
-                          {countryInfo?.local_foods?.map((food: any, i: number) => (
-                            <div key={i} className="food-item-premium" style={{ marginBottom: '20px' }}>
-                              <h4 style={{ margin: '0 0 4px', color: 'var(--color-sapphire)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '1px' }}>{food.name}</h4>
-                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-soft-slate)', lineHeight: '1.5' }}>{food.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="quick-city-selector">
-                  <h3 className="top-cities-header">Top Cities to Visit</h3>
-                  <div className="city-grid-mini">
-                    {Array.from(new Set(places.map(p => p.city))).slice(0, 6).map(city => (
-                      <button key={city} className="city-card-glass" onClick={() => setSelectedCity(city)}>
-                        <span>{city}</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                      </button>
                     ))}
-                  </div>
-                </div>
+                  </>
+                ) : (
+                  <div className="explorer-view">
+                    <h2 style={{ fontSize: '24px', margin: '0 0 8px' }}>{country} Explorer</h2>
+                    <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 32px' }}>Welcome to your personal guide to {country}.</p>
 
-                <button onClick={() => router.push('/')} className="btn-secondary-outline back-home" style={{ marginTop: '24px' }}>
-                  ← Main Menu
-                </button>
+                    <div className="explorer-steps">
+                      <div className="explorer-step">
+                        <div className="step-number">1</div>
+                        <div className="step-content">
+                          <h4>Select a City</h4>
+                          <p>Click a marker on the map to begin your journey.</p>
+                        </div>
+                      </div>
+                      <div className="explorer-step">
+                        <div className="step-number">2</div>
+                        <div className="step-content">
+                          <h4>Choose Attractions</h4>
+                          <p>Browse local landmarks and add them to your itinerary.</p>
+                        </div>
+                      </div>
+                      <div className="explorer-step">
+                        <div className="step-number">3</div>
+                        <div className="step-content">
+                          <h4>Finalize Itinerary</h4>
+                          <p>Review your day-wise plan and start your tour.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="explorer-card">
+                      <div className="explorer-card-icon">🏛️</div>
+                      <div className="explorer-card-text">
+                        <h5>Timeless Art &amp; Living Culture</h5>
+                        <p>Witness the genius of the masters as you wander through galleries.</p>
+                      </div>
+                    </div>
+                    <div className="explorer-card" style={{ background: '#FFF7ED' }}>
+                      <div className="explorer-card-icon" style={{ color: '#F97316' }}>🍴</div>
+                      <div className="explorer-card-text">
+                        <h5>Savor the Flavors of Tradition</h5>
+                        <p>Indulge in artisanal delicacies and world-class vintages.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </div> {/* ← closes right-sidebar div */}
 
+      </div> {/* ← closes trip-map-container div */}
 
-      {/* Mobile Bottom Navigation */}
+      {/* ── Mobile Bottom Nav ───────────────────────────────────────────────── */}
       <div className="mobile-bottom-nav">
         <button className={`mobile-nav-btn ${activeMobileTab === 'itinerary' ? 'active' : ''}`} onClick={() => setActiveMobileTab('itinerary')}>
           <span className="icon">📋</span>
@@ -897,30 +825,51 @@ function TripMapContent() {
 
         .trip-map-container {
           display: grid;
-          grid-template-columns: var(--sidebar-left) 1fr var(--sidebar-right);
+          grid-template-areas: 
+            "guide map"
+            "itinerary itinerary";
+          grid-template-columns: 450px 1fr;
+          grid-template-rows: 1fr 320px;
           height: calc(100vh - 64px);
-          background: #eef2f7;
+          background: #FFFFFF;
         }
 
         .trip-map-container.fullscreen-map {
+          grid-template-areas: "map map" "itinerary itinerary";
           grid-template-columns: 1fr !important;
         }
 
         .sidebar {
-          background: var(--glass-surface);
-          backdrop-filter: var(--glass-blur);
-          -webkit-backdrop-filter: var(--glass-blur);
+          background: #FFFFFF;
           display: flex;
           flex-direction: column;
           position: relative;
           z-index: 20;
-          box-shadow: var(--shadow-luxe);
           overflow: hidden;
           min-height: 0;
         }
 
-        .left-sidebar { border-right: 1px solid var(--glass-border); }
-        .right-sidebar { border-left: 1px solid var(--glass-border); }
+        .left-sidebar { border-top: 1px solid #E2E8F0; }
+        .right-sidebar { border-right: 1px solid #E2E8F0; }
+
+        .itinerary-scroller-premium {
+          display: flex;
+          flex-direction: row;
+          gap: 24px;
+          padding: 24px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          flex: 1;
+        }
+
+        .day-card-premium {
+          min-width: 320px;
+          flex-shrink: 0;
+          background: #FFFFFF;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+        }
 
         /* Typography & Headings */
         h1, h2, h3 {
@@ -937,765 +886,478 @@ function TripMapContent() {
           overflow: hidden;
         }
 
-        .sidebar-header-premium {
-          padding: 32px 24px;
+        .itinerary-header-horizontal {
+          padding: 20px 40px;
+          background: #F9FAFB;
+          border-bottom: 1px solid #E5E7EB;
           display: flex;
+          justify-content: space-between;
           align-items: center;
-          gap: 20px;
-          background: rgba(255, 255, 255, 0.4);
         }
 
-        .city-name-premium {
-          font-size: 32px;
-          font-weight: 900;
-          color: var(--color-sapphire);
+        .itinerary-info-horizontal {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+
+        .itinerary-title-horizontal {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .itinerary-title-horizontal h4 {
+          font-size: 16px;
+          color: #111827;
+          font-weight: 700;
           margin: 0;
         }
 
-        .country-hero-card {
-          width: 100%;
-          height: 240px;
-          position: relative;
-          clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+        .itinerary-title-horizontal span {
+          font-size: 12px;
+          color: #6B7280;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
-        .country-hero-card img { width: 100%; height: 100%; object-fit: cover; }
-        .hero-gradient-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, transparent 0%, rgba(3, 27, 78, 0.9) 100%);
+        .itinerary-actions-horizontal {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
-        .hero-text-overlay {
-          position: absolute;
-          bottom: 40px;
-          left: 24px;
-          color: var(--color-pure-white);
+        .btn-confirm-itinerary {
+          padding: 10px 20px;
+          background: var(--color-sapphire);
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.2s;
         }
 
-        .hero-text-overlay h2 { font-size: 38px; margin: 0; }
-        .hero-text-overlay span { 
-          font-size: 11px; 
-          text-transform: uppercase; 
-          letter-spacing: 3px; 
+        .btn-confirm-itinerary:hover {
+          background: var(--color-sapphire-light);
+        }
+
+        .btn-share-itinerary {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          background: #fff;
+          color: var(--color-sapphire);
+          border: 1px solid #E5E7EB;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-share-itinerary:hover {
+          border-color: var(--color-gold);
           color: var(--color-gold);
+        }
+
+        .popular-attractions-carousel {
+          position: absolute;
+          bottom: 32px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #FFFFFF;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+          padding: 24px;
+          width: 800px;
+          z-index: 1000;
+        }
+
+        .carousel-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+
+        .carousel-header h3 {
+          font-size: 16px;
+          color: #111827;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .carousel-track {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+
+        .carousel-track::-webkit-scrollbar { display: none; }
+
+        .popular-card {
+          min-width: 240px;
+          border: 1px solid #F3F4F6;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .popular-card img {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+        }
+
+        .popular-card-info {
+          padding: 12px;
+        }
+
+        .popular-card-info h4 {
+          font-size: 14px;
+          color: #111827;
+          margin: 0 0 4px;
           font-weight: 700;
         }
 
-        .discovery-scroll-area, .exploration-content {
+        .popular-card-info p {
+          font-size: 11px;
+          color: #9CA3AF;
+          margin: 0;
+        }
+
+        .welcome-header {
+          padding: 40px 32px 20px;
+        }
+
+        .welcome-header h1 {
+          font-size: 28px;
+          color: #031B4E;
+          margin: 0;
+          font-weight: 400;
+        }
+
+        .welcome-header h1 i {
+          color: #F6B800;
+          font-style: italic;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .welcome-header p {
+          color: #6B7280;
+          font-size: 14px;
+          margin: 8px 0 0;
+        }
+
+        .controls-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 0 32px 24px;
+        }
+
+        .weather-widget {
+          position: absolute;
+          top: 24px;
+          right: 24px;
+          background: #FFFFFF;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          min-width: 200px;
+        }
+
+        .weather-main {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .weather-temp {
+          font-size: 32px;
+          font-weight: 800;
+          color: #111827;
+        }
+
+        .weather-info {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .weather-info strong { font-size: 16px; color: #111827; }
+        .weather-info span { font-size: 14px; color: #6B7280; }
+
+        .weather-footer {
+          border-top: 1px solid #F3F4F6;
+          padding-top: 12px;
+          font-size: 13px;
+          color: #4B5563;
+        }
+
+        .weather-footer span { color: #111827; font-weight: 600; margin-left: 4px; }
+
+        .country-select-minimal {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border: 1px solid #E5E7EB;
+          border-radius: 8px;
+          background: #FAFAFA;
+          font-weight: 600;
+          font-size: 14px;
+          color: #111827;
+        }
+
+        .days-counter-minimal {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 16px;
+          border: 1px solid #E5E7EB;
+          border-radius: 8px;
+          background: #FAFAFA;
+        }
+
+        .days-counter-minimal span {
+          font-size: 14px;
+          color: #6B7280;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .days-counter-minimal strong {
+          font-size: 18px;
+          color: #111827;
+          min-width: 20px;
+          text-align: center;
+        }
+
+        .counter-btn {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 1px solid #D1D5DB;
+          background: #FFFFFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 16px;
+          color: #4B5563;
+        }
+
+        .search-bar-minimal {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          padding: 0 16px;
+          background: #FAFAFA;
+          border: 1px solid #E5E7EB;
+          border-radius: 8px;
+          height: 44px;
+        }
+
+        .search-bar-minimal input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          outline: none;
+          font-size: 14px;
+          color: #111827;
+        }
+
+        .search-bar-minimal input::placeholder { color: #9CA3AF; }
+
+        .discovery-scroll-area {
           flex: 1;
           overflow-y: auto;
           padding: 24px;
           scrollbar-width: thin;
           scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
         }
-        .discovery-scroll-area::-webkit-scrollbar,
-        .exploration-content::-webkit-scrollbar { width: 4px; }
-        .discovery-scroll-area::-webkit-scrollbar-track,
-        .exploration-content::-webkit-scrollbar-track { background: transparent; }
-        .discovery-scroll-area::-webkit-scrollbar-thumb,
-        .exploration-content::-webkit-scrollbar-thumb {
+        .discovery-scroll-area::-webkit-scrollbar { width: 4px; }
+        .discovery-scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .discovery-scroll-area::-webkit-scrollbar-thumb {
           background: rgba(212, 175, 55, 0.45);
           border-radius: 4px;
         }
-        .discovery-scroll-area::-webkit-scrollbar-thumb:hover,
-        .exploration-content::-webkit-scrollbar-thumb:hover {
-          background: rgba(212, 175, 55, 0.8);
-        }
 
-        .city-description-glass {
-          font-size: 15px;
-          line-height: 1.8;
-          color: var(--color-soft-slate);
-          margin-bottom: 32px;
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.5);
-          border-radius: 12px;
-          border-left: 4px solid var(--color-gold);
-        }
-
-        /* Input & Actions */
-        .generation-section-premium {
+        .explorer-steps {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
           margin-bottom: 40px;
-          padding: 24px;
-          background: var(--color-pure-white);
-          border-radius: 20px;
-          border: 1px solid var(--color-champagne);
-          box-shadow: 0 10px 20px rgba(3,27,78,0.05);
         }
 
-        .input-group-modern {
+        .explorer-step {
           display: flex;
-          align-items: center;
           gap: 16px;
-          margin-top: 16px;
         }
 
-        .premium-input-small {
-          width: 70px;
-          height: 48px;
-          border-radius: 12px;
-          border: 1px solid #E2E8F0;
-          text-align: center;
-          font-weight: 800;
-          font-size: 18px;
-          color: var(--color-sapphire);
-          background: var(--color-ice);
-        }
-
-        .btn-primary-gradient {
-          background: var(--color-sapphire);
-          color: var(--color-pure-white);
-          border: none;
-          height: 48px;
-          border-radius: 12px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          font-size: 13px;
-          cursor: pointer;
-          flex: 1;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-primary-gradient:hover {
-          background: var(--color-sapphire-light);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(3, 27, 78, 0.2);
-        }
-
-        /* Place Cards */
-        .place-row-premium {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 16px;
-          background: var(--color-pure-white);
-          border-radius: 16px;
-          margin-bottom: 12px;
-          border: 1px solid transparent;
-          transition: all 0.3s ease;
-        }
-
-        .place-row-premium:hover {
-          border-color: var(--color-gold);
-          transform: scale(1.02);
-          box-shadow: 0 10px 25px rgba(212, 175, 55, 0.08);
-        }
-
-        .place-icon { 
-          width: 40px; 
-          height: 40px; 
-          background: var(--color-ice);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-        }
-        .place-info h4 { font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; margin: 0; }
-        .place-info p { font-size: 12px; color: var(--color-soft-slate); margin-top: 2px; }
-
-        .add-site-btn-round {
+        .step-number {
           width: 32px;
           height: 32px;
           border-radius: 50%;
-          border: 2px solid var(--color-ice);
-          background: var(--color-pure-white);
-          color: var(--color-sapphire);
-          font-weight: 900;
-          cursor: pointer;
-          margin-left: auto;
-          transition: all 0.2s;
-        }
-
-        .add-site-btn-round:hover {
-          background: var(--color-gold);
-          color: var(--color-pure-white);
-          border-color: var(--color-gold);
-        }
-
-        /* Right Sidebar: Itinerary Luxury Timeline */
-        /* New Card-Based Mindtrip Itinerary Styling */
-        .itinerary-header-premium {
-          padding: 40px 24px 24px;
-          background: #fff;
-        }
-
-        .itinerary-title-premium { font-size: 28px; font-family: 'Playfair Display', serif; color: var(--color-sapphire); margin: 0; font-weight: 900;}
-        .itinerary-subtitle-premium { 
-          font-size: 12px; 
-          text-transform: uppercase; 
-          letter-spacing: 2px;
-          color: #E2B13C;
+          background: #F6B800;
+          color: #FFFFFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           font-weight: 700;
-          margin-top: 4px;
+          flex-shrink: 0;
         }
 
-        .itinerary-scroller-premium {
+        .step-content h4 {
+          font-size: 16px;
+          color: #111827;
+          margin: 0 0 4px;
+        }
+
+        .step-content p {
+          font-size: 13px;
+          color: #6B7280;
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        .explorer-card {
+          background: #EEF2FF;
           padding: 24px;
-          flex: 1;
-          overflow-y: auto;
-          background: #fafafa;
-          scrollbar-width: none;
-        }
-
-        .day-card-premium {
-          position: relative;
-          padding-left: 24px;
-          margin-bottom: 40px;
-        }
-
-        .day-card-premium::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 10px;
-          bottom: -40px;
-          width: 2px;
-          background: #eee;
-        }
-
-        .day-card-premium:last-child::before { display: none; }
-
-        .day-label-modern {
-          font-size: 14px;
-          font-weight: 800;
-          color: var(--color-sapphire);
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .day-label-modern::before {
-          content: '';
-          width: 12px;
-          height: 12px;
-          background: #E2B13C;
-          border-radius: 50%;
-          position: absolute;
-          left: -5px;
-          box-shadow: 0 0 0 4px #fafafa;
-        }
-
-        .site-entry-premium {
-          background: #fff;
-          padding: 16px;
           border-radius: 12px;
-          margin-bottom: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-          font-weight: 600;
-          font-size: 14px;
-          border: 1px solid #f0f0f0;
           display: flex;
-          align-items: center;
-          gap: 12px;
+          gap: 20px;
+          margin-bottom: 16px;
         }
 
-        .site-entry-minimal {
-          background: #fff;
-          padding: 16px 20px;
-          border-radius: 16px;
-          margin-bottom: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          border: 1px solid #f0f0f0;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .site-entry-minimal:hover {
-          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-          transform: translateY(-2px);
-        }
-
-        .drag-handle-minimal {
-          color: #a0aec0;
-          cursor: grab;
-          font-size: 18px;
-          line-height: 1;
-          letter-spacing: -2px;
-        }
-
-        .entry-content-minimal {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .entry-thumbnail-img, .entry-thumbnail-placeholder {
+        .explorer-card-icon {
           width: 44px;
           height: 44px;
-          border-radius: 10px;
-          object-fit: cover;
+          border-radius: 8px;
+          background: #FFFFFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          color: #F6B800;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
           flex-shrink: 0;
-          background: #e2e8f0;
         }
 
-        .entry-text-stack {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .entry-category-minimal {
-          font-size: 12px;
-          color: #64748b;
-        }
-
-        .entry-name-minimal {
+        .explorer-card-text h5 {
+          font-size: 15px;
+          color: #111827;
+          margin: 0 0 8px;
           font-weight: 700;
-          color: #0f172a;
-          font-size: 14px;
         }
 
-        .add-site-btn-minimal {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          border: 1px solid #e2e8f0;
-          background: #fff;
-          color: #1e293b;
-          font-weight: 900;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s;
-          font-family: monospace;
-          font-size: 18px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .add-site-btn-minimal:hover {
-          background: #f8fafc;
-          border-color: #cbd5e1;
-        }
-
-        /* Footer Actions */
-        .itinerary-footer-actions {
-          padding: 24px;
-          background: #fff;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .btn-timeline-floating {
-          height: 54px;
-          background: var(--color-pure-white);
-          border: 1px solid #E2E8F0;
-          border-radius: 14px;
-          font-weight: 800;
-          color: var(--color-sapphire);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-
-        .btn-timeline-floating:hover {
-          background: var(--color-ice);
-        }
-
-        .btn-save-trip-primary {
-          height: 60px;
-          background: var(--color-sapphire);
-          color: var(--color-pure-white);
-          border-radius: 14px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          border: none;
-          transition: all 0.3s;
-          cursor: pointer;
-        }
-
-        /* Empty States & Placeholders */
-        .empty-itinerary-state {
-          height: 200px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          opacity: 0.4;
-          text-align: center;
-        }
-
-        .empty-icon-box { font-size: 48px; margin-bottom: 16px; }
-
-        /* Quick Selectors */
-        .quick-city-selector { margin-top: 48px; }
-        .city-grid-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .city-card-glass {
-          height: 60px;
-          background: var(--color-pure-white);
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          padding: 0 16px;
-          font-weight: 700;
+        .explorer-card-text p {
           font-size: 13px;
-          cursor: pointer;
-          border: 1px solid transparent;
-          transition: all 0.2s;
+          color: #4B5563;
+          margin: 0;
+          line-height: 1.5;
         }
-        .city-card-glass:hover {
-          border-color: var(--color-gold);
-          color: var(--color-gold);
+
+        /* Place Cards */
+        .attraction-card-editorial {
+          background: #FFFFFF;
+          border-radius: 12px;
+          overflow: hidden;
+          margin-bottom: 24px;
+          border: 1px solid #F3F4F6;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .card-top {
+          display: flex;
+          padding: 16px;
+          gap: 16px;
+          position: relative;
+        }
+
+        .card-img {
+          width: 90px;
+          height: 90px;
+          border-radius: 8px;
+          object-fit: cover;
+        }
+
+        .card-main-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .card-main-info h4 {
+          font-size: 16px;
+          color: #111827;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .card-category {
+          font-size: 11px;
+          color: #9CA3AF;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin: 4px 0 8px;
+        }
+
+        .card-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 12px;
+          color: #6B7280;
+        }
+
+        .card-meta span { display: flex; align-items: center; gap: 4px; }
+        .card-rating { color: #F6B800; font-weight: 700; }
+
+        .card-action-btn {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 1px solid #E5E7EB;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          background: #FFFFFF;
+          color: #F6B800;
+          flex-shrink: 0;
+          align-self: flex-start;
+        }
+
+        .card-footer-info {
+          padding: 12px 16px;
+          background: #FAFAFA;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 11px;
+          color: #9CA3AF;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          cursor: pointer;
+          border-top: 1px solid #F3F4F6;
         }
 
         /* Animations */
         .animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* UI Micro-interactions */
-        .icon-btn {
-          width: 44px;
-          height: 44px;
-          border-radius: 14px;
-          background: var(--color-pure-white);
-          border: 1px solid #E2E8F0;
-          color: var(--color-sapphire);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .icon-btn:hover { border-color: var(--color-gold); color: var(--color-gold); }
-
-        .back-home {
-          margin: 0 24px 24px;
-          height: 48px;
-          border-radius: 12px;
-          background: transparent;
-          border: 1px solid #E2E8F0;
-          font-weight: 700;
-          color: var(--color-soft-slate);
-          cursor: pointer;
-        }
-
-        /* --- Left Panel: Section Header --- */
-        .section-subtitle-modern {
-          font-family: 'Inter', sans-serif;
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 2.5px;
-          color: var(--color-soft-slate);
-          margin: 0 0 16px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .section-subtitle-modern::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: linear-gradient(to right, rgba(212,175,55,0.35), transparent);
-        }
-
-        /* --- Accordion --- */
-        .info-accordion-stack { margin-bottom: 8px; }
-
-        .accordion-item {
-          margin-bottom: 10px;
-          border-radius: 18px;
-          overflow: hidden;
-          border: 1px solid rgba(212, 175, 55, 0.12);
-          transition: box-shadow 0.3s ease, border-color 0.3s ease;
-          background: var(--color-pure-white);
-        }
-        .accordion-item.active {
-          border-color: rgba(212, 175, 55, 0.5);
-          box-shadow: 0 6px 24px -4px rgba(212, 175, 55, 0.18);
-        }
-
-        .accordion-trigger {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 14px 18px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          text-align: left;
-          transition: background 0.2s;
-        }
-        .accordion-trigger:hover { background: rgba(248, 250, 252, 0.8); }
-        .accordion-item.active .accordion-trigger { background: rgba(212, 175, 55, 0.05); }
-
-        .accordion-trigger .icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          background: var(--color-ice);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          flex-shrink: 0;
-          border: 1px solid rgba(212, 175, 55, 0.15);
-          transition: background 0.2s, transform 0.2s;
-        }
-        .accordion-item.active .accordion-trigger .icon {
-          background: linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(212,175,55,0.06) 100%);
-          transform: scale(1.05);
-        }
-
-        .accordion-trigger .label {
-          font-family: 'Inter', sans-serif;
-          font-weight: 700;
-          font-size: 14px;
-          color: var(--color-sapphire);
-          flex: 1;
-        }
-
-        .accordion-trigger .arrow {
-          width: 26px;
-          height: 26px;
-          border-radius: 8px;
-          background: var(--color-ice);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 15px;
-          font-weight: 900;
-          color: var(--color-soft-slate);
-          transition: all 0.25s;
-          flex-shrink: 0;
-          line-height: 1;
-        }
-        .accordion-item.active .accordion-trigger .arrow {
-          background: var(--color-gold);
-          color: #fff;
-          transform: rotate(0deg);
-        }
-
-        .accordion-content {
-          padding: 4px 18px 18px;
-        }
-
-        .overview-text-premium {
-          font-size: 14px;
-          line-height: 1.8;
-          color: var(--color-soft-slate);
-          margin: 0;
-          padding: 14px 16px;
-          background: linear-gradient(135deg, rgba(248,250,252,0.8) 0%, rgba(255,255,255,0.5) 100%);
-          border-radius: 12px;
-          border-left: 3px solid var(--color-gold);
-        }
-
-        /* --- City Cards --- */
-        .city-card-glass {
-          height: auto;
-          min-height: 52px;
-          background: linear-gradient(135deg, #fff 0%, var(--color-ice) 100%);
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 16px;
-          font-weight: 700;
-          font-size: 13px;
-          color: var(--color-sapphire);
-          cursor: pointer;
-          border: 1px solid rgba(226, 232, 240, 0.8);
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 2px 8px rgba(3, 27, 78, 0.04);
-          position: relative;
-          overflow: hidden;
-          text-align: left;
-        }
-        .city-card-glass::before {
-          content: '';
-          position: absolute;
-          left: 0; top: 0; bottom: 0;
-          width: 3px;
-          background: linear-gradient(180deg, var(--color-gold) 0%, rgba(212,175,55,0.3) 100%);
-          border-radius: 3px 0 0 3px;
-          opacity: 0;
-          transition: opacity 0.25s;
-        }
-        .city-card-glass:hover {
-          border-color: rgba(212, 175, 55, 0.45);
-          color: var(--color-sapphire);
-          box-shadow: 0 8px 20px rgba(212, 175, 55, 0.12);
-          transform: translateY(-2px);
-        }
-        .city-card-glass:hover::before { opacity: 1; }
-        .city-card-glass svg {
-          opacity: 0.4;
-          transition: opacity 0.2s, transform 0.2s;
-          flex-shrink: 0;
-        }
-        .city-card-glass:hover svg {
-          opacity: 1;
-          transform: translateX(3px);
-          color: var(--color-gold);
-          stroke: var(--color-gold);
-        }
-
-        .quick-city-selector { margin-top: 36px; }
-        .city-grid-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-        /* --- Bucket List Cards --- */
-        .bucket-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .bucket-card-glass {
-          border-radius: 14px;
-          overflow: hidden;
-          background: linear-gradient(135deg, var(--color-ice), #fff);
-          border: 1px solid rgba(212, 175, 55, 0.15);
-          padding: 0;
-          transition: box-shadow 0.25s, transform 0.25s;
-        }
-        .bucket-card-glass:hover {
-          box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
-          transform: translateY(-2px);
-        }
-        .bucket-card-glass img {
-          width: 100%;
-          height: 70px;
-          object-fit: cover;
-          display: block;
-        }
-        .bucket-card-glass p {
-          margin: 0;
-          padding: 8px 10px;
-          font-size: 12px;
-          font-weight: 600;
-          color: var(--color-sapphire);
-          line-height: 1.4;
-        }
-
-        /* --- Food Items --- */
-        .food-item-premium {
-          padding: 14px 16px;
-          border-radius: 14px;
-          background: linear-gradient(135deg, rgba(248,250,252,0.9) 0%, #fff 100%);
-          border: 1px solid rgba(212, 175, 55, 0.12);
-          margin-bottom: 10px;
-          transition: box-shadow 0.2s, border-color 0.2s;
-        }
-        .food-item-premium:hover {
-          border-color: rgba(212, 175, 55, 0.4);
-          box-shadow: 0 4px 14px rgba(212, 175, 55, 0.08);
-        }
-
-        /* --- Country Discovery View Redesign --- */
-        .country-discovery-view {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          background: #fafafa;
-          overflow-y: auto;
-          scrollbar-width: none;
-        }
-
-        .country-hero-card {
-          position: relative;
-          width: 100%;
-          height: 380px;
-          flex-shrink: 0;
-          clip-path: polygon(0 0, 100% 0, 100% 88%, 0 100%);
-          background: #000;
-        }
-
-        .country-hero-bg {
-          position: absolute;
-          inset: 0;
-          background-size: cover;
-          background-position: center;
-          opacity: 0.8;
-        }
-
-        .hero-gradient-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
-        }
-
-        .hero-text-overlay {
-          position: absolute;
-          bottom: 60px;
-          left: 24px;
-          right: 24px;
-          padding-bottom: 20px;
-        }
-
-        .hero-text-overlay h2 {
-          font-family: 'Playfair Display', serif;
-          font-size: 48px;
-          font-weight: 900;
-          color: white;
-          margin: 0 0 4px;
-          letter-spacing: -1px;
-        }
-
-        .hero-text-overlay span {
-          font-family: 'Inter', sans-serif;
-          font-size: 13px;
-          font-weight: 800;
-          color: var(--color-gold);
-          letter-spacing: 3px;
-          text-transform: uppercase;
-        }
-
-        .discovery-scroll-area {
-          padding: 24px;
-          flex: 1;
-          margin-top: -30px; /* Pull content up slightly over the slant margin */
-          z-index: 2;
-          position: relative;
-        }
-
-        /* Override old accordion icon sizes in fixed country view to match screenshot */
-        .accordion-trigger .icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: var(--color-champagne);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          border: none;
-        }
-
-        .accordion-item.active .accordion-trigger .icon {
-          background: var(--color-champagne);
-          transform: none;
-        }
-
-        .accordion-trigger .arrow {
-          width: 28px;
-          height: 28px;
-          border-radius: 8px;
-          background: var(--color-ice);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          font-weight: 400;
-          color: #888;
-          transition: all 0.25s;
-        }
-
-        .sidebar.sidebar-hidden {
-          display: none !important;
-        }
 
         .panel-close-btn {
           position: absolute;
@@ -1730,225 +1392,7 @@ function TripMapContent() {
           backdrop-filter: blur(4px);
         }
 
-        .panel-open-btn {
-          background: white;
-          color: #031B4E;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-weight: bold;
-          border: 1px solid #e2e8f0;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-family: "Inter", sans-serif;
-          transition: all 0.2s;
-          font-weight: 700;
-        }
-
-        .panel-open-btn:hover {
-          background: var(--color-sapphire);
-          color: white;
-          transform: translateY(-2px);
-        }
-
-        .edge-toggle-btn {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 24px;
-          height: 60px;
-          background: white;
-          border: 1px solid #e2e8f0;
-          color: #031B4E;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          font-weight: bold;
-          cursor: pointer;
-          z-index: 1100;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .edge-toggle-btn:hover {
-          background: var(--color-sapphire);
-          color: white;
-          width: 32px;
-        }
-
-        .edge-left {
-          left: 0;
-          border-left: none;
-          border-radius: 0 8px 8px 0;
-        }
-
-        .edge-right {
-          right: 0;
-          border-right: none;
-          border-radius: 8px 0 0 8px;
-        }
-
-        .accordion-item.active .accordion-trigger .arrow {
-          background: #D4AF37;
-          color: #fff;
-          border-radius: 6px;
-          transform: none;
-        }
-
-        .accordion-item {
-          border-radius: 16px;
-          margin-bottom: 16px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-          border: 1px solid #f0f0f0;
-        }
-        
-        .accordion-item.active {
-          border-color: #f0f0f0;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-        }
-
-        .top-cities-header {
-          font-family: 'Inter', sans-serif;
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 2.5px;
-          color: #475569;
-          margin: 32px 0 16px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .top-cities-header::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: #e2e8f0;
-        }
-
-        .city-card-glass {
-          height: 52px;
-          background: #fff;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          padding: 0 16px;
-          font-weight: 700;
-          font-size: 14px;
-          color: #1e293b;
-          border: 1px solid #f1f5f9;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .city-card-glass:hover {
-          border-color: #e2e8f0;
-          color: #0f172a;
-        }
-
-        .city-card-glass svg { opacity: 0.3; }
-
-        /* Mobile Adjustments */
-        .mobile-bottom-nav {
-          display: none;
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 64px;
-          background: #fff;
-          border-top: 1px solid #eee;
-          z-index: 1000;
-          justify-content: space-around;
-          align-items: center;
-        }
-        
-        .mobile-nav-btn {
-          background: none;
-          border: none;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 600;
-          color: #888;
-          gap: 4px;
-          padding: 8px 16px;
-        }
-        
-        .mobile-nav-btn.active {
-          color: var(--color-sapphire);
-        }
-        
-        .mobile-nav-btn .icon {
-          font-size: 20px;
-        }
-
-        @media (max-width: 1024px) {
-          .trip-map-container {
-             grid-template-columns: var(--sidebar-left) 1fr;
-          }
-          .right-sidebar {
-            position: fixed;
-            right: 0;
-            top: 64px;
-            bottom: 0;
-            width: 400px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 50;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-          }
-          .right-sidebar.mobile-active {
-            transform: translateX(0);
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .trip-map-container {
-             display: flex;
-             flex-direction: column;
-             height: calc(100vh - 64px - 64px); /* header + bottom nav */
-          }
-          
-          .mobile-bottom-nav {
-             display: flex;
-          }
-          
-          .sidebar, .trip-map-main-wrapper {
-             display: none;
-             width: 100%;
-             height: 100%;
-          }
-          
-          .sidebar.mobile-active, .trip-map-main-wrapper.mobile-active {
-             display: flex;
-             position: relative;
-             transform: none;
-             top: 0;
-             z-index: auto;
-             box-shadow: none;
-          }
-          
-          .right-sidebar { left: 0; right: 0; width: 100%; }
-          
-          /* Hide menus when card is open to match fullscreen look */
-          .mobile-explore-fullscreen .trip-map-header-wrapper {
-             display: none;
-          }
-          .mobile-explore-fullscreen .mobile-bottom-nav {
-             display: none;
-          }
-          .mobile-explore-fullscreen .trip-map-container {
-             height: 100vh;
-          }
-        }
-
-        .sidebar-hidden {
+        .sidebar.sidebar-hidden {
           display: none !important;
         }
 
@@ -2126,7 +1570,7 @@ function TripMapContent() {
           background: #fef2f2;
         }
 
-        /* Save Trip Modal Styles */
+        /* Save Trip Modal */
         .save-modal-overlay {
           position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
@@ -2148,6 +1592,11 @@ function TripMapContent() {
           box-shadow: 0 24px 48px rgba(0,0,0,0.2);
           animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           text-align: center;
+        }
+
+        @keyframes modalPopUp {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .save-modal-title {
@@ -2225,25 +1674,111 @@ function TripMapContent() {
           transform: none;
         }
 
+        /* Mobile */
+        .mobile-bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 64px;
+          background: #fff;
+          border-top: 1px solid #eee;
+          z-index: 1000;
+          justify-content: space-around;
+          align-items: center;
+        }
+
+        .mobile-nav-btn {
+          background: none;
+          border: none;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 600;
+          color: #888;
+          gap: 4px;
+          padding: 8px 16px;
+          cursor: pointer;
+        }
+
+        .mobile-nav-btn.active { color: var(--color-sapphire); }
+        .mobile-nav-btn .icon { font-size: 20px; }
+
+        @media (max-width: 1024px) {
+          .trip-map-container {
+            grid-template-columns: var(--sidebar-left) 1fr;
+          }
+          .right-sidebar {
+            position: fixed;
+            right: 0;
+            top: 64px;
+            bottom: 0;
+            width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+          }
+          .right-sidebar.mobile-active {
+            transform: translateX(0);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .trip-map-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 64px - 64px);
+          }
+
+          .mobile-bottom-nav { display: flex; }
+
+          .sidebar, .trip-map-main-wrapper {
+            display: none;
+            width: 100%;
+            height: 100%;
+          }
+
+          .sidebar.mobile-active, .trip-map-main-wrapper.mobile-active {
+            display: flex;
+            position: relative;
+            transform: none;
+            top: 0;
+            z-index: auto;
+            box-shadow: none;
+          }
+
+          .right-sidebar { left: 0; right: 0; width: 100%; }
+        }
+
+        .sidebar-hidden { display: none !important; }
       `}</style>
 
-      {
-        showTimeline && (
-          <TimelineView
-            dayPlans={dayPlans}
-            onClose={() => setShowTimeline(false)}
-          />
-        )
-      }
+      {showTimeline && (
+        <TimelineView
+          dayPlans={dayPlans}
+          onClose={() => setShowTimeline(false)}
+        />
+      )}
+
       <SiteFooter />
-    </div >
+    </div>
   )
 }
 
-
 export default function TripMapPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading Trip Details...</div>}>
+    <Suspense fallback={
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#031B4E', marginBottom: '8px' }}>Loading Trip Map...</div>
+          <div style={{ color: '#64748B' }}>Initializing your personalized adventure planner</div>
+        </div>
+      </div>
+    }>
       <TripMapContent />
     </Suspense>
   )

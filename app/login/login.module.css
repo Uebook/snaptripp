@@ -1,0 +1,244 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+  font-family: var(--font-sans);
+}
+
+.leftPanel {
+  flex: 1;
+  position: relative;
+  display: none;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .leftPanel {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 60px;
+  }
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+}
+
+.leftContent {
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+.tagline {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  max-width: 450px;
+}
+
+.description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.8;
+  max-width: 400px;
+}
+
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background-color: #fff;
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #006D77; /* Deep teal from the image logo */
+  margin-bottom: 3rem;
+  display: block;
+}
+
+.welcomeTitle {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.welcomeSub {
+  color: #666;
+  margin-bottom: 2.5rem;
+}
+
+.socialButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 2rem;
+}
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e1e1;
+  background: #f8f9fa;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.socialButton:hover {
+  background: #f1f1f1;
+  border-color: #ccc;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #eee;
+}
+
+.divider:not(:empty)::before {
+  margin-right: 1.5rem;
+}
+
+.divider:not(:empty)::after {
+  margin-left: 1.5rem;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.labelWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.forgotLink {
+  font-size: 0.75rem;
+  color: #006D77;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e1e1e1;
+  background: #f8f9fa;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 184, 0, 0.1);
+}
+
+.loginButton {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--primary);
+  color: #000;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 184, 0, 0.2);
+}
+
+.loginButton:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 184, 0, 0.3);
+}
+
+.loginButton:active {
+  transform: translateY(0);
+}
+
+.footer {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: #666;
+  text-align: center;
+}
+
+.signupLink {
+  color: #006D77;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.signupLink:hover {
+  text-decoration: underline;
+}
+
+.copyright {
+  position: absolute;
+  bottom: 24px;
+  font-size: 0.75rem;
+  color: #999;
+}

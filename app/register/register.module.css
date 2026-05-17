@@ -1,0 +1,276 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #E5E7EB; /* Gray background */
+  font-family: var(--font-sans, sans-serif);
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.card {
+  display: flex;
+  background-color: #FFFFFF;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 1100px;
+  height: 800px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Left Panel */
+.leftPanel {
+  flex: 1;
+  padding: 20px; /* Padding inside the white card around the image */
+  display: flex;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bgImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/images/coastal_beach.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.overlayContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 40px;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+  color: white;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-family: var(--font-inria), serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.description {
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Right Panel */
+.rightPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.welcomeTitle {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.welcomeSub {
+  font-size: 14px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.error {
+  color: #EF4444;
+  font-size: 14px;
+  padding: 12px;
+  background: #FEE2E2;
+  border-radius: 8px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: #F1F5F9;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input::placeholder {
+  color: #9CA3AF;
+}
+
+.input:focus {
+  background-color: #E2E8F0;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+}
+
+.phoneInputWrapper {
+  display: flex;
+  gap: 12px;
+}
+
+.phoneCodeDropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background-color: #F1F5F9;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+
+.phoneInput {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: #F1F5F9;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.phoneInput::placeholder {
+  color: #9CA3AF;
+}
+
+.phoneInput:focus {
+  background-color: #E2E8F0;
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+}
+
+.submitButton {
+  margin-top: 8px;
+  width: 100%;
+  padding: 16px;
+  background-color: #EAB308;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px; /* Pill shape */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.3);
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #CA8A04;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loginLinkText {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.loginLink {
+  color: #0369A1; /* SnapTrip Blue */
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.loginLink:hover {
+  text-decoration: underline;
+}
+
+.termsText {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 10px;
+  color: #9CA3AF;
+  line-height: 1.6;
+}
+
+.highlight {
+  position: relative;
+  font-weight: 500;
+  color: #374151;
+  z-index: 1;
+}
+
+.highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #FEF08A;
+  z-index: -1;
+}

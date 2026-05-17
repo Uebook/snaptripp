@@ -1,462 +1,180 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import dynamic from 'next/dynamic'
-import '../home.css'
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
-import { MapItem } from '../components/HierarchicalMap'
-import ItinerarySidebar from '../components/ItinerarySidebar'
-import DayPlanner, { DayPlan } from '../components/DayPlanner'
-import TimelineView from '../components/TimelineView'
-import { detectSearchType } from '../utils/searchTypeDetector'
+import styles from './explore.module.css'
 
-// Dynamically import to avoid SSR issues
-const HierarchicalMap = dynamic(() => import('../components/HierarchicalMap'), {
-  ssr: false,
-  loading: () => <div style={{ height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa', borderRadius: '12px' }}>Loading map...</div>
-})
+const FEATURED_GUIDES = [
+  {
+    id: 'japan',
+    title: 'Japan: The Art of Zen & Modernity',
+    desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.',
+    image: '/images/guide_japan.png',
+    tag: 'Culture'
+  },
+  {
+    id: 'italy',
+    title: 'Italy: A Summer in Tuscany',
+    desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.',
+    image: '/images/guide_italy.png',
+    tag: 'Editorial'
+  },
+  {
+    id: 'morocco',
+    title: 'Morocco: Colors of the Maghreb',
+    desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.',
+    image: '/images/guide_morocco.png',
+    tag: 'Lifestyle'
+  },
+  {
+    id: 'france',
+    title: 'France: Beyond the City of Light',
+    desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.',
+    image: '/images/guide_france.png',
+    tag: 'Vintage'
+  }
+]
 
-function ExploreContent() {
-  const searchParams = useSearchParams()
+const REGIONS = [
+  {
+    name: 'Europe',
+    countries: ['France', 'Italy', 'Greece', 'Iceland', 'Spain', 'Switzerland']
+  },
+  {
+    name: 'The Americas',
+    countries: ['Canada', 'Mexico', 'Peru', 'United States', 'Brazil', 'Argentina']
+  },
+  {
+    name: 'Asia Pacific',
+    countries: ['Japan', 'Vietnam', 'Australia', 'New Zealand', 'Thailand', 'Indonesia']
+  },
+  {
+    name: 'Africa & Middle East',
+    countries: ['Morocco', 'South Africa', 'Kenya', 'Egypt', 'Jordan', 'UAE']
+  }
+]
+
+export default function CountryGuide() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [searchType, setSearchType] = useState<'city' | 'state' | 'country'>('city')
-  const [mapItems, setMapItems] = useState<MapItem[]>([])
-  const [selectedItem, setSelectedItem] = useState<MapItem | null>(null)
+  const router = useRouter()
 
-
-  const [dayPlans, setDayPlans] = useState<DayPlan[]>([])
-  const [showTimeline, setShowTimeline] = useState(false)
-  const [autoMode, setAutoMode] = useState(false)
-  const [fallbackItem, setFallbackItem] = useState<MapItem | null>(null)
-
-  const handleSearch = useCallback(async (queryOverride?: string, forcedType?: 'city' | 'state' | 'country') => {
-    const query = (queryOverride ?? searchQuery).trim()
-    if (!query) {
-      setError('Please enter a location')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    setMapItems([])
-    setSelectedItem(null)
-
-    if (queryOverride) {
-      setSearchQuery(query)
-    }
-
-    const detectedType = forcedType || detectSearchType(query)
-    setSearchType(detectedType)
-
-    try {
-      let response: Response
-      let data: any
-
-      // Route to appropriate API based on search type
-      if (detectedType === 'country') {
-        response = await fetch(`/api/itinerary/country?country=${encodeURIComponent(query)}`)
-        data = await response.json()
-
-        if (response.ok && data.states) {
-          const items: MapItem[] = data.states.map((item: any, index: number) => ({
-            id: `state-${index}`,
-            name: item.name,
-            type: 'state' as const,
-            coordinates: item.coordinates || { lat: 0, lng: 0 },
-            data: item.data
-          }))
-          setMapItems(items)
-        } else {
-          throw new Error(data.message || data.error || 'Failed to fetch country data')
-        }
-      } else if (detectedType === 'state') {
-        response = await fetch(`/api/itinerary/state?state=${encodeURIComponent(query)}`)
-        data = await response.json()
-
-        if (response.ok && data.cities) {
-          const items: MapItem[] = data.cities.map((item: any, index: number) => ({
-            id: `city-${index}`,
-            name: item.name,
-            type: 'city' as const,
-            coordinates: item.coordinates || { lat: 0, lng: 0 },
-            data: item.data
-          }))
-          setMapItems(items)
-        } else {
-          throw new Error(data.message || data.error || 'Failed to fetch state data')
-        }
-      } else {
-        // City search - show places
-        response = await fetch(`/api/itinerary?city=${encodeURIComponent(query)}`)
-        data = await response.json()
-
-        if (response.ok && data.itinerary) {
-          const items: MapItem[] = (data.itinerary || []).map((item: any, index: number) => ({
-            id: `place-${index}`,
-            name: item.name || item.title || 'Unknown',
-            type: 'place' as const,
-            coordinates: item.coordinates || { lat: 0, lng: 0 },
-            data: item
-          }))
-          setMapItems(items)
-        } else {
-          throw new Error(data.message || data.error || 'Failed to fetch city data')
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }, [searchQuery])
-
-  useEffect(() => {
-    const query = searchParams.get('query')
-    const typeParam = searchParams.get('type') as 'city' | 'state' | 'country' | null
-    if (query) {
-      setAutoMode(true)
-      handleSearch(query, typeParam || undefined)
-    }
-  }, [searchParams, handleSearch])
-
-  useEffect(() => {
-    if (!autoMode || !searchQuery) return
-    let cancelled = false
-
-    const fetchCoords = async () => {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`)
-        if (!res.ok) return
-        const data = await res.json()
-        const first = data?.[0]
-        if (!first || cancelled) return
-        setFallbackItem({
-          id: 'country-focus',
-          name: searchQuery,
-          type: 'city' as const,
-          coordinates: { lat: Number(first.lat), lng: Number(first.lon) }
-        })
-      } catch {
-        // ignore
-      }
-    }
-
-    fetchCoords()
-    return () => { cancelled = true }
-  }, [autoMode, searchQuery])
-
-  const handleItemClick = async (item: MapItem) => {
-    // Scenario 1: Country → State → Click state → Show cities in sidebar
-    if (item.type === 'state' && searchType === 'country') {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/itinerary/state?state=${encodeURIComponent(item.name)}`)
-        const data = await response.json()
-
-        if (response.ok && data.cities) {
-          const cities: MapItem[] = data.cities.map((city: any, idx: number) => ({
-            id: `${item.id}-city-${idx}`,
-            name: city.name,
-            type: 'city' as const,
-            coordinates: city.coordinates || { lat: 0, lng: 0 },
-            data: city.data
-          }))
-
-          setSelectedItem({
-            ...item,
-            children: cities
-          })
-        } else {
-          setSelectedItem(item)
-        }
-      } catch (err) {
-        setSelectedItem(item)
-      } finally {
-        setLoading(false)
-      }
-    }
-    // Scenario 2: State → City → Click city → Show top 5 itinerary in sidebar
-    else if (item.type === 'city' && searchType === 'state') {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/itinerary?city=${encodeURIComponent(item.name)}`)
-        const data = await response.json()
-
-        if (response.ok && data.itinerary) {
-          // Get top 5 places
-          const top5Places: MapItem[] = data.itinerary.slice(0, 5).map((it: any, idx: number) => ({
-            id: `${item.id}-place-${idx}`,
-            name: it.name || it.title || 'Unknown',
-            type: 'place' as const,
-            coordinates: it.coordinates || { lat: 0, lng: 0 },
-            data: it
-          }))
-
-          setSelectedItem({
-            ...item,
-            children: top5Places
-          })
-        } else {
-          setSelectedItem(item)
-        }
-      } catch (err) {
-        setSelectedItem(item)
-      } finally {
-        setLoading(false)
-      }
-    }
-    // Scenario 3: City → Place → Click place → Show popup (handled by map, don't open sidebar)
-    else if (item.type === 'place' && searchType === 'city') {
-      // Don't open sidebar for places in city search - popup is shown by map
-      return
-    }
-    // Country → State → City → Click city → Show top 5 itinerary
-    else if (item.type === 'city' && searchType === 'country') {
-      setLoading(true)
-      try {
-        const response = await fetch(`/api/itinerary?city=${encodeURIComponent(item.name)}`)
-        const data = await response.json()
-
-        if (response.ok && data.itinerary) {
-          // Get top 5 places
-          const top5Places: MapItem[] = data.itinerary.slice(0, 5).map((it: any, idx: number) => ({
-            id: `${item.id}-place-${idx}`,
-            name: it.name || it.title || 'Unknown',
-            type: 'place' as const,
-            coordinates: it.coordinates || { lat: 0, lng: 0 },
-            data: it
-          }))
-
-          setSelectedItem({
-            ...item,
-            children: top5Places
-          })
-        } else {
-          setSelectedItem(item)
-        }
-      } catch (err) {
-        setSelectedItem(item)
-      } finally {
-        setLoading(false)
-      }
-    }
-  }
-
-  const handleAddToItinerary = (item: MapItem) => {
-    // Add to the first day by default, creating one if none exist
-    if (dayPlans.length === 0) {
-      const newDay: DayPlan = {
-        id: `day-${Date.now()}`,
-        title: 'Day 1',
-        items: [item]
-      }
-      setDayPlans([newDay])
-    } else {
-      // Add to Day 1 (index 0) or ask user? For now, Day 1.
-      const newDays = [...dayPlans]
-      // Avoid duplicates in the first day
-      if (!newDays[0].items.find(i => i.id === item.id)) {
-        newDays[0].items.push(item)
-        setDayPlans(newDays)
-      }
-    }
-  }
-
-  const handleUpdateDays = (updatedDays: DayPlan[]) => {
-    setDayPlans(updatedDays)
-  }
-
-  const handleRemoveItem = (dayId: string, itemId: string) => {
-    const newDays = dayPlans.map(day => {
-      if (day.id === dayId) {
-        return { ...day, items: day.items.filter(i => i.id !== itemId) }
-      }
-      return day
-    })
-    setDayPlans(newDays)
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    router.push(`/trip-map?query=${encodeURIComponent(searchQuery)}`)
   }
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh' }}>
+    <div className={styles.container}>
       <SiteHeader />
-      {/* Day Planner Sidebar */}
-      {dayPlans.length > 0 && (
-        <DayPlanner
-          days={dayPlans}
-          onUpdateDays={handleUpdateDays}
-          onRemoveItem={handleRemoveItem}
-          onGenerateTimeline={() => setShowTimeline(true)}
-          onSaveTrip={() => alert("Save functionality coming to Explore page soon! Go to Planner to save.")}
-        />
-      )}
 
-      {/* Main Content */}
-      <main style={{
-        paddingTop: '2rem',
-        paddingLeft: dayPlans.length > 0 ? '370px' : '2rem', // Shift content when planner is open
-        paddingRight: selectedItem ? '400px' : '2rem',
-        minHeight: '100vh',
-        transition: 'all 0.3s'
-      }}>
-        {!autoMode && (
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '2rem'
-          }}>
-            <h1 style={{
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              marginBottom: '1rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              Welcome to Snaptrip
-            </h1>
-            <p style={{
-              fontSize: '1.25rem',
-              color: '#666',
-              maxWidth: '600px',
-              margin: '0 auto',
-              lineHeight: '1.6'
-            }}>
-              Search by city, state, or country to explore destinations
+      {/* Hero Section */}
+      <section 
+        className={styles.hero} 
+        style={{ backgroundImage: 'url("/images/guide_hero.png")' }}
+      >
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroContent}>
+          <span className={styles.heroTagline}>Explore the Unseen</span>
+          <h1 className={styles.heroTitle}>Where will your curiosity lead you next?</h1>
+          
+          <form className={styles.searchWrapper} onSubmit={handleSearch}>
+            <input 
+              type="text" 
+              className={styles.searchInput}
+              placeholder="Search destinations, experiences, or stories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className={styles.searchButton}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Featured Guides Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>Featured Editorial Guides</h2>
+            <p className={styles.sectionDesc}>In-depth narratives and curated selections from our global contributors.</p>
+          </div>
+          <Link href="/blog" className={styles.viewAll}>View All Stories</Link>
+        </div>
+
+        <div className={styles.editorialGrid}>
+          {FEATURED_GUIDES.map((guide) => (
+            <Link key={guide.id} href={`/country/${guide.id}`} className={styles.guideCard}>
+              <div className={styles.cardImageWrapper}>
+                <img src={guide.image} alt={guide.title} className={styles.cardImage} />
+                <span className={styles.cardTag}>{guide.tag}</span>
+              </div>
+              <h3 className={styles.cardTitle}>{guide.title}</h3>
+              <p className={styles.cardDesc}>{guide.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Quote Section */}
+      <section className={styles.quoteSection}>
+        <span className={styles.quoteMark}>“</span>
+        <p className={styles.quoteText}>
+          The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.
+        </p>
+        <span className={styles.quoteAuthor}>— MARCEL PROUST</span>
+      </section>
+
+      {/* Regions Section */}
+      <section className={styles.regionsSection}>
+        <div className={styles.regionsHeader}>
+          <h2 className={styles.sectionTitle}>Browse by Region</h2>
+        </div>
+        
+        <div className={styles.regionsGrid}>
+          {REGIONS.map((region) => (
+            <div key={region.name}>
+              <span className={styles.regionTitle}>{region.name}</span>
+              <ul className={styles.regionList}>
+                {region.countries.map((country) => (
+                  <li key={country} className={styles.regionItem}>
+                    <Link href={`/country/${encodeURIComponent(country.toLowerCase())}`} className={styles.regionLink}>
+                      {country}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className={styles.newsletter}>
+        <div className={styles.newsletterContent}>
+          <div className={styles.newsletterInfo}>
+            <h2 className={styles.newsletterTitle}>The Weekly Dispatch</h2>
+            <p className={styles.newsletterDesc}>
+              Curated travel inspiration, exclusive guides, and cultural insights delivered directly to your inbox.
             </p>
           </div>
-        )}
-
-        {/* Search Form */}
-        {!autoMode && (
-          <div style={{
-            background: '#f8f9fa',
-            padding: '2rem',
-            borderRadius: '12px',
-            marginBottom: '2rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{
-              display: 'flex',
-              gap: '1rem',
-              flexWrap: 'wrap',
-              alignItems: 'flex-end'
-            }}>
-              <div style={{ flex: '1', minWidth: '200px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                  fontWeight: '600',
-                  color: '#333'
-                }}>
-                  Search Location (City, State, or Country)
-                </label>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="e.g., Delhi, California, India"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    fontSize: '1rem',
-                    border: '2px solid #ddd',
-                    borderRadius: '8px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-              <button
-                onClick={() => handleSearch()}
-                disabled={loading}
-                style={{
-                  padding: '0.75rem 2rem',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  background: loading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'opacity 0.3s'
-                }}
-              >
-                {loading ? 'Loading...' : 'Search'}
-              </button>
+          <div className={styles.newsletterForm}>
+            <div className={styles.newsletterInputWrapper}>
+              <input type="email" placeholder="Your email address" className={styles.newsletterInput} />
             </div>
-            {searchQuery && (
-              <p style={{
-                marginTop: '0.5rem',
-                fontSize: '0.9rem',
-                color: '#666'
-              }}>
-                Detected as: <strong>{searchType}</strong>
-              </p>
-            )}
+            <button className={styles.newsletterSubmit}>Subscribe</button>
           </div>
-        )}
+        </div>
+      </section>
 
-        {error && !autoMode && (
-          <div style={{
-            padding: '1rem',
-            background: '#fee',
-            color: '#c33',
-            borderRadius: '8px',
-            marginBottom: '2rem'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* Map */}
-        {(mapItems.length > 0 || autoMode) && (
-          <div style={{
-            height: '600px',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <HierarchicalMap
-              items={mapItems.length > 0 ? mapItems : (fallbackItem ? [fallbackItem] : [])}
-              searchType={autoMode ? 'country' : (searchType || 'country')}
-              onItemClick={handleItemClick}
-              selectedItem={selectedItem}
-              zoomOverride={autoMode ? 5 : undefined}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* Sidebar - Only show for state/city clicks, not for place clicks in city search */}
-      {selectedItem && !(selectedItem.type === 'place' && searchType === 'city') && (
-        <ItinerarySidebar
-          item={selectedItem}
-          onClose={() => setSelectedItem(null)}
-          onAddToItinerary={handleAddToItinerary}
-          loading={loading}
-        />
-      )}
-
-      {/* Timeline View */}
-      {showTimeline && (
-        <TimelineView
-          dayPlans={dayPlans}
-          onClose={() => setShowTimeline(false)}
-        />
-      )}
       <SiteFooter />
     </div>
-  )
-}
-
-export default function Home() {
-  return (
-    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading Explore...</div>}>
-      <ExploreContent />
-    </Suspense>
   )
 }

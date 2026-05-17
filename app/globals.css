@@ -1,3 +1,19 @@
+:root {
+  --foreground-rgb: 33, 37, 41;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 248, 249, 250;
+  
+  --primary: #FFB800; /* Gold/Yellow from Figma */
+  --primary-hover: #E6A600;
+  --dark: #0F172A;
+  --gray-light: #F1F5F9;
+  --gray-medium: #64748B;
+  --white: #FFFFFF;
+  
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -8,22 +24,13 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--background-start-rgb);
+  color: var(--foreground-rgb);
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-}
-
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+h1, h2, h3, .serif {
+  font-family: var(--font-serif);
 }
 
 @media (prefers-color-scheme: dark) {

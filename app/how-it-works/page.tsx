@@ -1,196 +1,294 @@
 'use client'
 
-import React from 'react';
-import SiteHeader from '@/app/components/SiteHeader';
-import SiteFooter from '@/app/components/SiteFooter';
-import Link from 'next/link';
+import React, { useState } from 'react'
+import Link from 'next/link'
+import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
+import styles from './how-it-works.module.css'
 
-export default function HowItWorksPage() {
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb', fontFamily: "'Inter', sans-serif" }}>
-            <SiteHeader />
+const HOW_IT_WORKS_STEPS = [
+  {
+    id: '01',
+    title: 'Pick your destination',
+    desc: 'Search 10,000+ destinations. See trending spots, seasonal highlights, and visa requirements upfront - no surprises at checkout.'
+  },
+  {
+    id: '02',
+    title: 'Choose your travel style',
+    desc: 'Adventure, culture, relaxation, or food tour? Tell us your vibe and group size - solo, couple, family, or squad- and we tailor everything.'
+  },
+  {
+    id: '03',
+    title: 'Set duration & budget',
+    desc: 'Pick travel dates and a daily budget. SnapTrip auto-flights, hotels, and activities to fit your spend - lives, as you move the slider.'
+  },
+  {
+    id: '04',
+    title: 'Select attractions',
+    desc: 'Browse curated must-sees and hidden gems. Add or remove stops-the AI instantly recalculates your daily route to cut travel time.'
+  },
+  {
+    id: '05',
+    title: 'Itinerary Complete!',
+    desc: 'Download your full plan maps, bookings, emergency contacts, and cost summary. Works offline too-ready wherever you land.'
+  }
+]
 
-            {/* Hero Section */}
-            <section style={{
-                backgroundColor: '#0a192f',
-                color: 'white',
-                padding: '120px 20px',
-                textAlign: 'center',
-                backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.05) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(255, 193, 7, 0.05) 0%, transparent 40%)'
-            }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <span style={{
-                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                        color: '#ffc107',
-                        padding: '8px 20px',
-                        borderRadius: '20px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        display: 'inline-block',
-                        marginBottom: '20px'
-                    }}>
-                        The Magic Behind The Trip
-                    </span>
-                    <h1 style={{ fontSize: '4rem', marginBottom: '24px', fontWeight: '800', lineHeight: '1.1' }}>
-                        How SnapTrip <span style={{ color: '#22d3ee' }}>Works</span>
-                    </h1>
-                    <p style={{ fontSize: '1.3rem', opacity: 0.9, lineHeight: '1.6', marginBottom: '40px' }}>
-                        Discover how our AI engine processes millions of data points to create your personalized travel masterpiece in seconds.
-                    </p>
-                    <Link href="/" style={{
-                        backgroundColor: '#ffc107',
-                        color: '#0a192f',
-                        padding: '18px 44px',
-                        borderRadius: '12px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        textDecoration: 'none',
-                        display: 'inline-block',
-                        boxShadow: '0 10px 20px rgba(246, 184, 0, 0.2)'
-                    }}>
-                        Try AI Planner Now
-                    </Link>
-                </div>
-            </section>
+export default function HowItWorks() {
+  const [activeTab, setActiveTab] = useState('itinerary')
 
-            {/* AI Magic Section */}
-            <section style={{ padding: '100px 20px', backgroundColor: 'white' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
-                    <div style={{
-                        height: '500px',
-                        backgroundColor: '#0a192f',
-                        borderRadius: '32px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 30px 60px rgba(0,0,0,0.1)'
-                    }}>
-                        {/* Decorative AI Elements */}
-                        <div style={{ position: 'absolute', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(34, 211, 238, 0.1)', filter: 'blur(50px)' }}></div>
-                        <div style={{ zIndex: 2, textAlign: 'center' }}>
-                            <div style={{ fontSize: '5rem', marginBottom: '10px' }}>🧠</div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#22d3ee' }}>Processing Data...</div>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 style={{ fontSize: '2.5rem', marginBottom: '24px', color: '#0a192f', fontWeight: '800' }}>The AI Travel Engine</h2>
-                        <p style={{ fontSize: '1.15rem', color: '#475569', lineHeight: '1.8', marginBottom: '30px' }}>
-                            Our proprietary travel AI doesn&apos;t just pick random spots. It understands your personality, checks local events, analyzes weather patterns, and optimizes routes to ensure every moment of your trip is purposeful.
-                        </p>
-                        <div style={{ display: 'grid', gap: '20px' }}>
-                            {[
-                                { title: 'Deep Learning', desc: 'Analyzes millions of user reviews and travel blogs.' },
-                                { title: 'Route Optimization', desc: 'Minimizes travel time between attractions.' },
-                                { title: 'Tailored Balance', desc: 'Matches the intensity to your chosen relaxed or intense style.' }
-                            ].map((feature) => (
-                                <div key={feature.title} style={{ display: 'flex', gap: '20px' }}>
-                                    <div style={{ backgroundColor: '#f1f5f9', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#ffc107', fontWeight: 'bold' }}>✓</div>
-                                    <div>
-                                        <h4 style={{ fontSize: '1.1rem', marginBottom: '5px', color: '#0a192f' }}>{feature.title}</h4>
-                                        <p style={{ fontSize: '0.95rem', color: '#64748b' }}>{feature.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
+  return (
+    <div className={styles.container}>
+      <SiteHeader />
 
-            {/* Steps Section */}
-            <section style={{ padding: '100px 20px', backgroundColor: '#f8fafc' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '2.8rem', marginBottom: '16px', color: '#0a192f', fontWeight: '800' }}>Simple 3-Step Process</h2>
-                    <p style={{ fontSize: '1.15rem', color: '#64748b', marginBottom: '60px' }}>From &quot;Where should I go?&quot; to &quot;I&apos;m ready!&quot; in under a minute.</p>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px', position: 'relative' }}>
-                        {/* Step 1 */}
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ width: '80px', height: '80px', backgroundColor: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 25px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', color: '#0ea5e9' }}>📍</div>
-                            <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', color: '#0a192f' }}>Choose Destination</h3>
-                            <p style={{ color: '#64748b', lineHeight: '1.6' }}>Select any country or city from our global database of travel hotspots.</p>
-                        </div>
-                        {/* Step 2 */}
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ width: '80px', height: '80px', backgroundColor: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 25px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', color: '#ffc107' }}>⚙️</div>
-                            <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', color: '#0a192f' }}>Set Your Vibe</h3>
-                            <p style={{ color: '#64748b', lineHeight: '1.6' }}>Define your pace, duration, and whether you prefer nature or deep culture.</p>
-                        </div>
-                        {/* Step 3 */}
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ width: '80px', height: '80px', backgroundColor: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 25px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', color: '#10b981' }}>🗺️</div>
-                            <h3 style={{ fontSize: '1.4rem', marginBottom: '15px', color: '#0a192f' }}>AI Generates Plan</h3>
-                            <p style={{ color: '#64748b', lineHeight: '1.6' }}>Our AI builds a custom itinerary with map integration and daily schedules.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Why It's Smarter Section */}
-            <section style={{ padding: '100px 20px', backgroundColor: 'white' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '2.8rem', marginBottom: '60px', color: '#0a192f', fontWeight: '800' }}>Why AI Is Smarter Than Manual Planning</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', textAlign: 'left' }}>
-                        <div style={{ padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                            <h4 style={{ fontSize: '1.3rem', marginBottom: '15px', color: '#0a192f', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ color: '#0ea5e9' }}>⌛</span> Saves 20+ Hours
-                            </h4>
-                            <p style={{ color: '#64748b', lineHeight: '1.7' }}>
-                                Skip the countless tabs and spreadsheet nightmares. SnapTrip does the research and organization for you instantly.
-                            </p>
-                        </div>
-                        <div style={{ padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                            <h4 style={{ fontSize: '1.3rem', marginBottom: '15px', color: '#0a192f', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ color: '#ffc107' }}>💎</span> Discover Hidden Gems
-                            </h4>
-                            <p style={{ color: '#64748b', lineHeight: '1.7' }}>
-                                Our AI identifies off-the-beaten-path locations that aren&apos;t in the standard top 10 lists but match your specific tastes.
-                            </p>
-                        </div>
-                        <div style={{ padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                            <h4 style={{ fontSize: '1.3rem', marginBottom: '15px', color: '#0a192f', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ color: '#10b981' }}>📉</span> Live Optimization
-                            </h4>
-                            <p style={{ color: '#64748b', lineHeight: '1.7' }}>
-                                We consider daily openings, seasonal trends, and geographical logic to ensure your route actually makes sense.
-                            </p>
-                        </div>
-                        <div style={{ padding: '40px', borderRadius: '24px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                            <h4 style={{ fontSize: '1.3rem', marginBottom: '15px', color: '#0a192f', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ color: '#ec4899' }}>🔄</span> Fully Editable
-                            </h4>
-                            <p style={{ color: '#64748b', lineHeight: '1.7' }}>
-                                The AI provides the foundation, but you have total control. Swap places, change dates, and refine until it&apos;s perfect.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Bottom CTA */}
-            <section style={{ padding: '120px 20px', backgroundColor: '#0a192f', textAlign: 'center', color: 'white' }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '3rem', marginBottom: '24px', fontWeight: '800' }}>Stop Planning, Start Exploring</h2>
-                    <p style={{ fontSize: '1.25rem', opacity: 0.8, marginBottom: '40px' }}>
-                        Your next unforgettable adventure is just a few clicks away. Let our AI take the lead.
-                    </p>
-                    <Link href="/" style={{
-                        backgroundColor: '#ffc107',
-                        color: '#0a192f',
-                        padding: '18px 44px',
-                        borderRadius: '12px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        textDecoration: 'none',
-                        display: 'inline-block'
-                    }}>
-                        Get Started for Free
-                    </Link>
-                </div>
-            </section>
-
-            <SiteFooter />
+      {/* Hero Section */}
+      <section className={styles.hero} style={{ backgroundImage: 'url("/images/how_hero.png")' }}>
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroContent}>
+          <span className={styles.heroBadge}>INTRODUCING ATLAS LUMINA</span>
+          <h1 className={styles.heroTitle}>
+            Crafting Your <br />
+            <i>Next Odyssey.</i>
+          </h1>
+          <p className={styles.heroSub}>
+            A fusion of high-end editorial curation and artificial intelligence. 
+            SnapTrip transforms wandering into precision exploration.
+          </p>
+          <div className={styles.heroButtons}>
+            <Link href="/plan" className={styles.btnPrimary}>Start Your Journey</Link>
+            <Link href="/explore" className={styles.btnSecondary}>View Journal</Link>
+          </div>
         </div>
-    );
+      </section>
+
+      {/* Art of Planning Section */}
+      <section className={styles.planningSection}>
+        <div className={styles.planningContent}>
+          <div className={styles.planningText}>
+            <h2 className={styles.sectionTitle}>The Art of Seamless Planning</h2>
+            <div className={styles.planningSteps}>
+              <div className={styles.pStep}>
+                <span className={styles.pStepNum}>01</span>
+                <div>
+                  <h3 className={styles.pStepTitle}>Define Your Muse</h3>
+                  <p className={styles.pStepDesc}>
+                    Tell our AI your desired mood—whether it's the quiet zen of Kyoto or the kinetic pulse of Berlin.
+                  </p>
+                </div>
+              </div>
+              <div className={styles.pStep}>
+                <span className={styles.pStepNum}>02</span>
+                <div>
+                  <h3 className={styles.pStepTitle}>Curated Logic</h3>
+                  <p className={styles.pStepDesc}>
+                    We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.
+                  </p>
+                </div>
+              </div>
+              <div className={styles.pStep}>
+                <span className={styles.pStepNum}>03</span>
+                <div>
+                  <h3 className={styles.pStepTitle}>Dynamic Refinement</h3>
+                  <p className={styles.pStepDesc}>
+                    Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className={styles.planningCollage}>
+            <div className={styles.collageGrid}>
+              <img src="/images/how_tokyo.png" alt="Tokyo" className={styles.collageImg} />
+              <img src="/images/guide_japan.png" alt="Kyoto" className={styles.collageImg} />
+              <img src="/images/how_london.png" alt="London" className={styles.collageImg} />
+              <img src="/images/how_positano.png" alt="Positano" className={styles.collageImg} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className={styles.howSection}>
+        <div className={styles.howBg} style={{ backgroundImage: 'url("/images/how_works_bg.png")' }} />
+        <div className={styles.howHeader}>
+          <h2 className={styles.howTitle}>How It Works</h2>
+          <p className={styles.howDesc}>
+            Snaptrip guides you through every step of your travel planning — from discovering destinations to creating 
+            a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly 
+            and without stress.
+          </p>
+        </div>
+
+        <div className={styles.arcContainer}>
+          <div className={styles.arcWrapper}>
+            {/* The Arc and Decorative Elements */}
+            <svg viewBox="0 0 1000 800" className={styles.arcSvg}>
+              {/* Inner Decorative Arc */}
+              <path 
+                d="M 120 250 A 150 150 0 0 1 120 550" 
+                fill="none" 
+                stroke="#F6B800" 
+                strokeWidth="40" 
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              <path 
+                d="M 120 250 A 150 150 0 0 1 120 550" 
+                fill="none" 
+                stroke="#F6B800" 
+                strokeWidth="20" 
+                strokeLinecap="round"
+              />
+
+              {/* Main Dashed Arc */}
+              <path 
+                id="mainArc"
+                d="M 250 100 A 350 350 0 0 1 250 700" 
+                fill="none" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeDasharray="10 10" 
+              />
+
+              {/* Connecting Lines */}
+              <line x1="250" y1="250" x2="450" y2="250" stroke="#333" strokeWidth="2" />
+              <line x1="390" y1="150" x2="450" y2="150" stroke="#333" strokeWidth="2" />
+              <line x1="430" y1="400" x2="550" y2="400" stroke="#333" strokeWidth="2" />
+              <line x1="390" y1="650" x2="450" y2="650" stroke="#333" strokeWidth="2" />
+              <line x1="250" y1="550" x2="450" y2="550" stroke="#333" strokeWidth="2" />
+
+              {/* Dots on Arc */}
+              <circle cx="250" cy="100" r="10" fill="#000" />
+              <circle cx="390" cy="150" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
+              <circle cx="250" cy="250" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
+              <circle cx="430" cy="400" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
+              <circle cx="250" cy="550" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
+              <circle cx="390" cy="650" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
+              <circle cx="250" cy="700" r="10" fill="#000" />
+
+              {/* Small Planes */}
+              <path d="M 280 120 L 300 110 L 295 130 Z" fill="#F6B800" transform="rotate(-15, 290, 120)" />
+              <path d="M 450 450 L 470 460 L 445 470 Z" fill="#F6B800" transform="rotate(30, 450, 460)" />
+            </svg>
+
+            {/* Step Bubbles */}
+            <div className={styles.stepBubble} style={{ top: '15%', left: '45%' }}>
+              <div className={styles.stepNum}>01</div>
+              <div className={styles.stepText}>
+                <h4>Pick your destination</h4>
+                <p>Search 10,000+ destinations. See trending spots, seasonal highlights.</p>
+              </div>
+            </div>
+            <div className={styles.stepBubble} style={{ top: '31%', left: '52%' }}>
+              <div className={styles.stepNum}>02</div>
+              <div className={styles.stepText}>
+                <h4>Choose your travel style</h4>
+                <p>Adventure, culture, or food tour? Tell us your vibe.</p>
+              </div>
+            </div>
+            <div className={styles.stepBubble} style={{ top: '50%', left: '55%' }}>
+              <div className={styles.stepNum}>03</div>
+              <div className={styles.stepText}>
+                <h4>Set duration & budget</h4>
+                <p>Pick travel dates and a daily budget auto-calculated.</p>
+              </div>
+            </div>
+            <div className={styles.stepBubble} style={{ top: '69%', left: '52%' }}>
+              <div className={styles.stepNum}>04</div>
+              <div className={styles.stepText}>
+                <h4>Select attractions</h4>
+                <p>Browse curated must-sees and hidden gems.</p>
+              </div>
+            </div>
+            <div className={styles.stepBubble} style={{ top: '81%', left: '45%' }}>
+              <div className={styles.stepNum}>05</div>
+              <div className={styles.stepText}>
+                <h4>Itinerary Complete!</h4>
+                <p>Download your full plan maps and bookings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Tabs Section */}
+      <section className={styles.tabsSection}>
+        <p className={styles.tabsHint}>Switch between tabs - All three sections are interactive</p>
+        
+        <div className={styles.tabsContainer}>
+          <div className={styles.tabsHeader}>
+            <button 
+              className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`}
+              onClick={() => setActiveTab('itinerary')}
+            >
+              <span>📅 Itinerary</span>
+            </button>
+            <button 
+              className={`${styles.tabBtn} ${activeTab === 'map' ? styles.active : ''}`}
+              onClick={() => setActiveTab('map')}
+            >
+              <span>🗺️ Live Map</span>
+            </button>
+            <button 
+              className={`${styles.tabBtn} ${activeTab === 'support' ? styles.active : ''}`}
+              onClick={() => setActiveTab('support')}
+            >
+              <span>🎧 Support</span>
+            </button>
+          </div>
+
+          <div className={styles.tabContent}>
+            {activeTab === 'itinerary' && (
+              <div className={styles.itineraryDemo}>
+                <div className={styles.iItem}>
+                  <div className={styles.iTime}>08</div>
+                  <div className={styles.iDetails}>
+                    <span className={styles.iLabel}>MORNING ARRIVAL</span>
+                    <div className={styles.iHeader}>
+                      <h3>Tokyo Narita Express</h3>
+                      <span className={styles.iPrice}>$32.00</span>
+                    </div>
+                    <p className={styles.iDesc}>
+                      Direct transfer to Shinjuku. Our concierge has pre-booked your green car seats for maximum comfort.
+                    </p>
+                    <div className={styles.iTags}>
+                      <span className={styles.tag}>TRANSPORT</span>
+                      <span className={styles.tag}>PRE-PAID</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.iItem}>
+                  <div className={styles.iTime}>13</div>
+                  <div className={styles.iDetails}>
+                    <span className={styles.iLabel}>LUNCH ENGAGEMENT</span>
+                    <div className={styles.iHeader}>
+                      <h3>Kozue, Park Hyatt</h3>
+                      <span className={styles.iPrice}>$120.00</span>
+                    </div>
+                    <p className={styles.iDesc}>
+                      Contemporary Japanese dining with views across the Tokyo skyline. Window table confirmed.
+                    </p>
+                    <img src="/images/how_food.png" alt="Food" className={styles.iImage} />
+                  </div>
+                </div>
+
+                <div className={styles.aiSuggestion}>
+                  <div className={styles.aiIcon}>💡</div>
+                  <div>
+                    <strong>AI Suggestion</strong>
+                    <p>Based on current weather, we recommend visiting the Gyoen Garden at 4:00 PM for optimal lighting.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === 'map' && <div className={styles.placeholder}>Live Map Visualization</div>}
+            {activeTab === 'support' && <div className={styles.placeholder}>24/7 Concierge Support</div>}
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  )
 }
