@@ -14,7 +14,7 @@ export default function PlanTrip() {
   const [selectedCountry, setSelectedCountry] = useState<string>('Italy')
   const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>('Intense')
   const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
-  const [tripPreference, setTripPreference] = useState<'Beach' | 'Mountains' | null>(null)
+  const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [tripImmersion, setTripImmersion] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [countries, setCountries] = useState<string[]>([])
 
@@ -113,7 +113,7 @@ export default function PlanTrip() {
 
         {renderStepper()}
 
-        <div className={plannerStep === 3 ? styles.vsContainerWrapper : styles.modal} style={{ width: '100%', maxWidth: '1000px' }}>
+        <div className={styles.modal} style={{ width: '100%', maxWidth: '1000px' }}>
           {plannerStep === 1 && (
             <>
               <h2 className={styles.selectionTitle} style={{ textAlign: 'center', marginBottom: '40px' }}>Choose your trip style</h2>
@@ -227,43 +227,50 @@ export default function PlanTrip() {
           )}
 
           {plannerStep === 3 && (
-            <div style={{ position: 'relative', width: '100%' }}>
-              <div className={styles.vsContainer}>
+            <>
+              <h2 className={styles.selectionTitle} style={{ textAlign: 'center', marginBottom: '40px' }}>Nature Immersion</h2>
+              <div className={styles.optionsGrid}>
                 <div 
-                  className={`${styles.vsOption} ${tripPreference === 'Beach' ? styles.selected : ''}`}
-                  style={{ backgroundImage: 'url(/images/coastal_beach.png)' }}
-                  onClick={() => setTripPreference('Beach')}
+                  className={`${styles.optionCard} ${tripPreference === 'Unmissable' ? styles.selected : ''}`}
+                  onClick={() => setTripPreference('Unmissable')}
                 >
-                  <div className={styles.vsContent}>
-                    <span className={styles.vsLabel}>Coastal Bliss</span>
-                    <h3 className={styles.vsTitle}>The Beach</h3>
-                    <p className={styles.vsDesc}>Sun-kissed sands and the rhythmic song of the tides.</p>
+                  <div className={styles.selectionIndicator}>
+                    {tripPreference === 'Unmissable' && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
                   </div>
+                  <h3 className={styles.optionTitle}>Unmissable</h3>
+                  <p className={styles.optionDesc}>The landmarks that shouldn't be missed</p>
                 </div>
-                <div className={styles.vsBadge}>VS</div>
+
                 <div 
-                  className={`${styles.vsOption} ${tripPreference === 'Mountains' ? styles.selected : ''}`}
-                  style={{ backgroundImage: 'url(/images/alpine_mountains.png)' }}
-                  onClick={() => setTripPreference('Mountains')}
+                  className={`${styles.optionCard} ${tripPreference === 'ALotMore' ? styles.selected : ''}`}
+                  onClick={() => setTripPreference('ALotMore')}
                 >
-                  <div className={styles.vsContent}>
-                    <span className={styles.vsLabel} style={{ background: '#008489' }}>Alpine Escape</span>
-                    <h3 className={styles.vsTitle}>The Mountains</h3>
-                    <p className={styles.vsDesc}>Majestic peaks and the crisp, clear air of the heights.</p>
+                  <div className={styles.selectionIndicator}>
+                    {tripPreference === 'ALotMore' && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
                   </div>
+                  <h3 className={styles.optionTitle}>A lot more</h3>
+                  <p className={styles.optionDesc}>More landmarks to explore for nature lovers</p>
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '40px' }}>
                 <button className={styles.btnBack} onClick={handleBackStep}>Back</button>
                 <button className={styles.btnNext} onClick={handleNextStep} disabled={!tripPreference}>
-                  Let's Go! 
+                  Next Step 
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
                   </svg>
                 </button>
               </div>
-            </div>
+            </>
           )}
 
           {plannerStep === 4 && (

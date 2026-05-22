@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [phoneCode, setPhoneCode] = useState('+1')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,23 +22,32 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      // Create user
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password: 'TemporaryPassword123!', // In a real app, you'd add a password field or use passwordless
-        options: {
-          data: {
-            full_name: fullName,
-            phone: `${phoneCode}${phoneNumber}`,
-          },
-          emailRedirectTo: `${window.location.origin}/verify-email`,
-        }
+      // Create user via server API to bypass email confirmation
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          phone: `${phoneCode}${phoneNumber}`,
+        })
       })
 
-      if (signUpError) throw signUpError
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to create account')
+      }
 
-      // Assuming successful registration triggers email verification
-      router.push('/verify-email')
+      // Log in immediately since email is auto-confirmed
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) throw signInError
+
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Failed to create account')
     } finally {
@@ -125,6 +135,19 @@ export default function RegisterPage() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>Password</label>
+                <input 
+                  type="password" 
+                  className={styles.input} 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
+                  required
+                />
               </div>
 
               <button 

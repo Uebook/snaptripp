@@ -106,62 +106,41 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     // Continue to signup if check fails (fallback)
                 }
 
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: {
-                            full_name: fullName,
-                            username: username.toLowerCase().trim(),
-                        },
-                    },
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        fullName,
+                        username: username.toLowerCase().trim(),
+                    })
                 })
 
-                if (error) {
-                    if (error.message.toLowerCase().includes('rate limit')) {
+                const regData = await res.json()
+                if (!res.ok || regData.error) {
+                    if (regData.error?.toLowerCase().includes('rate limit')) {
                         setError('Too many attempts. Please try logging in instead.')
                         setIsLogin(true)
                         return
                     }
-                    throw error
+                    throw new Error(regData.error || 'Failed to create account')
                 }
 
-                if (data.session && data.user) {
-                    // Sync profile manually just in case trigger fails or latency
-                    await supabase.from('profiles').upsert({
-                        id: data.user.id,
-                        email: email,
-                        full_name: fullName,
-                        password: password, // WARNING: Storing plain text password
-                        updated_at: new Date().toISOString(),
-                    })
+                // Attempt immediate sign in since email is auto-confirmed
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                })
 
+                if (signInError) throw signInError
+
+                if (signInData.session) {
                     onSuccess()
                     onClose()
-                } else if (data.user) {
-                    // Sync profile manually
-                    await supabase.from('profiles').upsert({
-                        id: data.user.id,
-                        email: email,
-                        full_name: fullName,
-                        password: password, // WARNING: Storing plain text password
-                        updated_at: new Date().toISOString(),
-                    })
-
-                    // Attempt immediate sign in
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email,
-                        password
-                    })
-
-                    if (signInData.session) {
-                        onSuccess()
-                        onClose()
-                    } else {
-                        // Verification required
-                        alert('Account created! Please check your email to verify your account.')
-                        setIsLogin(true)
-                    }
+                } else {
+                    setError('Account created, but session could not be established automatically. Please log in.')
+                    setIsLogin(true)
                 }
             }
         } catch (err: any) {
