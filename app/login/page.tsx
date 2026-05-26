@@ -46,7 +46,11 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      router.push('/dashboard')
+      if (loginEmail === 'admin@snaptrip.com') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
     } finally {
@@ -121,6 +125,53 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.divider}>OR</div>
+
+            {/* Quick Login Helper for Development */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+              fontSize: '13px'
+            }}>
+              <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></span>
+                Local Development Account
+              </div>
+              <div style={{ color: '#64748b', marginBottom: '10px' }}>
+                Use the following credentials to access the Admin Panel:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', fontFamily: 'monospace', background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '10px' }}>
+                <span style={{ color: '#64748b' }}>Email:</span>
+                <strong style={{ color: '#0f172a' }}>admin@snaptrip.com</strong>
+                <span style={{ color: '#64748b' }}>Password:</span>
+                <strong style={{ color: '#0f172a' }}>adminpassword123</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@snaptrip.com')
+                  setPassword('adminpassword123')
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: '#4f46e5',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                  boxSizing: 'border-box'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#4338ca'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#4f46e5'}
+              >
+                Auto-fill Admin Credentials
+              </button>
+            </div>
 
             <form onSubmit={handleLogin}>
               {error && <div style={{ color: 'red', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}

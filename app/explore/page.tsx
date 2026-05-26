@@ -1,42 +1,26 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import styles from './explore.module.css'
 
-const FEATURED_GUIDES = [
-  {
-    id: 'japan',
-    title: 'Japan: The Art of Zen & Modernity',
-    desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.',
-    image: '/images/guide_japan.png',
-    tag: 'Culture'
-  },
-  {
-    id: 'italy',
-    title: 'Italy: A Summer in Tuscany',
-    desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.',
-    image: '/images/guide_italy.png',
-    tag: 'Editorial'
-  },
-  {
-    id: 'morocco',
-    title: 'Morocco: Colors of the Maghreb',
-    desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.',
-    image: '/images/guide_morocco.png',
-    tag: 'Lifestyle'
-  },
-  {
-    id: 'france',
-    title: 'France: Beyond the City of Light',
-    desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.',
-    image: '/images/guide_france.png',
-    tag: 'Vintage'
-  }
-]
+interface ExploreSettings {
+  hero_tagline: string
+  hero_title: string
+  quote_text: string
+  quote_author: string
+}
+
+interface GuideItem {
+  id: string
+  title: string
+  desc: string
+  image: string
+  tag: string
+}
 
 const REGIONS = [
   {
@@ -61,6 +45,36 @@ export default function CountryGuide() {
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
 
+  const [settings, setSettings] = useState<ExploreSettings>({
+    hero_tagline: 'Explore the Unseen',
+    hero_title: 'Where will your curiosity lead you next?',
+    quote_text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.',
+    quote_author: 'MARCEL PROUST'
+  })
+
+  const [featuredGuides, setFeaturedGuides] = useState<GuideItem[]>([
+    { id: 'japan', title: 'Japan: The Art of Zen & Modernity', desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.', image: '/images/guide_japan.png', tag: 'Culture' },
+    { id: 'italy', title: 'Italy: A Summer in Tuscany', desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.', image: '/images/guide_italy.png', tag: 'Editorial' },
+    { id: 'morocco', title: 'Morocco: Colors of the Maghreb', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', image: '/images/guide_morocco.png', tag: 'Lifestyle' },
+    { id: 'france', title: 'France: Beyond the City of Light', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', image: '/images/guide_france.png', tag: 'Vintage' }
+  ])
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch('/api/explore-data')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.settings) setSettings(data.settings)
+          if (data.guides && data.guides.length > 0) setFeaturedGuides(data.guides)
+        }
+      } catch (err) {
+        console.error('Error fetching explore overview data:', err)
+      }
+    }
+    loadData()
+  }, [])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -78,8 +92,8 @@ export default function CountryGuide() {
       >
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
-          <span className={styles.heroTagline}>Explore the Unseen</span>
-          <h1 className={styles.heroTitle}>Where will your curiosity lead you next?</h1>
+          <span className={styles.heroTagline}>{settings.hero_tagline}</span>
+          <h1 className={styles.heroTitle}>{settings.hero_title}</h1>
           
           <form className={styles.searchWrapper} onSubmit={handleSearch}>
             <input 
@@ -110,7 +124,7 @@ export default function CountryGuide() {
         </div>
 
         <div className={styles.editorialGrid}>
-          {FEATURED_GUIDES.map((guide) => (
+          {featuredGuides.map((guide) => (
             <Link key={guide.id} href={`/country/${guide.id}`} className={styles.guideCard}>
               <div className={styles.cardImageWrapper}>
                 <img src={guide.image} alt={guide.title} className={styles.cardImage} />
@@ -127,9 +141,9 @@ export default function CountryGuide() {
       <section className={styles.quoteSection}>
         <span className={styles.quoteMark}>“</span>
         <p className={styles.quoteText}>
-          The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.
+          {settings.quote_text}
         </p>
-        <span className={styles.quoteAuthor}>— MARCEL PROUST</span>
+        <span className={styles.quoteAuthor}>— {settings.quote_author.toUpperCase()}</span>
       </section>
 
       {/* Regions Section */}
@@ -178,3 +192,4 @@ export default function CountryGuide() {
     </div>
   )
 }
+

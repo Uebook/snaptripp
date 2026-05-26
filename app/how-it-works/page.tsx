@@ -1,58 +1,115 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import styles from './how-it-works.module.css'
 
-const HOW_IT_WORKS_STEPS = [
-  {
-    id: '01',
-    title: 'Pick your destination',
-    desc: 'Search 10,000+ destinations. See trending spots, seasonal highlights, and visa requirements upfront - no surprises at checkout.'
-  },
-  {
-    id: '02',
-    title: 'Choose your travel style',
-    desc: 'Adventure, culture, relaxation, or food tour? Tell us your vibe and group size - solo, couple, family, or squad- and we tailor everything.'
-  },
-  {
-    id: '03',
-    title: 'Set duration & budget',
-    desc: 'Pick travel dates and a daily budget. SnapTrip auto-flights, hotels, and activities to fit your spend - lives, as you move the slider.'
-  },
-  {
-    id: '04',
-    title: 'Select attractions',
-    desc: 'Browse curated must-sees and hidden gems. Add or remove stops-the AI instantly recalculates your daily route to cut travel time.'
-  },
-  {
-    id: '05',
-    title: 'Itinerary Complete!',
-    desc: 'Download your full plan maps, bookings, emergency contacts, and cost summary. Works offline too-ready wherever you land.'
-  }
-]
+interface PageSettings {
+  hero_badge: string
+  hero_title: string
+  hero_description: string
+  planning_title: string
+  how_works_title: string
+  how_works_desc: string
+  demo_i_time_1: string
+  demo_i_label_1: string
+  demo_i_title_1: string
+  demo_i_price_1: string
+  demo_i_desc_1: string
+  demo_i_tags_1: string
+  demo_i_time_2: string
+  demo_i_label_2: string
+  demo_i_title_2: string
+  demo_i_price_2: string
+  demo_i_desc_2: string
+  demo_i_img_2: string
+  demo_i_ai_suggestion: string
+  demo_map_placeholder: string
+  demo_support_placeholder: string
+}
+
+interface StepItem {
+  id: string
+  type: string
+  step_number: string
+  title: string
+  description: string
+  display_order: number
+}
 
 export default function HowItWorks() {
   const [activeTab, setActiveTab] = useState('itinerary')
+  
+  const [settings, setSettings] = useState<PageSettings>({
+    hero_badge: 'INTRODUCING ATLAS LUMINA',
+    hero_title: 'Crafting Your Next Odyssey.',
+    hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
+    planning_title: 'The Art of Seamless Planning',
+    how_works_title: 'How It Works',
+    how_works_desc: 'Snaptrip guides you through every step of your travel planning — from discovering destinations to creating a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly and without stress.',
+    demo_i_time_1: '08',
+    demo_i_label_1: 'MORNING ARRIVAL',
+    demo_i_title_1: 'Tokyo Narita Express',
+    demo_i_price_1: '$32.00',
+    demo_i_desc_1: 'Direct transfer to Shinjuku. Our concierge has pre-booked your green car seats for maximum comfort.',
+    demo_i_tags_1: 'TRANSPORT, PRE-PAID',
+    demo_i_time_2: '13',
+    demo_i_label_2: 'LUNCH ENGAGEMENT',
+    demo_i_title_2: 'Kozue, Park Hyatt',
+    demo_i_price_2: '$120.00',
+    demo_i_desc_2: 'Contemporary Japanese dining with views across the Tokyo skyline. Window table confirmed.',
+    demo_i_img_2: '/images/how_food.png',
+    demo_i_ai_suggestion: 'Based on current weather, we recommend visiting the Gyoen Garden at 4:00 PM for optimal lighting.',
+    demo_map_placeholder: 'Live Map Visualization',
+    demo_support_placeholder: '24/7 Concierge Support'
+  })
+
+  const [steps, setSteps] = useState<StepItem[]>([
+    { id: 'p1', type: 'planning', step_number: '01', title: 'Define Your Muse', description: 'Tell our AI your desired mood—whether it\'s the quiet zen of Kyoto or the kinetic pulse of Berlin.', display_order: 0 },
+    { id: 'p2', type: 'planning', step_number: '02', title: 'Curated Logic', description: 'We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.', display_order: 1 },
+    { id: 'p3', type: 'planning', step_number: '03', title: 'Dynamic Refinement', description: 'Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.', display_order: 2 },
+    { id: 'h1', type: 'how', step_number: '01', title: 'Pick your destination', description: 'Search 10,000+ destinations. See trending spots, seasonal highlights.', display_order: 0 },
+    { id: 'h2', type: 'how', step_number: '02', title: 'Choose your travel style', description: 'Adventure, culture, or food tour? Tell us your vibe.', display_order: 1 },
+    { id: 'h3', type: 'how', step_number: '03', title: 'Set duration & budget', description: 'Pick travel dates and a daily budget auto-calculated.', display_order: 2 },
+    { id: 'h4', type: 'how', step_number: '04', title: 'Select attractions', description: 'Browse curated must-sees and hidden gems.', display_order: 3 },
+    { id: 'h5', type: 'how', step_number: '05', title: 'Itinerary Complete!', description: 'Download your full plan maps and bookings.', display_order: 4 }
+  ])
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch('/api/how-it-works-data', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.settings) setSettings(data.settings)
+          if (data.steps && data.steps.length > 0) setSteps(data.steps)
+        }
+      } catch (err) {
+        console.error('Error fetching how-it-works data:', err)
+      }
+    }
+    loadData()
+  }, [])
+
+  const planningSteps = steps.filter(s => s.type === 'planning')
+  const howSteps = steps.filter(s => s.type === 'how')
 
   return (
     <div className={styles.container}>
       <SiteHeader />
 
-      {/* Hero Section */}
       <section className={styles.hero} style={{ backgroundImage: 'url("/images/how_hero.png")' }}>
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
-          <span className={styles.heroBadge}>INTRODUCING ATLAS LUMINA</span>
-          <h1 className={styles.heroTitle}>
-            Crafting Your <br />
-            <i>Next Odyssey.</i>
-          </h1>
+          <span className={styles.heroBadge}>{settings.hero_badge}</span>
+          <h1 
+            className={styles.heroTitle}
+            dangerouslySetInnerHTML={{ __html: settings.hero_title.replace('\n', '<br />') }}
+          />
           <p className={styles.heroSub}>
-            A fusion of high-end editorial curation and artificial intelligence. 
-            SnapTrip transforms wandering into precision exploration.
+            {settings.hero_description}
           </p>
           <div className={styles.heroButtons}>
             <Link href="/plan" className={styles.btnPrimary}>Start Your Journey</Link>
@@ -61,39 +118,20 @@ export default function HowItWorks() {
         </div>
       </section>
 
-      {/* Art of Planning Section */}
       <section className={styles.planningSection}>
         <div className={styles.planningContent}>
           <div className={styles.planningText}>
-            <h2 className={styles.sectionTitle}>The Art of Seamless Planning</h2>
+            <h2 className={styles.sectionTitle}>{settings.planning_title}</h2>
             <div className={styles.planningSteps}>
-              <div className={styles.pStep}>
-                <span className={styles.pStepNum}>01</span>
-                <div>
-                  <h3 className={styles.pStepTitle}>Define Your Muse</h3>
-                  <p className={styles.pStepDesc}>
-                    Tell our AI your desired mood—whether it's the quiet zen of Kyoto or the kinetic pulse of Berlin.
-                  </p>
+              {planningSteps.map((step, idx) => (
+                <div className={styles.pStep} key={step.id || idx}>
+                  <span className={styles.pStepNum}>{step.step_number}</span>
+                  <div>
+                    <h3 className={styles.pStepTitle}>{step.title}</h3>
+                    <p className={styles.pStepDesc}>{step.description}</p>
+                  </div>
                 </div>
-              </div>
-              <div className={styles.pStep}>
-                <span className={styles.pStepNum}>02</span>
-                <div>
-                  <h3 className={styles.pStepTitle}>Curated Logic</h3>
-                  <p className={styles.pStepDesc}>
-                    We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.
-                  </p>
-                </div>
-              </div>
-              <div className={styles.pStep}>
-                <span className={styles.pStepNum}>03</span>
-                <div>
-                  <h3 className={styles.pStepTitle}>Dynamic Refinement</h3>
-                  <p className={styles.pStepDesc}>
-                    Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           <div className={styles.planningCollage}>
@@ -107,57 +145,26 @@ export default function HowItWorks() {
         </div>
       </section>
 
-      {/* How It Works Section */}
       <section className={styles.howSection}>
         <div className={styles.howBg} style={{ backgroundImage: 'url("/images/how_works_bg.png")' }} />
         <div className={styles.howHeader}>
-          <h2 className={styles.howTitle}>How It Works</h2>
+          <h2 className={styles.howTitle}>{settings.how_works_title}</h2>
           <p className={styles.howDesc}>
-            Snaptrip guides you through every step of your travel planning — from discovering destinations to creating 
-            a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly 
-            and without stress.
+            {settings.how_works_desc}
           </p>
         </div>
 
         <div className={styles.arcContainer}>
           <div className={styles.arcWrapper}>
-            {/* The Arc and Decorative Elements */}
             <svg viewBox="0 0 1000 800" className={styles.arcSvg}>
-              {/* Inner Decorative Arc */}
-              <path 
-                d="M 120 250 A 150 150 0 0 1 120 550" 
-                fill="none" 
-                stroke="#F6B800" 
-                strokeWidth="40" 
-                strokeLinecap="round"
-                opacity="0.6"
-              />
-              <path 
-                d="M 120 250 A 150 150 0 0 1 120 550" 
-                fill="none" 
-                stroke="#F6B800" 
-                strokeWidth="20" 
-                strokeLinecap="round"
-              />
-
-              {/* Main Dashed Arc */}
-              <path 
-                id="mainArc"
-                d="M 250 100 A 350 350 0 0 1 250 700" 
-                fill="none" 
-                stroke="#333" 
-                strokeWidth="2" 
-                strokeDasharray="10 10" 
-              />
-
-              {/* Connecting Lines */}
+              <path d="M 120 250 A 150 150 0 0 1 120 550" fill="none" stroke="#F6B800" strokeWidth="40" strokeLinecap="round" opacity="0.6" />
+              <path d="M 120 250 A 150 150 0 0 1 120 550" fill="none" stroke="#F6B800" strokeWidth="20" strokeLinecap="round" />
+              <path id="mainArc" d="M 250 100 A 350 350 0 0 1 250 700" fill="none" stroke="#333" strokeWidth="2" strokeDasharray="10 10" />
               <line x1="250" y1="250" x2="450" y2="250" stroke="#333" strokeWidth="2" />
               <line x1="390" y1="150" x2="450" y2="150" stroke="#333" strokeWidth="2" />
               <line x1="430" y1="400" x2="550" y2="400" stroke="#333" strokeWidth="2" />
               <line x1="390" y1="650" x2="450" y2="650" stroke="#333" strokeWidth="2" />
               <line x1="250" y1="550" x2="450" y2="550" stroke="#333" strokeWidth="2" />
-
-              {/* Dots on Arc */}
               <circle cx="250" cy="100" r="10" fill="#000" />
               <circle cx="390" cy="150" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
               <circle cx="250" cy="250" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
@@ -165,125 +172,100 @@ export default function HowItWorks() {
               <circle cx="250" cy="550" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
               <circle cx="390" cy="650" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
               <circle cx="250" cy="700" r="10" fill="#000" />
-
-              {/* Small Planes */}
               <path d="M 280 120 L 300 110 L 295 130 Z" fill="#F6B800" transform="rotate(-15, 290, 120)" />
               <path d="M 450 450 L 470 460 L 445 470 Z" fill="#F6B800" transform="rotate(30, 450, 460)" />
             </svg>
 
-            {/* Step Bubbles */}
-            <div className={styles.stepBubble} style={{ top: '15%', left: '45%' }}>
-              <div className={styles.stepNum}>01</div>
-              <div className={styles.stepText}>
-                <h4>Pick your destination</h4>
-                <p>Search 10,000+ destinations. See trending spots, seasonal highlights.</p>
+            {howSteps[0] && (
+              <div className={styles.stepBubble} style={{ top: '15%', left: '45%' }}>
+                <div className={styles.stepNum}>{howSteps[0].step_number}</div>
+                <div className={styles.stepText}>
+                  <h4>{howSteps[0].title}</h4>
+                  <p>{howSteps[0].description}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.stepBubble} style={{ top: '31%', left: '52%' }}>
-              <div className={styles.stepNum}>02</div>
-              <div className={styles.stepText}>
-                <h4>Choose your travel style</h4>
-                <p>Adventure, culture, or food tour? Tell us your vibe.</p>
+            )}
+            {howSteps[1] && (
+              <div className={styles.stepBubble} style={{ top: '31%', left: '52%' }}>
+                <div className={styles.stepNum}>{howSteps[1].step_number}</div>
+                <div className={styles.stepText}>
+                  <h4>{howSteps[1].title}</h4>
+                  <p>{howSteps[1].description}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.stepBubble} style={{ top: '50%', left: '55%' }}>
-              <div className={styles.stepNum}>03</div>
-              <div className={styles.stepText}>
-                <h4>Set duration & budget</h4>
-                <p>Pick travel dates and a daily budget auto-calculated.</p>
+            )}
+            {howSteps[2] && (
+              <div className={styles.stepBubble} style={{ top: '50%', left: '55%' }}>
+                <div className={styles.stepNum}>{howSteps[2].step_number}</div>
+                <div className={styles.stepText}>
+                  <h4>{howSteps[2].title}</h4>
+                  <p>{howSteps[2].description}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.stepBubble} style={{ top: '69%', left: '52%' }}>
-              <div className={styles.stepNum}>04</div>
-              <div className={styles.stepText}>
-                <h4>Select attractions</h4>
-                <p>Browse curated must-sees and hidden gems.</p>
+            )}
+            {howSteps[3] && (
+              <div className={styles.stepBubble} style={{ top: '69%', left: '52%' }}>
+                <div className={styles.stepNum}>{howSteps[3].step_number}</div>
+                <div className={styles.stepText}>
+                  <h4>{howSteps[3].title}</h4>
+                  <p>{howSteps[3].description}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.stepBubble} style={{ top: '81%', left: '45%' }}>
-              <div className={styles.stepNum}>05</div>
-              <div className={styles.stepText}>
-                <h4>Itinerary Complete!</h4>
-                <p>Download your full plan maps and bookings.</p>
+            )}
+            {howSteps[4] && (
+              <div className={styles.stepBubble} style={{ top: '81%', left: '45%' }}>
+                <div className={styles.stepNum}>{howSteps[4].step_number}</div>
+                <div className={styles.stepText}>
+                  <h4>{howSteps[4].title}</h4>
+                  <p>{howSteps[4].description}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Interactive Tabs Section */}
       <section className={styles.tabsSection}>
         <p className={styles.tabsHint}>Switch between tabs - All three sections are interactive</p>
-        
         <div className={styles.tabsContainer}>
           <div className={styles.tabsHeader}>
-            <button 
-              className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`}
-              onClick={() => setActiveTab('itinerary')}
-            >
-              <span>📅 Itinerary</span>
-            </button>
-            <button 
-              className={`${styles.tabBtn} ${activeTab === 'map' ? styles.active : ''}`}
-              onClick={() => setActiveTab('map')}
-            >
-              <span>🗺️ Live Map</span>
-            </button>
-            <button 
-              className={`${styles.tabBtn} ${activeTab === 'support' ? styles.active : ''}`}
-              onClick={() => setActiveTab('support')}
-            >
-              <span>🎧 Support</span>
-            </button>
+            <button className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`} onClick={() => setActiveTab('itinerary')}><span>📅 Itinerary</span></button>
+            <button className={`${styles.tabBtn} ${activeTab === 'map' ? styles.active : ''}`} onClick={() => setActiveTab('map')}><span>🗺️ Live Map</span></button>
+            <button className={`${styles.tabBtn} ${activeTab === 'support' ? styles.active : ''}`} onClick={() => setActiveTab('support')}><span>🎧 Support</span></button>
           </div>
-
           <div className={styles.tabContent}>
             {activeTab === 'itinerary' && (
               <div className={styles.itineraryDemo}>
                 <div className={styles.iItem}>
-                  <div className={styles.iTime}>08</div>
+                  <div className={styles.iTime}>{settings.demo_i_time_1}</div>
                   <div className={styles.iDetails}>
-                    <span className={styles.iLabel}>MORNING ARRIVAL</span>
-                    <div className={styles.iHeader}>
-                      <h3>Tokyo Narita Express</h3>
-                      <span className={styles.iPrice}>$32.00</span>
-                    </div>
-                    <p className={styles.iDesc}>
-                      Direct transfer to Shinjuku. Our concierge has pre-booked your green car seats for maximum comfort.
-                    </p>
+                    <span className={styles.iLabel}>{settings.demo_i_label_1}</span>
+                    <div className={styles.iHeader}><h3>{settings.demo_i_title_1}</h3><span className={styles.iPrice}>{settings.demo_i_price_1}</span></div>
+                    <p className={styles.iDesc}>{settings.demo_i_desc_1}</p>
                     <div className={styles.iTags}>
-                      <span className={styles.tag}>TRANSPORT</span>
-                      <span className={styles.tag}>PRE-PAID</span>
+                      {(settings.demo_i_tags_1 || '').split(',').map((tag, tIdx) => (
+                        <span className={styles.tag} key={tIdx}>{tag.trim().toUpperCase()}</span>
+                      ))}
                     </div>
                   </div>
                 </div>
-
                 <div className={styles.iItem}>
-                  <div className={styles.iTime}>13</div>
+                  <div className={styles.iTime}>{settings.demo_i_time_2}</div>
                   <div className={styles.iDetails}>
-                    <span className={styles.iLabel}>LUNCH ENGAGEMENT</span>
-                    <div className={styles.iHeader}>
-                      <h3>Kozue, Park Hyatt</h3>
-                      <span className={styles.iPrice}>$120.00</span>
-                    </div>
-                    <p className={styles.iDesc}>
-                      Contemporary Japanese dining with views across the Tokyo skyline. Window table confirmed.
-                    </p>
-                    <img src="/images/how_food.png" alt="Food" className={styles.iImage} />
+                    <span className={styles.iLabel}>{settings.demo_i_label_2}</span>
+                    <div className={styles.iHeader}><h3>{settings.demo_i_title_2}</h3><span className={styles.iPrice}>{settings.demo_i_price_2}</span></div>
+                    <p className={styles.iDesc}>{settings.demo_i_desc_2}</p>
+                    {settings.demo_i_img_2 && <img src={settings.demo_i_img_2} alt="Food" className={styles.iImage} />}
                   </div>
                 </div>
-
                 <div className={styles.aiSuggestion}>
                   <div className={styles.aiIcon}>💡</div>
-                  <div>
-                    <strong>AI Suggestion</strong>
-                    <p>Based on current weather, we recommend visiting the Gyoen Garden at 4:00 PM for optimal lighting.</p>
-                  </div>
+                  <div><strong>AI Suggestion</strong><p>{settings.demo_i_ai_suggestion}</p></div>
                 </div>
               </div>
             )}
-            {activeTab === 'map' && <div className={styles.placeholder}>Live Map Visualization</div>}
-            {activeTab === 'support' && <div className={styles.placeholder}>24/7 Concierge Support</div>}
+            {activeTab === 'map' && <div className={styles.placeholder}>{settings.demo_map_placeholder}</div>}
+            {activeTab === 'support' && <div className={styles.placeholder}>{settings.demo_support_placeholder}</div>}
           </div>
         </div>
       </section>
