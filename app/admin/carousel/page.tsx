@@ -99,7 +99,7 @@ export default function AdminCarouselPage() {
       setLoading(true)
       setErrorMsg(null)
       setTableMissing(false)
-      const res = await fetch('/api/admin/carousel')
+      const res = await fetch('/api/admin/carousel', { cache: 'no-store' })
       const data = await res.json()
 
       if (!res.ok) {

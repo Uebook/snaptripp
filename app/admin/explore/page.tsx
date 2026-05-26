@@ -197,7 +197,7 @@ export default function AdminExplorePage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/admin/explore/settings')
+      const res = await fetch('/api/admin/explore/settings', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
         if (data.settings) {
@@ -212,7 +212,7 @@ export default function AdminExplorePage() {
   const fetchGuides = async () => {
     setIsLoadingGuides(true)
     try {
-      const res = await fetch('/api/admin/explore/guides')
+      const res = await fetch('/api/admin/explore/guides', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
         if (data.guides) {
@@ -352,7 +352,7 @@ export default function AdminExplorePage() {
     setIsDetailsModalOpen(true)
 
     try {
-      const res = await fetch(`/api/admin/explore/guides/details?country_id=${countryId}`)
+      const res = await fetch(`/api/admin/explore/guides/details?country_id=${countryId}`, { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
         setDetails({

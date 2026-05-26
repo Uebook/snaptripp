@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
@@ -19,7 +22,11 @@ export async function GET() {
       throw error
     }
 
-    return NextResponse.json({ steps })
+    const response = NextResponse.json({ steps })
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    return response
   } catch (error: any) {
     console.error('Fetch how_it_works steps error:', error)
     return NextResponse.json({ error: error.message || 'Failed to fetch steps' }, { status: 500 })

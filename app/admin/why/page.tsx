@@ -25,7 +25,7 @@ export default function WhyManager() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('/api/admin/why')
+      const res = await fetch('/api/admin/why', { cache: 'no-store' })
       const data = await res.json()
       
       if (!res.ok) {

@@ -135,7 +135,7 @@ export default function AdminBlogManager() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/admin/blogs')
+      const res = await fetch('/api/admin/blogs', { cache: 'no-store' })
       const data = await res.json()
       if (!res.ok) {
         if (data.error === 'table_missing') {

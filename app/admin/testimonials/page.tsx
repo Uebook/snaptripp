@@ -33,7 +33,7 @@ export default function TestimonialsManager() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('/api/admin/testimonials')
+      const res = await fetch('/api/admin/testimonials', { cache: 'no-store' })
       const data = await res.json()
       
       if (!res.ok) {
