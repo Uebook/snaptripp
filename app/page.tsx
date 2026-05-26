@@ -679,7 +679,6 @@ export default function Home() {
                       <p>{currentT.location}</p>
                     </div>
                   </div>
-                  <button className="explore-stories-btn" onClick={() => router.push('/blog')}>Explore Stories</button>
                 </div>
                 <div className="testimonial-polaroid">
                   <div className="polaroid-img" style={{ backgroundImage: `url(${currentT.image_url})` }}></div>
