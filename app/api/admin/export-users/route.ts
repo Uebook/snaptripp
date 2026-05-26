@@ -7,7 +7,7 @@ export async function GET() {
               const { data: profiles, error } = await supabaseAdmin
                      .from('profiles')
                      .select('*')
-                     .order('created_at', { ascending: false })
+                     .order('updated_at', { ascending: false })
 
               if (error) {
                      console.error('Profile Export Error Details:', error)
@@ -34,7 +34,7 @@ export async function GET() {
                             `"${(profile.location || '').replace(/"/g, '""')}"`,
                             `"${(profile.website || '').replace(/"/g, '""')}"`,
                             `"${(profile.bio || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`, // Replace newlines in bio to keep it on one row safely though quotes usually handle it
-                            `"${new Date(profile.created_at).toLocaleDateString()}"`
+                            `"${new Date(profile.updated_at || Date.now()).toLocaleDateString()}"`
                      ]
                      csvRows.push(row.join(','))
               })

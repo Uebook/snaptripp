@@ -12,6 +12,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     const [isLogin, setIsLogin] = useState(true)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [fullName, setFullName] = useState('')
     const [username, setUsername] = useState('')
     const [loading, setLoading] = useState(false)
@@ -79,8 +80,25 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
         try {
             if (isLogin) {
+                let loginEmail = email.trim()
+                if (!loginEmail.includes('@')) {
+                    // Resolve username to email
+                    const cleanUsername = loginEmail.replace('@', '').toLowerCase().trim()
+                    const { data: profileData, error: profileErr } = await supabase
+                        .from('profiles')
+                        .select('email')
+                        .eq('username', cleanUsername)
+                        .maybeSingle()
+
+                    if (profileErr) throw profileErr
+                    if (!profileData?.email) {
+                        throw new Error('Username not found')
+                    }
+                    loginEmail = profileData.email
+                }
+
                 const { error } = await supabase.auth.signInWithPassword({
-                    email,
+                    email: loginEmail,
                     password,
                 })
                 if (error) throw error
@@ -296,13 +314,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     )}
 
                     <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Email</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Email or Username</label>
                         <input
-                            type="email"
+                            type="text"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="you@example.com"
+                            placeholder="you@example.com or username"
                             style={{
                                 width: '100%',
                                 padding: '0.75rem',
@@ -316,22 +334,55 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
                     <div style={{ marginBottom: '1.5rem' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151' }}>Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                            placeholder="••••••••"
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                borderRadius: '6px',
-                                border: '1px solid #d1d5db',
-                                color: '#111827',
-                                backgroundColor: 'white',
-                            }}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                minLength={6}
+                                placeholder="••••••••"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    paddingRight: '2.5rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid #d1d5db',
+                                    color: '#111827',
+                                    backgroundColor: 'white',
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: '#6b7280',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '4px'
+                                }}
+                            >
+                                {showPassword ? (
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                    </svg>
+                                ) : (
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     <button

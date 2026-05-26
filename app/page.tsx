@@ -96,12 +96,48 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [animateSteps, setAnimateSteps] = useState(false)
+  const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
+  const [whyData, setWhyData] = useState<any[]>([])
+  const [testimData, setTestimData] = useState<any[]>([])
+  const [blogsData, setBlogsData] = useState<any[]>([])
+  const [activeTestimIndex, setActiveTestimIndex] = useState(0)
 
   const REEL_COUNTRIES = ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
   const ITEM_HEIGHT = 90; // 55px height + 35px gap
-  const destKeys = Object.keys(DESTINATIONS_DATA)
+  const destKeys = Object.keys(destinationsData)
   const currentIndex = destKeys.indexOf(activeDest)
-  const currentData = DESTINATIONS_DATA[activeDest]
+  const currentData = destinationsData[activeDest] || destinationsData[destKeys[0]] || DESTINATIONS_DATA['Spain']
+
+  // Fetch homepage hero carousel data from DB
+  useEffect(() => {
+    const fetchHeroCarousel = async () => {
+      try {
+        const res = await fetch('/api/admin/carousel')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.items && data.items.length > 0) {
+            const formatted: Record<string, any> = {}
+            data.items.forEach((item: any) => {
+              formatted[item.country] = {
+                region: item.region,
+                desc: item.description,
+                label: item.label,
+                image: item.image_url,
+                bgImage: item.bg_image_url,
+                locationTag: item.location_tag
+              }
+            })
+            setDestinationsData(formatted)
+            const keys = Object.keys(formatted)
+            setActiveDest(prev => keys.includes(prev) ? prev : (keys[0] || 'Spain'))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch home carousel from database, using static fallback:', err)
+      }
+    }
+    fetchHeroCarousel()
+  }, [])
 
   // Fetch countries from API
   useEffect(() => {
@@ -119,6 +155,24 @@ export default function Home() {
       }
     }
     fetchCountries()
+  }, [])
+
+  // Fetch homepage dynamic sections data
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        const res = await fetch('/api/homepage-data')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.whySnaptrip) setWhyData(data.whySnaptrip)
+          if (data.testimonials) setTestimData(data.testimonials)
+          if (data.blogs) setBlogsData(data.blogs)
+        }
+      } catch (err) {
+        console.error('Failed to fetch homepage sections', err)
+      }
+    }
+    fetchSections()
   }, [])
 
   // Observer for Journey section
@@ -180,14 +234,60 @@ export default function Home() {
             <div className="left-gallery">
               <div
                 className="gallery-img"
-                style={{ backgroundImage: `url(${DESTINATIONS_DATA[nextDest1].image})` }}
+                style={{ 
+                  backgroundImage: `url(${destinationsData[nextDest1]?.image || ''})`,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
                 onClick={() => setActiveDest(nextDest1)}
-              ></div>
+              >
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0, left: 0, right: 0, height: '80px',
+                  background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
+                  borderRadius: '0 0 25px 25px',
+                  zIndex: 1
+                }}></div>
+                <span style={{ 
+                  color: '#fff', 
+                  fontSize: '14px', 
+                  fontWeight: '700', 
+                  position: 'relative', 
+                  zIndex: 2,
+                  letterSpacing: '0.5px'
+                }}>{nextDest1}</span>
+              </div>
               <div
                 className="gallery-img"
-                style={{ backgroundImage: `url(${DESTINATIONS_DATA[nextDest2].image})` }}
+                style={{ 
+                  backgroundImage: `url(${destinationsData[nextDest2]?.image || ''})`,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
                 onClick={() => setActiveDest(nextDest2)}
-              ></div>
+              >
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0, left: 0, right: 0, height: '80px',
+                  background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
+                  borderRadius: '0 0 25px 25px',
+                  zIndex: 1
+                }}></div>
+                <span style={{ 
+                  color: '#fff', 
+                  fontSize: '14px', 
+                  fontWeight: '700', 
+                  position: 'relative', 
+                  zIndex: 2,
+                  letterSpacing: '0.5px'
+                }}>{nextDest2}</span>
+              </div>
             </div>
           </div>
 
@@ -204,11 +304,6 @@ export default function Home() {
                 <p className="spark-desc">{currentData.desc}</p>
                 <span className="spark-sub-label">{currentData.label}</span>
                 <div className="card-thumb" style={{ backgroundImage: `url(${currentData.image})` }}></div>
-                <div className="pagination-dots">
-                  {destKeys.slice(0, 3).map((_, i) => (
-                    <span key={i} className={`dot ${currentIndex % 3 === i ? 'active' : ''}`}></span>
-                  ))}
-                </div>
               </div>
               <div className="location-tag" onClick={() => router.push('/guide')}>
                 <span>{currentData.locationTag}</span>
@@ -270,13 +365,13 @@ export default function Home() {
             <div 
               className="v-card-img" 
               style={{ 
-                backgroundImage: `url(${DESTINATIONS_DATA[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.image || '/images/explore_japan.png'})` 
+                backgroundImage: `url(${destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.image || '/images/explore_japan.png'})` 
               }}
             ></div>
             <div className="v-card-overlay">
               <h3>Explore <span>{searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan'}</span></h3>
               <p>
-                {DESTINATIONS_DATA[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.desc || 
+                {destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.desc || 
                   `Discover the beauty of ${searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan'}, from its vibrant city life to its serene landscapes.`}
               </p>
               <button className="explore-now-btn" onClick={() => router.push('/plan')}>Explore Now</button>
@@ -516,12 +611,12 @@ export default function Home() {
         <h2>Why SnapTrip</h2>
 
         <div className="why-grid">
-          {[
+          {(whyData.length > 0 ? whyData : [
             { icon: '🗺️', title: 'Seamless and Intuitive', text: 'Plan your trip with ease using our clean and simple interface.' },
             { icon: '⭐', title: 'Effortless Planning', text: 'Create personalized itineraries tailored to your unique travel style.' },
             { icon: '⚡', title: 'Personalized Journeys', text: 'Our AI-powered engine finds the best places for your journey.' },
             { icon: '💡', title: 'Expert Recommendations', text: 'Get handpicked recommendations from seasoned travelers.' }
-          ].map(item => (
+          ]).map(item => (
             <div className="why-card" key={item.title}>
               <div className="why-icon" style={{ color: '#EBA424' }}>{item.icon}</div>
               <h4>{item.title}</h4>
@@ -545,24 +640,53 @@ export default function Home() {
       <section className="testimonials-redesign">
         <h2>What Our <span>Travelers Says</span></h2>
 
-        <div className="testimonial-layout">
-          <div className="testimonial-main">
-            <div className="location-pin">📍</div>
-            <blockquote>
-              "Planning my trip was super easy and smooth. Loved the experience."
-            </blockquote>
-            <div className="testimonial-user">
-              <img src="/images/testimonial.png" alt="Riya Sharma" className="user-avatar" />
-              <div>
-                <h4>Riya Sharma</h4>
-                <p>Dubai</p>
-              </div>
+        <div className="testimonial-layout" style={{ position: 'relative' }}>
+          {testimData.length > 1 && (
+            <div style={{ position: 'absolute', top: '50%', left: '-30px', right: '-30px', display: 'flex', justifyContent: 'space-between', zIndex: 10, transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <button 
+                onClick={() => setActiveTestimIndex((prev) => (prev - 1 + testimData.length) % testimData.length)} 
+                style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', pointerEvents: 'auto', fontSize: '24px', color: '#64748b', transition: 'all 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.color = '#EBA424'}
+                onMouseOut={(e) => e.currentTarget.style.color = '#64748b'}
+              >←</button>
+              <button 
+                onClick={() => setActiveTestimIndex((prev) => (prev + 1) % testimData.length)} 
+                style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', pointerEvents: 'auto', fontSize: '24px', color: '#64748b', transition: 'all 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.color = '#EBA424'}
+                onMouseOut={(e) => e.currentTarget.style.color = '#64748b'}
+              >→</button>
             </div>
-            <button className="explore-stories-btn">Explore Stories</button>
-          </div>
-          <div className="testimonial-polaroid">
-            <div className="polaroid-img" style={{ backgroundImage: 'url(/images/testimonial.png)' }}></div>
-          </div>
+          )}
+          {(() => {
+            const currentT = testimData.length > 0 ? testimData[activeTestimIndex] : {
+              quote: "Planning my trip was super easy and smooth. Loved the experience.",
+              name: "Riya Sharma",
+              location: "Dubai",
+              avatar_url: "/images/testimonial.png",
+              image_url: "/images/testimonial.png"
+            };
+            return (
+              <>
+                <div className="testimonial-main">
+                  <div className="location-pin">📍</div>
+                  <blockquote style={{ minHeight: '120px' }}>
+                    "{currentT.quote}"
+                  </blockquote>
+                  <div className="testimonial-user">
+                    <img src={currentT.avatar_url} alt={currentT.name} className="user-avatar" style={{ objectFit: 'cover' }} />
+                    <div>
+                      <h4>{currentT.name}</h4>
+                      <p>{currentT.location}</p>
+                    </div>
+                  </div>
+                  <button className="explore-stories-btn" onClick={() => router.push('/blog')}>Explore Stories</button>
+                </div>
+                <div className="testimonial-polaroid">
+                  <div className="polaroid-img" style={{ backgroundImage: `url(${currentT.image_url})` }}></div>
+                </div>
+              </>
+            )
+          })()}
         </div>
       </section>
 
@@ -572,30 +696,45 @@ export default function Home() {
         <h2>Curated <span>Stories</span> & Perspectives</h2>
 
         <div className="stories-grid">
-          <div className="main-story-card" style={{ backgroundImage: 'url(/images/marrakech.png)' }}>
-            <div className="story-overlay">
-              <span className="story-category">MARRAKECH</span>
-              <h3>Marrakech Magic: The Secret Heart of the Red City</h3>
-              <p>Explore the hidden corners of Marrakech, from the bustling souks to the serene courtyards of riads.</p>
-              <button className="read-story-btn">Read More →</button>
-            </div>
-          </div>
-          <div className="side-stories">
-            {[
-              { img: '/images/why_mountains.png', title: 'Atlas Adventures: Beyond Berber Hospitality', category: 'MOROCCO', date: 'FEB 10, 2026' },
-              { img: '/images/hero_city.png', title: 'A Taste of Morocco: A Spice Trail Odyssey', category: 'MOROCCO', date: 'FEB 08, 2026' },
-              { img: '/images/marrakech.png', title: 'Chasing Dreams: Moroccan landscapes', category: 'MOROCCO', date: 'FEB 05, 2026' }
-            ].map(story => (
-              <div className="side-story-card" key={story.title}>
-                <div className="side-story-img" style={{ backgroundImage: `url(${story.img})` }}></div>
-                <div className="side-story-info">
-                  <span className="side-category">{story.category} • {story.date}</span>
-                  <h4>{story.title}</h4>
-                  <button className="read-link">Read More →</button>
+          {(() => {
+            const mainStory = blogsData.length > 0 ? blogsData[0] : {
+              image_url: '/images/marrakech.png',
+              category: 'MARRAKECH',
+              title: 'Marrakech Magic: The Secret Heart of the Red City',
+              excerpt: 'Explore the hidden corners of Marrakech, from the bustling souks to the serene courtyards of riads.',
+              slug: '#'
+            };
+            const sideStories = blogsData.length > 1 ? blogsData.slice(1) : [
+              { image_url: '/images/why_mountains.png', title: 'Atlas Adventures: Beyond Berber Hospitality', category: 'MOROCCO', created_at: '2026-02-10T00:00:00Z', slug: '#' },
+              { image_url: '/images/hero_city.png', title: 'A Taste of Morocco: A Spice Trail Odyssey', category: 'MOROCCO', created_at: '2026-02-08T00:00:00Z', slug: '#' },
+              { image_url: '/images/marrakech.png', title: 'Chasing Dreams: Moroccan landscapes', category: 'MOROCCO', created_at: '2026-02-05T00:00:00Z', slug: '#' }
+            ];
+
+            return (
+              <>
+                <div className="main-story-card" style={{ backgroundImage: `url(${mainStory.image_url})` }}>
+                  <div className="story-overlay">
+                    <span className="story-category">{mainStory.category}</span>
+                    <h3>{mainStory.title}</h3>
+                    <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{mainStory.excerpt}</p>
+                    <button className="read-story-btn" onClick={() => router.push(mainStory.slug !== '#' ? `/blog/${mainStory.slug}` : '#')}>Read More →</button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+                <div className="side-stories">
+                  {sideStories.map((story, i) => (
+                    <div className="side-story-card" key={i}>
+                      <div className="side-story-img" style={{ backgroundImage: `url(${story.image_url})` }}></div>
+                      <div className="side-story-info">
+                        <span className="side-category">{story.category} • {story.created_at ? new Date(story.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}</span>
+                        <h4 style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{story.title}</h4>
+                        <button className="read-link" onClick={() => router.push(story.slug !== '#' ? `/blog/${story.slug}` : '#')}>Read More →</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 

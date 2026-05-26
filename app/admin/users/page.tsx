@@ -25,7 +25,7 @@ export default async function AdminUsers({
     let baseQuery = supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (query) {
@@ -65,7 +65,7 @@ export default async function AdminUsers({
           email: profile.email || 'N/A',
           isBlocked,
           status: isBlocked ? 'Blocked' : 'Active',
-          lastActive: new Date(profile.updated_at || profile.created_at).toLocaleDateString(),
+          lastActive: profile.updated_at ? new Date(profile.updated_at).toLocaleDateString() : 'N/A',
           badge: isBlocked ? 'danger' : 'success'
         }
       })
