@@ -237,33 +237,59 @@ export default function HowItWorks() {
           </div>
           <div className={styles.tabContent}>
             {activeTab === 'itinerary' && (
-              <div className={styles.itineraryDemo}>
-                <div className={styles.iItem}>
-                  <div className={styles.iTime}>{settings.demo_i_time_1}</div>
-                  <div className={styles.iDetails}>
-                    <span className={styles.iLabel}>{settings.demo_i_label_1}</span>
-                    <div className={styles.iHeader}><h3>{settings.demo_i_title_1}</h3><span className={styles.iPrice}>{settings.demo_i_price_1}</span></div>
-                    <p className={styles.iDesc}>{settings.demo_i_desc_1}</p>
-                    <div className={styles.iTags}>
-                      {(settings.demo_i_tags_1 || '').split(',').map((tag, tIdx) => (
-                        <span className={styles.tag} key={tIdx}>{tag.trim().toUpperCase()}</span>
-                      ))}
+              <div className={styles.phasesDemo}>
+
+                {/* Phase One */}
+                <div className={styles.phaseRow}>
+                  <div className={styles.phaseCircle}>1</div>
+                  <div className={styles.phaseContent}>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>🗺️</span> PHASE ONE</div>
+                    <h3 className={styles.phaseTitle}>Select a City: Map Discovery</h3>
+                    <p className={styles.phaseDesc}>Begin your journey by exploring our global map interface. Pinpoint your next adventure using interactive markers that reveal real-time insights about cities worldwide, from bustling metropolises to hidden gems.</p>
+                    <div className={styles.phaseTags}>
+                      <span className={styles.phaseTag}>GLOBAL RADIUS</span>
+                      <span className={styles.phaseTag}>INTERACTIVE MARKERS</span>
                     </div>
                   </div>
                 </div>
-                <div className={styles.iItem}>
-                  <div className={styles.iTime}>{settings.demo_i_time_2}</div>
-                  <div className={styles.iDetails}>
-                    <span className={styles.iLabel}>{settings.demo_i_label_2}</span>
-                    <div className={styles.iHeader}><h3>{settings.demo_i_title_2}</h3><span className={styles.iPrice}>{settings.demo_i_price_2}</span></div>
-                    <p className={styles.iDesc}>{settings.demo_i_desc_2}</p>
-                    {settings.demo_i_img_2 && <img src={settings.demo_i_img_2} alt="Food" className={styles.iImage} />}
+
+                {/* Phase Two */}
+                <div className={styles.phaseRow}>
+                  <div className={styles.phaseCircle}>2</div>
+                  <div className={styles.phaseContent}>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>📍</span> PHASE TWO</div>
+                    <h3 className={styles.phaseTitle}>Choose Attractions: Curated Landmarks</h3>
+                    <p className={styles.phaseDesc}>Dive into a selection of curated landmarks and hidden gems. Our system analyzes millions of data points to suggest attractions tailored to your personal preferences. Add world-renowned sites or local secrets to your custom bucket list with a single click.</p>
+                    <div className={styles.phaseCards}>
+                      <div className={styles.phaseCard}>
+                        <div className={styles.phaseCardIcon}>👍</div>
+                        <div className={styles.phaseCardLabel}>Top Suggestions</div>
+                      </div>
+                      <div className={styles.phaseCard}>
+                        <div className={styles.phaseCardIcon}>✅</div>
+                        <div className={styles.phaseCardLabel}>Curated Landmarks</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className={styles.aiSuggestion}>
-                  <div className={styles.aiIcon}>💡</div>
-                  <div><strong>AI Suggestion</strong><p>{settings.demo_i_ai_suggestion}</p></div>
+
+                {/* Phase Three */}
+                <div className={styles.phaseRow}>
+                  <div className={styles.phaseCircle}>3</div>
+                  <div className={styles.phaseContent}>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>⚡</span> PHASE THREE</div>
+                    <h3 className={styles.phaseTitle}>Finalize Itinerary: Optimization Engine</h3>
+                    <p className={styles.phaseDesc}>Let our advanced optimization engine handle the logistics. The platform automatically calculates the most efficient travel routes, provides precise time-on-site estimates, and generates a comprehensive day-wise breakdown. Adjust your schedule in real-time as your travel needs evolve.</p>
+                    <div className={styles.phaseAi}>
+                      <span className={styles.phaseAiIcon}>🤖</span>
+                      <div>
+                        <strong>AI-Powered Route Optimization Active</strong>
+                        <p>Intelligent scheduling engine processing your data.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
               </div>
             )}
             {activeTab === 'support' && (

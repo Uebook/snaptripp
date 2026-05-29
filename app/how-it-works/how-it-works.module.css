@@ -662,3 +662,142 @@
   line-height: 1.5;
   color: #666;
 }
+
+/* ── Phase-based Itinerary Demo ────────────────────────── */
+.phasesDemo {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.phaseRow {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.phaseCircle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: #F6B800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #fff;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(246, 184, 0, 0.35);
+}
+
+.phaseContent {
+  flex: 1;
+}
+
+.phaseLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #555;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.phaseLabelIcon {
+  font-size: 1rem;
+}
+
+.phaseTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 12px;
+}
+
+.phaseDesc {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.65;
+  margin: 0 0 16px;
+}
+
+.phaseTags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.phaseTag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #888;
+  letter-spacing: 0.05em;
+}
+
+.phaseCards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.phaseCard {
+  background: #F8F9FA;
+  border: 1px solid #EBEBEB;
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  text-align: center;
+}
+
+.phaseCardIcon {
+  font-size: 1.5rem;
+}
+
+.phaseCardLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #555;
+}
+
+.phaseAi {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.phaseAiIcon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.phaseAi strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 4px;
+}
+
+.phaseAi p {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0;
+}
+
