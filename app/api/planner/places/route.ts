@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         const { data: places, error: placesError } = await supabaseAdmin
             .from('places')
             .select('*')
-            .eq('country', country)
+            .ilike('country', country)
             .order('city', { ascending: true });
 
         if (placesError) throw placesError;
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         const { data: destination, error: destError } = await supabaseAdmin
             .from('destinations')
             .select('*')
-            .eq('name', country)
+            .ilike('name', country)
             .eq('type', 'country')
             .single();
 

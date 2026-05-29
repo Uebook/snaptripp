@@ -15,6 +15,8 @@ import SiteFooter from '../components/SiteFooter'
 import DayPlanner, { DayPlan } from '../components/DayPlanner'
 import TimelineView from '../components/TimelineView'
 import { MapItem } from '../components/HierarchicalMap'
+import AuthModal from '../components/AuthModal'
+import PlaceDetailsModal from '../components/PlaceDetailsModal'
 
 // Dynamically import TripMap to avoid SSR issues with Leaflet
 const TripMap = dynamic(() => import('../components/TripMap'), {
@@ -23,7 +25,6 @@ const TripMap = dynamic(() => import('../components/TripMap'), {
 })
 
 import { supabase } from '@/lib/supabase'
-import AuthModal from '../components/AuthModal'
 
 interface Place {
   id: number
@@ -73,8 +74,9 @@ function TripMapContent() {
   const [showTimeline, setShowTimeline] = useState(false)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [daysCount, setDaysCount] = useState<number>(1)
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(!tripIdParam)
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(!tripIdParam)
+  const [isItineraryOpen, setIsItineraryOpen] = useState<boolean>(false)
 
   // Auth & Saving State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -139,8 +141,29 @@ function TripMapContent() {
         }
       }
       fetchTrip()
+    } else {
+      // Load from local storage draft if it's a new trip
+      try {
+        const draft = localStorage.getItem('snaptrip_draft');
+        if (draft) {
+          const parsed = JSON.parse(draft);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDayPlans(parsed);
+            setDaysCount(parsed.length);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load draft from local storage', e);
+      }
     }
   }, [tripIdParam])
+
+  // Save to localStorage on change so progress isn't lost
+  useEffect(() => {
+    if (!tripIdParam && dayPlans.length > 0) {
+      localStorage.setItem('snaptrip_draft', JSON.stringify(dayPlans));
+    }
+  }, [dayPlans, tripIdParam])
 
   // Fetch places for the selected country
   useEffect(() => {
@@ -232,6 +255,23 @@ function TripMapContent() {
   }
 
   // Planner Handlers
+  const handleUpdateDaysCount = (newCount: number) => {
+    setDaysCount(newCount);
+    const newDays = [...dayPlans];
+    if (newCount > newDays.length) {
+      while (newDays.length < newCount) {
+        newDays.push({
+          id: `day-${Date.now()}-${newDays.length + 1}`,
+          title: `Day ${newDays.length + 1}`,
+          items: []
+        });
+      }
+    } else if (newCount < newDays.length) {
+      newDays.splice(newCount, newDays.length - newCount);
+    }
+    setDayPlans(newDays);
+  }
+
   const handleUpdateDays = (updatedDays: DayPlan[]) => {
     setDayPlans(updatedDays)
   }
@@ -286,6 +326,7 @@ function TripMapContent() {
         title: `Day ${lastDayIndex + 1}`,
         items: []
       });
+      setDaysCount(newDays.length);
     }
 
     newDays[lastDayIndex].items.push(item);
@@ -431,19 +472,20 @@ function TripMapContent() {
 
       {/* ─── Main Grid ─────────────────────────────────────────────────────── */}
       <div
-        className="trip-map-container"
+        className={`trip-map-container ${isItineraryOpen ? 'itinerary-open' : 'itinerary-closed'}`}
         style={{
-          gridTemplateAreas: dayPlans.length > 0 ? '"guide map" "itinerary itinerary"' : '"guide map"',
-          gridTemplateColumns: '450px 1fr',
-          gridTemplateRows: dayPlans.length > 0 ? '1fr 320px' : '1fr'
+          gridTemplateAreas: '"guide map itinerary"',
+          gridTemplateColumns: isItineraryOpen ? '450px 1fr 400px' : '450px 1fr 0px',
+          gridTemplateRows: '1fr',
+          transition: 'grid-template-columns 0.3s ease-in-out'
         }}
       >
 
-        {/* ── Left Sidebar / Itinerary (bottom row when dayPlans exist) ── */}
+        {/* ── Right Sidebar (Itinerary) ── */}
         {dayPlans.length > 0 && (
           <div
-            className={`sidebar left-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${!isLeftSidebarOpen ? 'sidebar-hidden' : ''}`}
-            style={{ gridArea: 'itinerary' }}
+            className={`sidebar itinerary-sidebar ${activeMobileTab === 'itinerary' ? 'mobile-active' : ''} ${!isItineraryOpen ? 'sidebar-hidden' : ''}`}
+            style={{ gridArea: 'itinerary', display: 'flex', flexDirection: 'column' }}
           >
             <div className="itinerary-header-horizontal">
               <div className="itinerary-info-horizontal">
@@ -453,17 +495,16 @@ function TripMapContent() {
                 </div>
               </div>
               <div className="itinerary-actions-horizontal">
-                <button className="btn-confirm-itinerary">CONFIRM ITINERARY</button>
-                <button className="btn-share-itinerary" onClick={handleSaveTripClick}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-12-4l4-4 4 4m-4-4v12" />
-                  </svg>
-                  Share
+                <button 
+                  className="btn-confirm-itinerary"
+                  onClick={() => router.push(`/trip-confirm?country=${encodeURIComponent(country || '')}`)}
+                >
+                  CONFIRM ITINERARY
                 </button>
               </div>
             </div>
 
-            <div className="itinerary-scroller-premium">
+            <div className="itinerary-scroller-premium" style={{ flexDirection: 'column', overflowY: 'auto' }}>
               {dayPlans.map((day, idx) => (
                 <div
                   key={day.id}
@@ -485,17 +526,49 @@ function TripMapContent() {
                     {day.items.map(item => (
                       <div
                         key={item.id}
+                        draggable
+                        onDragStart={() => handleDragStart(item.id, day.id)}
                         className="site-entry-premium"
-                        style={{ padding: '10px', background: '#FAFAFA', borderRadius: '8px', border: '1px solid #E5E7EB' }}
+                        style={{ 
+                          padding: '8px 12px', 
+                          background: '#FFFFFF', 
+                          borderRadius: '8px', 
+                          border: '1px solid #E2E8F0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'grab',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                          transition: 'all 0.2s ease',
+                          marginBottom: '8px'
+                        }}
                       >
-                        <img src={item.data?.image_url || '/api/placeholder/40/40'} alt="" style={{ width: '36px', height: '36px', borderRadius: '6px' }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
-                          <div style={{ fontSize: '11px', color: '#6B7280' }}>09:00 AM • {item.data?.city}</div>
+                        <div style={{ color: '#CBD5E1', display: 'flex', alignItems: 'center' }}>
+                          <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor">
+                            <circle cx="4" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/>
+                            <circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/>
+                          </svg>
+                        </div>
+                        {item.data?.image_url && (
+                          <img 
+                            src={item.data.image_url} 
+                            alt="" 
+                            style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover' }} 
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                          <div style={{ fontSize: '11px', color: '#64748B', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <span>09:00 AM</span>
+                            <span>•</span>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.data?.city || 'City'}</span>
+                          </div>
                         </div>
                         <button
                           onClick={() => handleRemoveFromDay(day.id, item.id)}
-                          style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '18px' }}
+                          style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '18px', padding: '4px', lineHeight: 1 }}
+                          title="Remove from plan"
                         >×</button>
                       </div>
                     ))}
@@ -525,19 +598,31 @@ function TripMapContent() {
                 <h3>Popular attractions</h3>
               </div>
               <div className="carousel-track">
-                {[
-                  { title: 'Milan: Duomo di Milano', desc: '5 Locations • 3 Days', img: '/images/explore_japan.png' },
-                  { title: 'Art Capital: Florence', desc: '8 Locations • 4 Days', img: '/images/hero_city.png' },
-                  { title: 'Roman Holidays', desc: '12 Locations • 5 Days', img: '/images/explore_japan.png' }
-                ].map((item, i) => (
-                  <div key={i} className="popular-card">
-                    <img src={item.img} alt="" />
-                    <div className="popular-card-info">
-                      <h4>{item.title}</h4>
-                      <p>{item.desc}</p>
+                {(() => {
+                  const pool = selectedCity ? places.filter(p => p.city === selectedCity) : places;
+                  const displayPlaces = pool.slice(0, 4);
+                  
+                  if (displayPlaces.length === 0) return null;
+                  
+                  return displayPlaces.map((place) => (
+                    <div 
+                      key={place.id} 
+                      className="popular-card" 
+                      onClick={() => handleAddToItinerary(place)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <img 
+                        src={place.image_url || '/api/placeholder/400/200'} 
+                        alt="" 
+                        onError={(e) => { e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23ccc"><rect width="100" height="100" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="%23999">No Image</text></svg>'; }} 
+                      />
+                      <div className="popular-card-info">
+                        <h4 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{place.title}</h4>
+                        <p>{place.city} • {place.categoryName || 'Attraction'}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -575,89 +660,23 @@ function TripMapContent() {
           />
         </div> {/* ← closes trip-map-main-wrapper div */}
 
-        {/* ── Right Sidebar: Guide / Place Details ────────────────────────── */}
+        {/* Itinerary Toggle Button */}
+        {dayPlans.length > 0 && (
+          <div 
+            className="itinerary-toggle-tab"
+            onClick={() => setIsItineraryOpen(!isItineraryOpen)}
+          >
+            {isItineraryOpen ? 'Close Itinerary ▾' : 'Your Itinerary ▾'}
+          </div>
+        )}
+
+        {/* ── Left Sidebar: Guide / Place Details ────────────────────────── */}
         <div
-          className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''} ${!isRightSidebarOpen ? 'sidebar-hidden' : ''}`}
+          className={`sidebar right-sidebar ${activeMobileTab === 'explore' ? 'mobile-active' : ''}`}
           style={{ gridArea: 'guide' }}
         >
-          {activeDetailsPlace ? (
-            <div className="place-details-sidebar animate-fade-in">
-              <button
-                onClick={() => setActiveDetailsPlace(null)}
-                className="panel-close-btn right-panel-close"
-                title="Back to Discovery"
-                style={{ zIndex: 100 }}
-              >←</button>
-
-              <div className="place-hero-sidebar">
-                <img src={activeDetailsPlace.image_url || '/api/placeholder/400/300'} alt={activeDetailsPlace.title} className="sidebar-hero-img" />
-                <div className="sidebar-hero-gradient" />
-                <div className="sidebar-hero-content">
-                  <span className="sidebar-category-badge">{activeDetailsPlace.categoryName || 'Explore'}</span>
-                  <h3>{activeDetailsPlace.title}</h3>
-                </div>
-              </div>
-
-              <div className="sidebar-details-scroll">
-                <section className="sidebar-info-section">
-                  <p className="sidebar-description">{activeDetailsPlace.description || 'No detailed description available for this location.'}</p>
-
-                  <div className="sidebar-contact-list">
-                    {activeDetailsPlace.address && <div className="contact-row"><span>📍</span> {activeDetailsPlace.address}</div>}
-                    {activeDetailsPlace.phone && <div className="contact-row"><span>📞</span> {activeDetailsPlace.phone}</div>}
-                    {activeDetailsPlace.website && (
-                      <div className="contact-row">
-                        <span>🌐</span>
-                        <a href={activeDetailsPlace.website.startsWith('http') ? activeDetailsPlace.website : 'https://' + activeDetailsPlace.website} target="_blank" rel="noreferrer">Visit Website</a>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <section className="sidebar-info-section">
-                  <h4 className="sidebar-section-title">Features</h4>
-                  <div className="sidebar-features-grid">
-                    {activeDetailsPlace.ai_Acc_0_entrance && <div className="side-feature-chip">Wheelchair Accessible</div>}
-                    {activeDetailsPlace.ai_Chld_0_kids && <div className="side-feature-chip">Kids Friendly</div>}
-                    {activeDetailsPlace.ai_Pets_0_dogs && <div className="side-feature-chip">Pets Allowed</div>}
-                  </div>
-                </section>
-
-                {(activeDetailsPlace as any).openingHours_0_day && (
-                  <section className="sidebar-info-section">
-                    <h4 className="sidebar-section-title">Opening Hours</h4>
-                    <div className="sidebar-hours-list">
-                      {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
-                        const day = (activeDetailsPlace as any)[`openingHours_${dayIdx}_day`];
-                        const hours = (activeDetailsPlace as any)[`openingHours_${dayIdx}_hours`];
-                        if (!day) return null;
-                        return (
-                          <div key={dayIdx} className="sidebar-hour-row">
-                            <span className="day">{day}</span>
-                            <span className="hours">{hours}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                <div style={{ padding: '24px 0 40px' }}>
-                  {isPlaceInPlanGlobal(activeDetailsPlace.id) ? (
-                    <button className="sidebar-btn-remove" onClick={() => handleRemoveGlobal(activeDetailsPlace!.id)}>
-                      ✕ Remove from Plan
-                    </button>
-                  ) : (
-                    <button className="sidebar-btn-add" onClick={() => handleAddToItinerary(activeDetailsPlace!)}>
-                      + Add to Plan
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="country-discovery-view animate-fade-in" style={{ position: 'relative' }}>
-              <div className="welcome-header">
+          <div className="country-discovery-view animate-fade-in" style={{ position: 'relative' }}>
+            <div className="welcome-header">
                 <h1>Welcome to <i>{country}</i></h1>
                 <p>Explore the best experiences, plan your days, and build your perfect itinerary.</p>
               </div>
@@ -670,9 +689,9 @@ function TripMapContent() {
                 </div>
                 <div className="days-counter-minimal">
                   <span>Days</span>
-                  <button className="counter-btn" onClick={() => setDaysCount(Math.max(1, daysCount - 1))}>-</button>
+                  <button className="counter-btn" onClick={() => handleUpdateDaysCount(Math.max(1, daysCount - 1))}>-</button>
                   <strong>{daysCount}</strong>
-                  <button className="counter-btn" onClick={() => setDaysCount(daysCount + 1)}>+</button>
+                  <button className="counter-btn" onClick={() => handleUpdateDaysCount(daysCount + 1)}>+</button>
                 </div>
                 <div className="search-bar-minimal">
                   <input
@@ -699,9 +718,23 @@ function TripMapContent() {
                     </div>
 
                     {places.filter(p => p.city === selectedCity).map(place => (
-                      <div key={place.id} className="attraction-card-editorial">
+                      <div 
+                        key={place.id} 
+                        draggable
+                        onDragStart={() => handleDragStart(place.id.toString(), 'suggested')}
+                        className="attraction-card-editorial" 
+                        style={{
+                          ...(isPlaceInPlanGlobal(place.id) ? { border: '2px solid #48bb78', boxShadow: '0 4px 15px rgba(72, 187, 120, 0.2)' } : {}),
+                          cursor: 'grab'
+                        }}
+                      >
                         <div className="card-top">
-                          <img src={place.image_url || '/api/placeholder/100/100'} alt="" className="card-img" />
+                          <img 
+                            src={place.image_url || '/api/placeholder/100/100'} 
+                            alt="" 
+                            className="card-img" 
+                            onError={(e) => { e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23ccc"><rect width="100" height="100" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="%23999">No Image</text></svg>'; }}
+                          />
                           <div className="card-main-info">
                             <h4>{place.title}</h4>
                             <span className="card-category">{place.categoryName || 'Attraction'}</span>
@@ -729,29 +762,38 @@ function TripMapContent() {
                     <h2 style={{ fontSize: '24px', margin: '0 0 8px' }}>{country} Explorer</h2>
                     <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 32px' }}>Welcome to your personal guide to {country}.</p>
 
-                    <div className="explorer-steps">
-                      <div className="explorer-step">
-                        <div className="step-number">1</div>
-                        <div className="step-content">
-                          <h4>Select a City</h4>
-                          <p>Click a marker on the map to begin your journey.</p>
+                    {dayPlans.length > 0 ? (
+                      <div style={{ padding: '20px', background: '#F0F9FF', borderRadius: '12px', border: '1px solid #BAE6FD', marginBottom: '32px' }}>
+                        <h4 style={{ color: '#0369A1', margin: '0 0 8px', fontSize: '16px' }}>Your itinerary is active! ✨</h4>
+                        <p style={{ color: '#0C4A6E', margin: 0, fontSize: '14px' }}>
+                          Select any city on the map or zoom in to discover more attractions to add to your plan.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="explorer-steps">
+                        <div className="explorer-step">
+                          <div className="step-number">1</div>
+                          <div className="step-content">
+                            <h4>Select a City</h4>
+                            <p>Click a marker on the map to begin your journey.</p>
+                          </div>
+                        </div>
+                        <div className="explorer-step">
+                          <div className="step-number">2</div>
+                          <div className="step-content">
+                            <h4>Choose Attractions</h4>
+                            <p>Browse local landmarks and add them to your itinerary.</p>
+                          </div>
+                        </div>
+                        <div className="explorer-step">
+                          <div className="step-number">3</div>
+                          <div className="step-content">
+                            <h4>Finalize Itinerary</h4>
+                            <p>Review your day-wise plan and start your tour.</p>
+                          </div>
                         </div>
                       </div>
-                      <div className="explorer-step">
-                        <div className="step-number">2</div>
-                        <div className="step-content">
-                          <h4>Choose Attractions</h4>
-                          <p>Browse local landmarks and add them to your itinerary.</p>
-                        </div>
-                      </div>
-                      <div className="explorer-step">
-                        <div className="step-number">3</div>
-                        <div className="step-content">
-                          <h4>Finalize Itinerary</h4>
-                          <p>Review your day-wise plan and start your tour.</p>
-                        </div>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="explorer-card">
                       <div className="explorer-card-icon">🏛️</div>
@@ -770,11 +812,22 @@ function TripMapContent() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+          </div>
         </div> {/* ← closes right-sidebar div */}
 
       </div> {/* ← closes trip-map-container div */}
+
+      {/* Modals */}
+      {activeDetailsPlace && (
+        <PlaceDetailsModal
+          place={activeDetailsPlace}
+          onClose={() => setActiveDetailsPlace(null)}
+          dayPlans={dayPlans}
+          onAddToItinerary={(place, dayIdx) => handleAddToItinerary(place)} // Or handle dayIdx if supported
+          isPlaceInPlanGlobal={isPlaceInPlanGlobal}
+          onRemoveFromPlan={() => handleRemoveGlobal(activeDetailsPlace.id)}
+        />
+      )}
 
       {/* ── Mobile Bottom Nav ───────────────────────────────────────────────── */}
       <div className="mobile-bottom-nav">
@@ -825,6 +878,7 @@ function TripMapContent() {
 
         .trip-map-container {
           display: grid;
+          position: relative;
           grid-template-areas: 
             "guide map"
             "itinerary itinerary";
@@ -849,26 +903,55 @@ function TripMapContent() {
           min-height: 0;
         }
 
+        .itinerary-toggle-tab {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%) rotate(-90deg);
+          transform-origin: bottom right;
+          background-color: #031B4E;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 8px 8px 0 0;
+          font-weight: 700;
+          font-size: 14px;
+          cursor: pointer;
+          z-index: 1000;
+          box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+          letter-spacing: 1px;
+        }
+
+        .itinerary-closed .itinerary-sidebar {
+          display: none !important;
+        }
+
         .left-sidebar { border-top: 1px solid #E2E8F0; }
         .right-sidebar { border-right: 1px solid #E2E8F0; }
 
         .itinerary-scroller-premium {
           display: flex;
-          flex-direction: row;
+          flex-direction: column;
           gap: 24px;
           padding: 24px;
-          overflow-x: auto;
-          overflow-y: hidden;
+          overflow-x: hidden;
+          overflow-y: auto;
           flex: 1;
         }
 
         .day-card-premium {
-          min-width: 320px;
-          flex-shrink: 0;
-          background: #FFFFFF;
-          border-radius: 12px;
+          background: #fff;
+          border-radius: 16px;
+          border: 1px solid rgba(0,0,0,0.05);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.04);
           display: flex;
           flex-direction: column;
+          overflow: hidden;
+          flex-shrink: 0;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .day-card-premium:hover {
+          box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+          transform: translateY(-2px);
         }
 
         /* Typography & Headings */
@@ -1056,6 +1139,7 @@ function TripMapContent() {
 
         .controls-row {
           display: flex;
+          flex-wrap: wrap;
           align-items: center;
           gap: 12px;
           padding: 0 32px 24px;

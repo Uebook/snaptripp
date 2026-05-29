@@ -96,6 +96,40 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
         return dayPlans.some(day => day.items.some(item => item.data?.id === placeId || item.id === `place-${placeId}`))
     }
 
+    // Auto-select city on pan/zoom
+    useEffect(() => {
+        if (!mapRef.current || isSavedTripView) return;
+
+        const handleMoveEnd = () => {
+            const zoom = mapRef.current?.getZoom();
+            if (zoom && zoom >= 12 && onCityClick) {
+                const center = mapRef.current.getCenter();
+                let closestCity = null;
+                let minDistance = Number.MAX_VALUE;
+                
+                places.forEach(p => {
+                    const d = Math.pow(p.location_lat - center.lat, 2) + Math.pow(p.location_lng - center.lng, 2);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        closestCity = p.city;
+                    }
+                });
+
+                if (closestCity && minDistance < 0.05 && closestCity !== selectedCity) {
+                    onCityClick(closestCity);
+                }
+            } else if (zoom && zoom < 12 && selectedCity && onCityClick) {
+                // If zoomed out past the threshold, unselect the city
+                onCityClick('');
+            }
+        };
+
+        mapRef.current.on('moveend', handleMoveEnd);
+        return () => {
+            mapRef.current?.off('moveend', handleMoveEnd);
+        };
+    }, [places, selectedCity, isSavedTripView, onCityClick]);
+
     // Populating layers with markers
     useEffect(() => {
         if (!mapRef.current) return
@@ -231,9 +265,9 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
             syncLayer(placeLayerRef.current, false)
             syncLayer(tripLayerRef.current, true)
         } else if (selectedCity) {
-            // Local view: show clustered places only
+            // Local view: show clustered places AND itinerary
             syncLayer(cityLayerRef.current, false)
-            syncLayer(tripLayerRef.current, false)
+            syncLayer(tripLayerRef.current, true) // Kept visible on city zoom as requested!
             syncLayer(placeLayerRef.current, true)
         } else {
             // Explore view: show decluttered cities only

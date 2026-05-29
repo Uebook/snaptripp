@@ -13,7 +13,7 @@ export default function PlanTrip() {
   // Selection States
   const [selectedCountry, setSelectedCountry] = useState<string>('Italy')
   const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>('Intense')
-  const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
+  const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>('Weekend')
   const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [tripImmersion, setTripImmersion] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [countries, setCountries] = useState<string[]>([])
@@ -23,16 +23,25 @@ export default function PlanTrip() {
       try {
         const res = await fetch('/api/admin/sync/countries')
         const data = await res.json()
-        if (data.success) {
+        if (data.success && data.countries.length > 0) {
           setCountries(data.countries)
+          // If the default 'Italy' is not in the list, set to the first available country
+          if (!data.countries.includes(selectedCountry)) {
+            setSelectedCountry(data.countries[0])
+          }
         }
       } catch (err) {
         console.error('Failed to fetch countries', err)
         // Fallback
-        setCountries(['Japan', 'Greece', 'India', 'Germany', 'Brazil', 'Italy', 'Spain', 'UAE', 'USA', 'Canada', 'Thailand', 'Ireland'])
+        const fallback = ['Japan', 'Greece', 'India', 'Germany', 'Brazil', 'Italy', 'Spain', 'UAE', 'USA', 'Canada', 'Thailand', 'Ireland']
+        setCountries(fallback)
+        if (!fallback.includes(selectedCountry)) {
+          setSelectedCountry(fallback[0])
+        }
       }
     }
     fetchCountries()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   
   const renderStepper = () => {
@@ -73,8 +82,17 @@ export default function PlanTrip() {
     if (plannerStep < 4) {
       setPlannerStep(plannerStep + 1)
     } else {
-      // Final Generation logic: Redirect to the trip map (graph) page with the selected country
-      router.push(`/trip-map?country=${encodeURIComponent(selectedCountry)}`)
+      // Convert duration label to number of days
+      const durationMap: Record<string, number> = {
+        'Weekend': 3,
+        'Mini': 6,
+        'Full': 10
+      }
+      const days = tripDuration ? durationMap[tripDuration] : 3
+      // Navigate to trip map to explore and build itinerary
+      router.push(
+        `/trip-map?country=${encodeURIComponent(selectedCountry)}&duration=${days}&style=${encodeURIComponent(tripStyle || 'Intense')}&immersion=${encodeURIComponent(tripImmersion || 'Unmissable')}`
+      )
     }
   }
 
@@ -241,6 +259,11 @@ export default function PlanTrip() {
                       </svg>
                     )}
                   </div>
+                  <div className={styles.iconCircle}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 22h20L12 2z"></path>
+                    </svg>
+                  </div>
                   <h3 className={styles.optionTitle}>Unmissable</h3>
                   <p className={styles.optionDesc}>The landmarks that shouldn't be missed</p>
                 </div>
@@ -255,6 +278,14 @@ export default function PlanTrip() {
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     )}
+                  </div>
+                  <div className={styles.iconCircle}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 14v5"></path>
+                      <path d="M16 14v5"></path>
+                      <path d="M12 19v3"></path>
+                      <path d="M4 10a8 8 0 0 1 16 0c0 4-4 9-8 9s-8-5-8-9z"></path>
+                    </svg>
                   </div>
                   <h3 className={styles.optionTitle}>A lot more</h3>
                   <p className={styles.optionDesc}>More landmarks to explore for nature lovers</p>

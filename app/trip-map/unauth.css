@@ -1,0 +1,353 @@
+.unauth-travel-map {
+  min-height: 100vh;
+  background-color: #F8F9FA;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+.unauth-travel-map .top-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 30px 40px 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.unauth-travel-map .btn-share {
+  background: white;
+  border: 1.5px solid #F6B800;
+  color: #F6B800;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.unauth-travel-map .btn-share:hover {
+  background: #FFFBF0;
+}
+
+.unauth-travel-map .btn-add {
+  background: #F6B800;
+  border: 1.5px solid #F6B800;
+  color: white;
+  font-weight: 600;
+  padding: 10px 28px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(246,184,0,0.3);
+}
+
+.unauth-travel-map .btn-add:hover {
+  background: #D9A200;
+  border-color: #D9A200;
+}
+
+.unauth-hero {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto 60px;
+  padding: 20px 40px;
+  min-height: 550px;
+}
+
+.unauth-world-map-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140%;
+  max-width: 1600px;
+  opacity: 0.12;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.unauth-hero-text {
+  position: relative;
+  z-index: 1;
+  max-width: 450px;
+  margin-top: -40px;
+}
+
+.unauth-hero-pill {
+  display: inline-block;
+  background: #FFF3D4;
+  color: #A37600;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 50px;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.unauth-hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  line-height: 1.15;
+  color: #1F2937;
+  margin-bottom: 24px;
+}
+
+.unauth-hero-title span {
+  color: #F6B800;
+}
+
+.unauth-hero-desc {
+  color: #6B7280;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 400px;
+}
+
+.unauth-social-proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.unauth-avatars {
+  display: flex;
+}
+
+.unauth-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #EBEBEB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #555;
+  border: 2px solid #FFF;
+  margin-left: -10px;
+}
+
+.unauth-avatar:first-child {
+  margin-left: 0;
+  background: #A0C4FF;
+  color: white;
+}
+.unauth-avatar:nth-child(2) {
+  background: #F6B800;
+  color: white;
+}
+.unauth-avatar:nth-child(3) {
+  background: #D1D5DB;
+  color: #4B5563;
+}
+
+.unauth-social-text {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.unauth-login-card {
+  position: relative;
+  z-index: 1;
+  background: #FAFAFA;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+  width: 440px;
+  border: 1px solid #F3F4F6;
+}
+
+.unauth-login-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  color: #F6B800;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.unauth-login-card p {
+  text-align: center;
+  color: #6B7280;
+  font-size: 0.9rem;
+  margin-bottom: 30px;
+}
+
+.social-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-login-btn:hover {
+  background: #E5E7EB;
+}
+
+.login-divider {
+  text-align: center;
+  position: relative;
+  margin: 30px 0;
+}
+.login-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #E5E7EB;
+}
+.login-divider span {
+  background: #FAFAFA;
+  padding: 0 16px;
+  color: #9CA3AF;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  background: white;
+  transition: all 0.2s;
+  color: #1F2937;
+}
+
+.input-group input::placeholder {
+  color: #9CA3AF;
+}
+
+.input-group input:focus {
+  border-color: #F6B800;
+  box-shadow: 0 0 0 3px rgba(246,184,0,0.1);
+}
+
+.forgot-link {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 0.75rem;
+  color: #F6B800;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-signin {
+  width: 100%;
+  background: #F6B800;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(246,184,0,0.25);
+}
+
+.btn-signin:hover {
+  background: #D9A200;
+}
+
+.signup-hint {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: #6B7280;
+}
+
+.signup-hint a {
+  color: #F6B800;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.unauth-cta-section {
+  background: #0B1120;
+  margin: 60px auto 100px;
+  max-width: 1000px;
+  border-radius: 24px;
+  padding: 80px 40px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 40px rgba(11, 17, 32, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.unauth-cta-section h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.unauth-cta-section p {
+  color: #9CA3AF;
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+.unauth-cta-section .btn-get-started {
+  background: #F6B800;
+  color: #111827;
+  border: none;
+  padding: 16px 48px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.unauth-cta-section .btn-get-started:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(246,184,0,0.3);
+}

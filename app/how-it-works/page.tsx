@@ -226,12 +226,14 @@ export default function HowItWorks() {
       </section>
 
       <section className={styles.tabsSection}>
-        <p className={styles.tabsHint}>Switch between tabs - All three sections are interactive</p>
         <div className={styles.tabsContainer}>
           <div className={styles.tabsHeader}>
-            <button className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`} onClick={() => setActiveTab('itinerary')}><span>📅 Itinerary</span></button>
-            <button className={`${styles.tabBtn} ${activeTab === 'map' ? styles.active : ''}`} onClick={() => setActiveTab('map')}><span>🗺️ Live Map</span></button>
-            <button className={`${styles.tabBtn} ${activeTab === 'support' ? styles.active : ''}`} onClick={() => setActiveTab('support')}><span>🎧 Support</span></button>
+            <button className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`} onClick={() => setActiveTab('itinerary')}>
+              <span className={styles.tabIcon}>📅</span> Itinerary
+            </button>
+            <button className={`${styles.tabBtn} ${activeTab === 'support' ? styles.activeSupport : ''}`} onClick={() => setActiveTab('support')}>
+              <span className={styles.tabIcon}>🎧</span> Support
+            </button>
           </div>
           <div className={styles.tabContent}>
             {activeTab === 'itinerary' && (
@@ -264,8 +266,95 @@ export default function HowItWorks() {
                 </div>
               </div>
             )}
-            {activeTab === 'map' && <div className={styles.placeholder}>{settings.demo_map_placeholder}</div>}
-            {activeTab === 'support' && <div className={styles.placeholder}>{settings.demo_support_placeholder}</div>}
+            {activeTab === 'support' && (
+              <div className={styles.supportDemo}>
+                <div className={styles.supportHeader}>
+                  <div>
+                    <h3 className={styles.supportTitle}>Safety Shield</h3>
+                    <p className={styles.supportDesc}>
+                      Intelligent assistance and local resources curated based on your current geographical context for total peace of mind.
+                    </p>
+                  </div>
+                  <button className={styles.sosBtn}>
+                    <span className={styles.asterisk}>✱</span> GLOBAL SOS
+                  </button>
+                </div>
+
+                <div className={styles.zonesGrid}>
+                  {/* Primary Zone */}
+                  <div className={styles.zoneCard}>
+                    <div className={styles.zoneHeader}>
+                      <div className={styles.zoneInfo}>
+                        <h4>Primary Zone</h4>
+                        <div className={styles.zoneMeta}>
+                          <span className={styles.metaBadge}>CURRENT LOCATION</span>
+                          <span className={styles.metaTime}>14:30 | EN/HI</span>
+                        </div>
+                      </div>
+                      <div className={styles.zoneIcon}>🏢</div>
+                    </div>
+
+                    <div className={styles.emergencyNumbers}>
+                      <div className={styles.numberBox}>
+                        <span className={styles.numberLabel}>AMBULANCE</span>
+                        <span className={styles.numberValue}>911</span>
+                      </div>
+                      <div className={styles.numberBox}>
+                        <span className={styles.numberLabel}>LOCAL POLICE</span>
+                        <span className={styles.numberValue}>110</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.facilityInfo}>
+                      <div className={styles.facilityTitle}>
+                        <span className={styles.plusIcon}>🏥</span> Nearby Medical Care
+                      </div>
+                      <div className={styles.facilityDetails}>
+                        <div className={styles.statusDot}></div>
+                        <div>
+                          <strong>Central General Hospital</strong>
+                          <span>Emergency Dept | 24/7 Support</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transit Zone */}
+                  <div className={styles.zoneCard}>
+                    <div className={styles.zoneHeader}>
+                      <div className={styles.zoneInfo}>
+                        <h4>Transit Zone</h4>
+                        <div className={styles.zoneMeta}>
+                          <span className={`${styles.metaBadge} ${styles.transit}`}>NEXT DESTINATION</span>
+                          <span className={styles.metaTime}>17:00 | EN/FR</span>
+                        </div>
+                      </div>
+                      <div className={styles.zoneIcon}>🧭</div>
+                    </div>
+
+                    <div className={styles.emergencyNumbers}>
+                      <div className={styles.numberBox}>
+                        <span className={styles.numberLabel}>EMERGENCY</span>
+                        <span className={styles.numberValue}>119</span>
+                      </div>
+                      <div className={styles.numberBox}>
+                        <span className={styles.numberLabel}>SAFETY HUB</span>
+                        <span className={styles.numberValue}>112</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.facilityInfo}>
+                      <div className={styles.facilityTitle}>
+                        <span className={styles.infoIcon}>ℹ️</span> Protocol & Guidance
+                      </div>
+                      <p className={styles.protocolText}>
+                        Keep your digital emergency vault synced. Medical facilities here require insurance validation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>

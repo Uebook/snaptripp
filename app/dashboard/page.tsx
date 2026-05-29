@@ -45,7 +45,9 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
   
   // Dashboard Tabs
-  const [activeTab, setActiveTab] = useState<'personal-info' | 'security' | 'notifications' | 'travel-history' | 'saved-places'>('personal-info')
+  const [activeTab, setActiveTab] = useState<'personal-info' | 'my-trips' | 'security' | 'notifications' | 'travel-history' | 'saved-places'>('personal-info')
+  const [trips, setTrips] = useState<any[]>([])
+  const [loadingTrips, setLoadingTrips] = useState(true)
 
   // Profile Form States
   const [profile, setProfile] = useState<any>({
@@ -238,10 +240,20 @@ export default function Dashboard() {
             }
           }
         }
+
+        // Fetch Trips
+        const res = await fetch('/api/trips', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+        const data = await res.json()
+        if (data.success) {
+          setTrips(data.trips)
+        }
       } catch (err) {
-        console.error('Error loading dashboard profile data:', err)
+        console.error('Error loading dashboard profile/trips data:', err)
       } finally {
         setLoading(false)
+        setLoadingTrips(false)
       }
     }
 
@@ -867,6 +879,65 @@ export default function Dashboard() {
             </>
           )}
 
+          {/* Tab: My Trips */}
+          {activeTab === 'my-trips' && (
+            <div className={styles["card-container"]} style={{ background: 'none', padding: 0, boxShadow: 'none' }}>
+              <h2 className={styles["card-header-title"]}>My Travel Archives</h2>
+              <p className={styles["card-header-subtitle"]} style={{ marginBottom: '24px' }}>A curated collection of your planned and upcoming adventures.</p>
+
+              {loadingTrips ? (
+                <div>Searching your archives...</div>
+              ) : trips.length === 0 ? (
+                <div className={styles["card-container"]} style={{ textAlign: 'center', padding: '60px 40px', background: 'white', borderRadius: '24px' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🗺️</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#031B4E', marginBottom: '8px' }}>Your map is uncharted</h3>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>Begin your legacy by planning your first escape.</p>
+                  <button className={styles["btn-upload-yellow"]} onClick={() => router.push('/explore')}>Discover Destinations</button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+                  {trips.map((trip) => (
+                    <div key={trip.id} className={styles["card-container"]} style={{ background: 'white', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span style={{ background: '#FFF9E6', color: '#F6B800', fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>Upcoming</span>
+                          <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>{new Date(trip.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#031B4E', marginBottom: '8px', lineHeight: '1.4' }}>{trip.title}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', fontSize: '13px', marginBottom: '16px' }}>
+                          <span>📍 {trip.country}</span>
+                          <span>&bull;</span>
+                          <span>📅 {trip.duration}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
+                        <button 
+                          className={styles["btn-upload-yellow"]} 
+                          style={{ flex: 1, padding: '10px 16px', fontSize: '13px' }}
+                          onClick={() => router.push(`/trip-map?country=${encodeURIComponent(trip.country)}&tripId=${trip.id}`)}
+                        >
+                          Open Planner
+                        </button>
+                        <button 
+                          className={styles["btn-remove-outline"]}
+                          style={{ padding: '10px 14px', border: '1px solid #fca5a5', color: '#ef4444' }}
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this trip?')) {
+                              const { error } = await supabase.from('trips').delete().eq('id', trip.id)
+                              if (!error) setTrips(prev => prev.filter(t => t.id !== trip.id))
+                            }
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Tab 5: Saved Places */}
           {activeTab === 'saved-places' && (
             <div className={styles["card-container"]} style={{ background: 'none', padding: 0, boxShadow: 'none' }}>
@@ -932,6 +1003,14 @@ export default function Dashboard() {
           >
             <span className={styles["tab-icon"]}>👤</span>
             Personal Info
+          </button>
+
+          <button 
+            className={`${styles["sidebar-tab-button"]} ${activeTab === 'my-trips' ? styles["active-tab"] : ''}`}
+            onClick={() => setActiveTab('my-trips')}
+          >
+            <span className={styles["tab-icon"]}>✈️</span>
+            My Trips
           </button>
 
           <button 

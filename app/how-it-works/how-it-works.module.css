@@ -473,3 +473,192 @@
   .stepBubble { position: relative !important; left: 0 !important; top: 0 !important; margin: 20px auto; transform: none; }
   .arcSvg { display: none; }
 }
+
+/* Custom Active Styling for Support */
+.tabBtn.activeSupport {
+  color: #FFF;
+  background: #F6B800;
+  border-bottom: 3px solid #F6B800;
+  border-top-right-radius: 32px; /* to match container */
+}
+
+/* Support Demo Styles (Safety Shield) */
+.supportDemo {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.supportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.supportTitle {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.supportDesc {
+  color: #555;
+  font-size: 1.1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.sosBtn {
+  background: #E53935;
+  color: #FFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 20px rgba(229, 57, 53, 0.3);
+  cursor: pointer;
+}
+
+.asterisk {
+  font-size: 1.2rem;
+}
+
+.zonesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.zoneCard {
+  border: 1px solid #EBEBEB;
+  border-radius: 20px;
+  padding: 30px;
+  background: #FFF;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+}
+
+.zoneHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.zoneInfo h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.zoneMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+}
+
+.metaBadge {
+  background: #FFF4D6;
+  color: #B58400;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.metaBadge.transit {
+  background: #F0F4F8;
+  color: #4A657A;
+}
+
+.zoneIcon {
+  font-size: 1.5rem;
+  background: #F8F9FA;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emergencyNumbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.numberBox {
+  background: #F8F9FA;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.numberLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.numberValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #E53935;
+}
+
+.facilityInfo {
+  border-top: 1px solid #EBEBEB;
+  padding-top: 24px;
+}
+
+.facilityTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.facilityDetails {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  background: #4CAF50;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+
+.facilityDetails strong {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.facilityDetails span {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.protocolText {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #666;
+}

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const { data, error } = await supabase
             .from('places')
             .select('city, location_lat, location_lng')
-            .eq('country', country)
+            .ilike('country', country)
             .not('city', 'is', null)
             .not('location_lat', 'is', null)
             .not('location_lng', 'is', null);
