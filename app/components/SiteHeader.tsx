@@ -96,7 +96,7 @@ export default function SiteHeader() {
 
         <nav className="nav-links">
           <Link href="/plan" className={getLinkClass('/plan')}>Plan Your Trip</Link>
-          <Link href="/blog" className={getLinkClass('/blog')}>Blog</Link>
+          <Link href="/travel-map" className={getLinkClass('/travel-map')}>Travel Map</Link>
           <Link href="/explore" className={getLinkClass('/explore')}>Country Guide</Link>
           <Link href="/how-it-works" className={getLinkClass('/how-it-works')}>How SnapTrip Work</Link>
         </nav>

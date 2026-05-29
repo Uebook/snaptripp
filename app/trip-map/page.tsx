@@ -144,26 +144,30 @@ function TripMapContent() {
     } else {
       // Load from local storage draft if it's a new trip
       try {
-        const draft = localStorage.getItem('snaptrip_draft');
-        if (draft) {
-          const parsed = JSON.parse(draft);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setDayPlans(parsed);
-            setDaysCount(parsed.length);
+        const draftCountry = localStorage.getItem('snaptrip_draft_country');
+        if (draftCountry === country) {
+          const draft = localStorage.getItem('snaptrip_draft');
+          if (draft) {
+            const parsed = JSON.parse(draft);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setDayPlans(parsed);
+              setDaysCount(parsed.length);
+            }
           }
         }
       } catch (e) {
         console.error('Failed to load draft from local storage', e);
       }
     }
-  }, [tripIdParam])
+  }, [tripIdParam, country])
 
   // Save to localStorage on change so progress isn't lost
   useEffect(() => {
-    if (!tripIdParam && dayPlans.length > 0) {
+    if (!tripIdParam && dayPlans.length > 0 && country) {
       localStorage.setItem('snaptrip_draft', JSON.stringify(dayPlans));
+      localStorage.setItem('snaptrip_draft_country', country);
     }
-  }, [dayPlans, tripIdParam])
+  }, [dayPlans, tripIdParam, country])
 
   // Fetch places for the selected country
   useEffect(() => {
