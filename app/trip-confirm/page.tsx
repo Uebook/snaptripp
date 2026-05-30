@@ -247,7 +247,7 @@ function TripConfirmContent() {
 
       if (data.success) {
         localStorage.removeItem('snaptrip_draft')
-        router.push(`/trip-map?tripId=${data.tripId}`)
+        router.push('/dashboard')
       } else {
         alert('Failed to save: ' + data.error)
       }
