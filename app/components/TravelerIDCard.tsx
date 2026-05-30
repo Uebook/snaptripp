@@ -204,9 +204,7 @@ export default function TravelerIDCard({ username }: { username?: string }) {
                 <div className={styles["card-header"]}>
                     <div className={styles.brand}>
                         <div className={styles["brand-logo"]}>
-                            <svg viewBox="0 0 24 24" fill="white" width="24" height="24">
-                                <path d="M21 16.5L12 21L3 16.5V7.5L12 3L21 7.5V16.5Z" />
-                            </svg>
+                            <img src="/images/applogo.webp" alt="SnapTrip" style={{ height: '28px', width: 'auto', display: 'block' }} />
                         </div>
                         <span className={styles["brand-name"]}>SnapTrip</span>
                     </div>

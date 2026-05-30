@@ -68,6 +68,8 @@ export default function Dashboard() {
     newPassword: '',
     confirmPassword: ''
   })
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true)
   const [activeSessions, setActiveSessions] = useState<SessionInfo[]>([
@@ -540,54 +542,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Verify Identity Banner */}
-              <div className={styles["verify-identity-card"]}>
-                <div className={styles["verify-card-left"]}>
-                  <span className={styles["verify-title"]}>Verify Your Identity</span>
-                  <span className={styles["verify-desc"]}>Increase your booking limits and get the verified traveler badge on your profile.</span>
-                  <button 
-                    onClick={() => alert('Verification process started! Please upload a valid ID in the Traveler ID page.')}
-                    className={styles["verify-link"]} 
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
-                  >
-                    Get Started &rarr;
-                  </button>
-                </div>
-                <div className={styles["verify-card-right-bg"]}>
-                  <svg width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="m9 11 2 2 4-4" />
-                  </svg>
-                </div>
-              </div>
 
-              {/* Travel History Summary List */}
-              <div className={styles["travel-history-summary-card"]}>
-                <h3 className={styles["section-title-bold"]}>Travel History</h3>
-                <div className={styles["summary-list-container"]}>
-                  <div className={styles["summary-list-item"]} onClick={() => setActiveTab('travel-history')}>
-                    <div className={styles["summary-item-left"]}>
-                      <div className={styles["pin-icon-wrapper"]}>📍</div>
-                      <div className={styles["summary-item-details"]}>
-                        <span className={styles["summary-item-title"]}>Tokyo, Japan</span>
-                        <span className={styles["summary-item-subtitle"]}>Oct 2023 &bull; 10 days</span>
-                      </div>
-                    </div>
-                    <span className={styles["chevron-right-grey"]}>&rarr;</span>
-                  </div>
-
-                  <div className={styles["summary-list-item"]} onClick={() => setActiveTab('travel-history')}>
-                    <div className={styles["summary-item-left"]}>
-                      <div className={styles["pin-icon-wrapper"]}>📍</div>
-                      <div className={styles["summary-item-details"]}>
-                        <span className={styles["summary-item-title"]}>Paris, France</span>
-                        <span className={styles["summary-item-subtitle"]}>May 2023 &bull; 7 days</span>
-                      </div>
-                    </div>
-                    <span className={styles["chevron-right-grey"]}>&rarr;</span>
-                  </div>
-                </div>
-              </div>
             </>
           )}
 
@@ -596,129 +551,68 @@ export default function Dashboard() {
             <>
               <div className={styles["card-container"]}>
                 <h2 className={styles["card-header-title"]}>Security Settings</h2>
-                <p className={styles["card-header-subtitle"]}>Manage your account security, set up authentication methods, and monitor active sessions to keep your travel plans safe.</p>
+                <p className={styles["card-header-subtitle"]}>Manage your account security and password to keep your travel plans safe.</p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' }}>
                   {/* Change Password Card */}
                   <div className={styles["card-container"]} style={{ padding: '30px', boxShadow: 'none', border: '1px solid #f3f4f6' }}>
                     <h3 className={styles["section-title-bold"]} style={{ fontSize: '18px', marginBottom: '20px' }}>🔑 Change Password</h3>
-                    <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div className={styles["field-block"]}>
-                        <span className={styles["field-label-tag"]}>Current Password</span>
-                        <input 
-                          type="password" 
-                          required
-                          placeholder="••••••••" 
-                          className={styles["field-input-box"]}
-                          value={passwordData.currentPassword}
-                          onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                        />
-                      </div>
+                    <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '500px' }}>
                       <div className={styles["field-block"]}>
                         <span className={styles["field-label-tag"]}>New Password</span>
-                        <input 
-                          type="password" 
-                          required
-                          placeholder="••••••••" 
-                          className={styles["field-input-box"]}
-                          value={passwordData.newPassword}
-                          onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type={showNewPassword ? "text" : "password"}
+                            required
+                            placeholder="••••••••" 
+                            className={styles["field-input-box"]}
+                            value={passwordData.newPassword}
+                            onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {showNewPassword ? (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <div className={styles["field-block"]}>
                         <span className={styles["field-label-tag"]}>Confirm New Password</span>
-                        <input 
-                          type="password" 
-                          required
-                          placeholder="••••••••" 
-                          className={styles["field-input-box"]}
-                          value={passwordData.confirmPassword}
-                          onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                        />
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type={showConfirmPassword ? "text" : "password"}
+                            required
+                            placeholder="••••••••" 
+                            className={styles["field-input-box"]}
+                            value={passwordData.confirmPassword}
+                            onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            {showConfirmPassword ? (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
-                      <button type="submit" className={styles["btn-upload-yellow"]} style={{ width: '100%', marginTop: '10px' }} disabled={isUpdatingPassword}>
+                      <button type="submit" className={styles["btn-upload-yellow"]} style={{ marginTop: '10px' }} disabled={isUpdatingPassword}>
                         {isUpdatingPassword ? 'Updating...' : 'Update Password'}
                       </button>
                     </form>
                   </div>
-
-                  {/* Two-Factor Auth Card */}
-                  <div className={styles["two-factor-auth-card"]} style={{ border: '1px solid #f3f4f6', boxShadow: 'none', padding: '30px' }}>
-                    <div className={styles["two-factor-header-row"]}>
-                      <h3 className={styles["section-title-bold"]} style={{ fontSize: '18px', margin: 0 }}>🛡️ Two-Factor Auth</h3>
-                      <button 
-                        className={`${styles["switch-toggle-btn"]} ${twoFactorEnabled ? styles["switch-active"] : ''}`}
-                        onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
-                      >
-                        <span className={styles["switch-knob"]}></span>
-                      </button>
-                    </div>
-                    <p className={styles["card-header-subtitle"]} style={{ fontSize: '13px', margin: '12px 0 0 0' }}>Add an extra layer of security to your account by requiring more than just a password to log in.</p>
-
-                    <div className={styles["authenticator-app-badge"]}>
-                      <div className={styles["auth-badge-icon"]}>📱</div>
-                      <div className={styles["auth-badge-details"]}>
-                        <span className={styles["auth-badge-title"]}>Authenticator App</span>
-                        <span className={styles["auth-badge-desc"]}>{twoFactorEnabled ? 'Google Authenticator active' : 'Inactive'}</span>
-                      </div>
-                    </div>
-
-                    <button className={styles["btn-manage-auth"]} onClick={() => alert('Authenticator settings modal opened.')}>Manage Auth Methods</button>
-                  </div>
                 </div>
 
-                {/* Active Sessions Card */}
-                <div className={styles["active-sessions-card"]} style={{ border: '1px solid #f3f4f6', boxShadow: 'none', padding: '30px', marginBottom: '24px' }}>
-                  <div className={styles["active-sessions-header"]}>
-                    <h3 className={styles["section-title-bold"]} style={{ fontSize: '18px', margin: 0 }}>💻 Active Sessions</h3>
-                    <button className={styles["logout-all-btn-red"]} onClick={handleLogoutAllDevices}>LOG OUT FROM ALL DEVICES</button>
-                  </div>
-
-                  <div className={styles["sessions-list-container"]}>
-                    {activeSessions.map((session, i) => (
-                      <div key={i} className={styles["session-item-row"]}>
-                        <div className={styles["session-left-details"]}>
-                          <div className={`${styles["device-icon-circle"]} ${session.isCurrent ? styles.gold : ''}`}>
-                            {session.device.includes('iPhone') || session.device.includes('iPad') ? '📱' : '💻'}
-                          </div>
-                          <div className={styles["session-texts"]}>
-                            <span className={styles["session-device-name"]}>
-                              {session.device}
-                              {session.isCurrent && <span className={styles["current-session-badge"]}>Current</span>}
-                            </span>
-                            <span className={styles["session-meta-line"]}>Chrome &bull; {session.location} &bull; {session.ip}</span>
-                          </div>
-                        </div>
-                        <div className={styles["session-action-area"]}>
-                          {session.isCurrent ? (
-                            <span className={styles["active-session-text"]}>Active</span>
-                          ) : (
-                            <button className={styles["btn-session-logout-red"]} onClick={() => handleLogoutSession(session.device)}>Logout</button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Login History */}
-                <div className={styles["login-history-card"]} style={{ border: '1px solid #f3f4f6', boxShadow: 'none', padding: '30px' }}>
-                  <h3 className={styles["section-title-bold"]} style={{ fontSize: '18px', marginBottom: '20px' }}>📒 Login History</h3>
-                  <div className={styles["history-metrics-grid"]}>
-                    <div className={styles["history-metric-box"]}>
-                      <span className={styles["history-metric-label"]}>Last Password Change</span>
-                      <span className={styles["history-metric-value"]}>September 12, 2023</span>
-                    </div>
-                    <div className={styles["history-metric-box"]}>
-                      <span className={styles["history-metric-label"]}>Failed Login Attempts</span>
-                      <span className={styles["history-metric-value"]}>0 in last 30 days</span>
-                    </div>
-                    <div className={styles["history-metric-box"]}>
-                      <span className={styles["history-metric-label"]}>Security Score</span>
-                      <span className={`${styles["history-metric-value"]} ${styles.excellent}`}>Excellent (98/100)</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </>
           )}
@@ -762,21 +656,6 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                <div className={styles["pref-checkbox-row"]}>
-                  <div className={styles["pref-checkbox-left"]}>
-                    <span className={styles["pref-checkbox-title"]}>Public Profile Visibility</span>
-                    <span className={styles["pref-checkbox-desc"]}>Allow other globetrotters to view your travel archives, map data, and recommendations.</span>
-                  </div>
-                  <button 
-                    className={`${styles["switch-toggle-btn"]} ${preferences.public_profile ? styles["switch-active"] : ''}`}
-                    onClick={() => {
-                      const newPrefs = { ...preferences, public_profile: !preferences.public_profile }
-                      setPreferences(newPrefs)
-                    }}
-                  >
-                    <span className={styles["switch-knob"]}></span>
-                  </button>
-                </div>
               </div>
 
               <div className={styles["form-action-footer"]}>
@@ -897,99 +776,72 @@ export default function Dashboard() {
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
                   {trips.map((trip) => (
-                    <div key={trip.id} className={styles["card-container"]} style={{ background: 'white', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                          <span style={{ background: '#FFF9E6', color: '#F6B800', fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>Upcoming</span>
-                          <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>{new Date(trip.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#031B4E', marginBottom: '8px', lineHeight: '1.4' }}>{trip.title}</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280', fontSize: '13px', marginBottom: '16px' }}>
-                          <span>📍 {trip.country}</span>
-                          <span>&bull;</span>
-                          <span>📅 {trip.duration}</span>
-                        </div>
+                    <div key={trip.id} style={{
+                      background: 'white', borderRadius: '28px', overflow: 'hidden', border: '1px solid #F1F5F9',
+                      boxShadow: '0 10px 40px rgba(3, 27, 78, 0.05)', display: 'flex', flexDirection: 'column', transition: 'transform 0.3s, box-shadow 0.3s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 30px 60px rgba(3, 27, 78, 0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 40px rgba(3, 27, 78, 0.05)'; }}
+                    >
+                      <div style={{
+                        height: '160px', background: '#031B4E', position: 'relative', padding: '24px',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        backgroundImage: `linear-gradient(rgba(3, 27, 78, 0.4), rgba(3, 27, 78, 0.8)), url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=800')`,
+                        backgroundSize: 'cover', backgroundPosition: 'center'
+                      }}>
+                        <div style={{
+                          alignSelf: 'flex-end', background: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(8px)',
+                          padding: '6px 14px', borderRadius: '30px', color: 'white', fontSize: '10px', fontWeight: '800',
+                          textTransform: 'uppercase', letterSpacing: '1px', border: '1px solid rgba(255, 255, 255, 0.3)'
+                        }}>Upcoming</div>
+                        <div style={{
+                          fontFamily: "'Playfair Display', serif", fontSize: '24px', fontWeight: '800', color: 'white',
+                          textShadow: '0 2px 15px rgba(0,0,0,0.4)', letterSpacing: '-0.5px'
+                        }}>{trip.country}</div>
                       </div>
-                      <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
-                        <button 
-                          className={styles["btn-upload-yellow"]} 
-                          style={{ flex: 1, padding: '10px 16px', fontSize: '13px' }}
-                          onClick={() => router.push(`/trip-map?country=${encodeURIComponent(trip.country)}&tripId=${trip.id}`)}
-                        >
-                          Open Planner
-                        </button>
-                        <button 
-                          className={styles["btn-remove-outline"]}
-                          style={{ padding: '10px 14px', border: '1px solid #fca5a5', color: '#ef4444' }}
-                          onClick={async () => {
-                            if (confirm('Are you sure you want to delete this trip?')) {
-                              const { error } = await supabase.from('trips').delete().eq('id', trip.id)
-                              if (!error) setTrips(prev => prev.filter(t => t.id !== trip.id))
-                            }
-                          }}
-                        >
-                          🗑️
-                        </button>
+                      
+                      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', fontWeight: '800', color: '#031B4E', margin: '0 0 12px' }}>{trip.title}</h3>
+                        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', fontSize: '13px', fontWeight: '600', color: '#64748B' }}>
+                          <span>📅 {trip.duration}</span>
+                          <span>✨ {new Date(trip.created_at).toLocaleDateString()}</span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
+                          <button 
+                            style={{
+                              flex: 1, background: '#031B4E', color: 'white', textAlign: 'center', padding: '12px',
+                              borderRadius: '12px', fontWeight: '700', fontSize: '13px', border: 'none', cursor: 'pointer',
+                              boxShadow: '0 5px 15px rgba(3, 27, 78, 0.2)', transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#0A2B6E'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#031B4E'}
+                            onClick={() => router.push(`/trip-confirm?tripId=${trip.id}`)}
+                          >
+                            Open Planner
+                          </button>
+                          <button 
+                            style={{
+                              width: '44px', background: '#FFF1F2', border: 'none', borderRadius: '12px',
+                              cursor: 'pointer', fontSize: '18px', color: '#E11D48', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#FFE4E6'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#FFF1F2'}
+                            onClick={async () => {
+                              if (confirm('Are you sure you want to delete this trip?')) {
+                                const { error } = await supabase.from('trips').delete().eq('id', trip.id)
+                                if (!error) setTrips(prev => prev.filter(t => t.id !== trip.id))
+                              }
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Tab 5: Saved Places */}
-          {activeTab === 'saved-places' && (
-            <div className={styles["card-container"]} style={{ background: 'none', padding: 0, boxShadow: 'none' }}>
-              <h2 className={styles["card-header-title"]}>Saved Destinations</h2>
-              <p className={styles["card-header-subtitle"]} style={{ marginBottom: '24px' }}>Curate your next escape from your collection of dream spots.</p>
-
-              <div className={styles["saved-places-tabs-row"]}>
-                {(['All', 'Beach', 'Mountain', 'City Escape'] as const).map(tab => (
-                  <button 
-                    key={tab} 
-                    className={`${styles["saved-pill-button"]} ${savedFilter === tab ? styles["active-pill"] : ''}`}
-                    onClick={() => setSavedFilter(tab)}
-                  >
-                    {tab === 'All' ? 'All Trips' : tab}
-                  </button>
-                ))}
-              </div>
-
-              <div className={styles["saved-places-grid"]}>
-                {savedPlaces
-                  .filter(place => savedFilter === 'All' || place.category === savedFilter)
-                  .map((place, i) => (
-                    <div key={place.id} className={`${styles["saved-place-card"]} ${i === 0 ? styles["large-feature-card"] : ''}`}>
-                      <div className={styles["saved-place-image-panel"]}>
-                        <img src={place.imageUrl} alt={place.title} />
-                        <button 
-                          className={`${styles["heart-badge-icon"]} ${heartedPlaces.includes(place.id) ? styles["heart-active"] : ''}`}
-                          onClick={() => toggleHeart(place.id)}
-                        >
-                          ❤️
-                        </button>
-                        <span className={styles["saved-place-category-badge"]}>{place.category}</span>
-                      </div>
-                      <div className={styles["saved-place-content-panel"]}>
-                        <div>
-                          <div className={styles["saved-place-title-row"]}>
-                            <h3 className={styles["saved-place-title"]}>{place.title}</h3>
-                          </div>
-                          <p className={styles["saved-place-desc"]}>{place.description}</p>
-                        </div>
-                        <div className={styles["saved-place-footer"]}>
-                          <span className={styles["saved-place-price"]}>{place.price} <span style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'normal' }}>/ person</span></span>
-                          <button className={styles["btn-plan-trip-yellow"]} onClick={() => router.push(`/trip-map?country=${encodeURIComponent(place.location.split(',')[1]?.trim() || '')}`)}>Plan Trip</button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              <div className={styles["saved-places-footer-section"]}>
-                <button className={styles["btn-discover-more-outline"]} onClick={() => router.push('/explore')}>Discover More Destinations</button>
-              </div>
             </div>
           )}
 
@@ -1030,72 +882,18 @@ export default function Dashboard() {
           </button>
 
           <button 
-            className={`${styles["sidebar-tab-button"]} ${activeTab === 'travel-history' ? styles["active-tab"] : ''}`}
-            onClick={() => setActiveTab('travel-history')}
+            className={styles["sidebar-tab-button"]}
+            onClick={async () => {
+              await supabase.auth.signOut()
+              router.push('/login')
+            }}
           >
-            <span className={styles["tab-icon"]}>⏳</span>
-            Travel History
-          </button>
-
-          <button 
-            className={`${styles["sidebar-tab-button"]} ${activeTab === 'saved-places' ? styles["active-tab"] : ''}`}
-            onClick={() => setActiveTab('saved-places')}
-          >
-            <span className={styles["tab-icon"]}>🔖</span>
-            Saved Places
+            <span className={styles["tab-icon"]}>🚪</span>
+            Log Out
           </button>
         </div>
       </div>
 
-      {/* Receipt Modal (Travel History View) */}
-      {selectedReceipt && (
-        <div className={styles["modal-backdrop-blur"]} onClick={() => setSelectedReceipt(null)}>
-          <div className={styles["modal-content-card"]} onClick={e => e.stopPropagation()}>
-            <button className={styles["modal-close-btn"]} onClick={() => setSelectedReceipt(null)}>✕</button>
-            
-            <div className={styles["receipt-modal-header"]}>
-              <span className={styles["receipt-modal-title"]}>Booking Invoice</span>
-              <div className={styles["receipt-modal-sub"]}>Invoice #{selectedReceipt.id.toUpperCase()} &bull; {selectedReceipt.date}</div>
-            </div>
-
-            <div className={styles["receipt-details-list"]}>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Destination Tour</span>
-                <span className={styles["receipt-row-val"]}>{selectedReceipt.title} ({selectedReceipt.country})</span>
-              </div>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Carrier Flight</span>
-                <span className={styles["receipt-row-val"]}>{selectedReceipt.airline}</span>
-              </div>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Duration</span>
-                <span className={styles["receipt-row-val"]}>{selectedReceipt.duration}</span>
-              </div>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Base Cost</span>
-                <span className={styles["receipt-row-val"]}>${selectedReceipt.price.toLocaleString()}</span>
-              </div>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Taxes</span>
-                <span className={styles["receipt-row-val"]}>${selectedReceipt.taxes.toLocaleString()}</span>
-              </div>
-              <div className={styles["receipt-details-row"]}>
-                <span className={styles["receipt-row-label"]}>Service Fee</span>
-                <span className={styles["receipt-row-val"]}>${selectedReceipt.fee.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <div className={styles["receipt-modal-footer"]}>
-              <span className={styles["receipt-total-label"]}>Total Paid</span>
-              <span className={styles["receipt-total-val"]}>${(selectedReceipt.price + selectedReceipt.taxes + selectedReceipt.fee).toLocaleString()}</span>
-            </div>
-
-            <button className={styles["btn-upload-yellow"]} style={{ width: '100%' }} onClick={() => alert('PDF receipt downloaded!')}>
-              Download PDF Invoice
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

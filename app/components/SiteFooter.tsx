@@ -32,8 +32,6 @@ export default function SiteFooter() {
   const [links, setLinks] = useState<FooterLinkItem[]>([
     { label: 'Plan Your Trip', url: '/plan', category: 'Quick Links' },
     { label: 'How it works', url: '/how-it-works', category: 'Quick Links' },
-    { label: 'Why Us', url: '/why-us', category: 'Quick Links' },
-    { label: 'Testimonial', url: '/testimonials', category: 'Quick Links' },
     { label: 'Blog', url: '/blog', category: 'Quick Links' },
     { label: 'Privacy Policy', url: '/privacy', category: 'Support' },
     { label: 'Terms Of Use', url: '/terms', category: 'Support' }
@@ -63,7 +61,7 @@ export default function SiteFooter() {
       <div className="footer-container">
         <div className="footer-logo-col">
           <Link href="/" className="footer-logo">
-            <span className="logo-text">SnapTrip</span>
+            <img src="/images/applogo.webp" alt="SnapTrip" className="logo-img" style={{ height: '64px', width: 'auto' }} />
           </Link>
         </div>
         <div className="footer-info">

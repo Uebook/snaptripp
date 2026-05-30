@@ -15,6 +15,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +55,30 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      if (!email.trim() || !email.includes('@')) {
+        throw new Error('Please enter a valid email address.')
+      }
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/dashboard`,
+      })
+      
+      if (error) throw error
+      
+      setResetSent(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset link')
     } finally {
       setLoading(false)
     }
@@ -126,123 +152,85 @@ export default function LoginPage() {
 
             <div className={styles.divider}>OR</div>
 
-            {/* Quick Login Helper for Development */}
-            <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '20px',
-              fontSize: '13px'
-            }}>
-              <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></span>
-                Local Development Account
-              </div>
-              <div style={{ color: '#64748b', marginBottom: '10px' }}>
-                Use the following credentials to access the Admin Panel:
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', fontFamily: 'monospace', background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '10px' }}>
-                <span style={{ color: '#64748b' }}>Email:</span>
-                <strong style={{ color: '#0f172a' }}>admin@snaptrip.com</strong>
-                <span style={{ color: '#64748b' }}>Password:</span>
-                <strong style={{ color: '#0f172a' }}>adminpassword123</strong>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@snaptrip.com')
-                  setPassword('adminpassword123')
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: '#4f46e5',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                  boxSizing: 'border-box'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = '#4338ca'}
-                onMouseOut={(e) => e.currentTarget.style.background = '#4f46e5'}
-              >
-                Auto-fill Admin Credentials
-              </button>
-            </div>
-
-            <form onSubmit={handleLogin}>
+            <form onSubmit={isForgotPassword ? handleResetPassword : handleLogin}>
               {error && <div style={{ color: 'red', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
+              {resetSent && <div style={{ color: '#10b981', marginBottom: '1rem', fontSize: '0.875rem', padding: '10px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>Reset link sent! Check your email to securely log in and update your password.</div>}
               
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Email or Username</label>
+                <label className={styles.label}>{isForgotPassword ? "Enter your Email" : "Email or Username"}</label>
                 <input 
                   type="text" 
                   className={styles.input} 
-                  placeholder="name@example.com or username" 
+                  placeholder={isForgotPassword ? "name@example.com" : "name@example.com or username"} 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
 
-              <div className={styles.inputGroup}>
-                <div className={styles.labelWrapper}>
-                  <label className={styles.label}>Password</label>
-                  <Link href="/forgot-password" className={styles.forgotLink}>Forgot Password?</Link>
+              {!isForgotPassword && (
+                <div className={styles.inputGroup}>
+                  <div className={styles.labelWrapper}>
+                    <label className={styles.label}>Password</label>
+                    <button type="button" onClick={() => { setIsForgotPassword(true); setError(null); setResetSent(false); }} className={styles.forgotLink} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Forgot Password?</button>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      className={styles.input} 
+                      placeholder="••••••••" 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      style={{ paddingRight: '48px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#6b7280',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4px'
+                      }}
+                    >
+                      {showPassword ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    className={styles.input} 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={{ paddingRight: '48px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '16px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#6b7280',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '4px'
-                    }}
-                  >
-                    {showPassword ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
+              )}
 
               <button 
                 type="submit" 
                 className={styles.loginButton}
                 disabled={loading}
               >
-                {loading ? 'Signing in...' : 'Log In'}
+                {loading ? (isForgotPassword ? 'Sending...' : 'Signing in...') : (isForgotPassword ? 'Send Reset Link' : 'Log In')}
               </button>
+
+              {isForgotPassword && (
+                <button type="button" onClick={() => { setIsForgotPassword(false); setError(null); }} style={{ marginTop: '12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>
+                  Back to Login
+                </button>
+              )}
             </form>
 
             <p className={styles.footer}>

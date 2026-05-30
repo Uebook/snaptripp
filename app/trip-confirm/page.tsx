@@ -29,13 +29,18 @@ function TripConfirmContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const country = searchParams.get('country') || 'Italy'
-  const duration = parseInt(searchParams.get('duration') || '3')
+  const tripIdParam = searchParams.get('tripId')
+  const defaultCountry = searchParams.get('country') || 'Italy'
+  const defaultDuration = parseInt(searchParams.get('duration') || '3')
+
+  const [country, setCountry] = useState(defaultCountry)
+  const [duration, setDuration] = useState(defaultDuration)
   const style = searchParams.get('style') || 'Intense'
   const immersion = searchParams.get('immersion') || 'Unmissable'
 
   const [places, setPlaces] = useState<Place[]>([])
   const [loading, setLoading] = useState(true)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [activeDay, setActiveDay] = useState(1)
   const [dayPlans, setDayPlans] = useState<any[] | null>(null)
   
@@ -71,7 +76,7 @@ function TripConfirmContent() {
   if (dayPlans) {
     itineraryDays = dayPlans.map((day, idx) => ({
       day: idx + 1,
-      items: day.items.map((i: any) => i.data)
+      items: day.items.map((i: any) => i.data || i)
     }))
   } else {
     const shuffled = [...places].sort(() => 0.5 - Math.random()).slice(0, duration * 4)
@@ -116,16 +121,53 @@ function TripConfirmContent() {
   const tripTags = getDynamicTags()
 
   useEffect(() => {
-    try {
-      const draft = localStorage.getItem('snaptrip_draft')
-      if (draft) {
-        const parsed = JSON.parse(draft)
-        if (parsed.length > 0) {
-          setDayPlans(parsed)
+    const loadTripData = async () => {
+      setIsInitializing(true)
+      if (tripIdParam) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          const headers: any = {}
+          if (session) {
+            headers['Authorization'] = `Bearer ${session.access_token}`
+          }
+
+          const res = await fetch(`/api/trips/${tripIdParam}`, { headers })
+          const data = await res.json()
+          if (data.success && data.trip) {
+            setCountry(data.trip.country)
+            setDuration(data.trip.days?.length || 1)
+            setSaveTripTitle(data.trip.title)
+            
+            const loadedDays = data.trip.days.map((day: any) => ({
+              id: day.id,
+              title: day.title,
+              items: day.items.map((item: any) => ({
+                id: item.id,
+                name: item.custom_name || item.place?.title || 'Unknown Place',
+                type: 'place',
+                data: item.place || {}
+              }))
+            }))
+            setDayPlans(loadedDays)
+          }
+        } catch (err) {
+          console.error('Failed to fetch trip from API:', err)
         }
+      } else {
+        try {
+          const draft = localStorage.getItem('snaptrip_draft')
+          if (draft) {
+            const parsed = JSON.parse(draft)
+            if (parsed.length > 0) {
+              setDayPlans(parsed)
+            }
+          }
+        } catch(e) {}
       }
-    } catch(e) {}
-  }, [])
+      setIsInitializing(false)
+    }
+    loadTripData()
+  }, [tripIdParam])
 
   useEffect(() => {
     const fetchPlaces = async () => {
@@ -225,12 +267,29 @@ function TripConfirmContent() {
   }
 
   const handleEdit = () => {
-    router.push(
-      `/trip-map?country=${encodeURIComponent(country)}&duration=${duration}&style=${encodeURIComponent(style)}&immersion=${encodeURIComponent(immersion)}`
-    )
+    if (tripIdParam) {
+      router.push(`/trip-map?country=${encodeURIComponent(country)}&tripId=${tripIdParam}`)
+    } else {
+      router.push(
+        `/trip-map?country=${encodeURIComponent(country)}&duration=${duration}&style=${encodeURIComponent(style)}&immersion=${encodeURIComponent(immersion)}`
+      )
+    }
   }
 
   const activeItems = itineraryDays.find(d => d.day === activeDay)?.items || []
+
+  if (isInitializing) {
+    return (
+      <div className="confirm-page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F8FAFC' }}>
+        <SiteHeader />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div className="map-loading-spinner" style={{ margin: '0 auto 24px', width: '60px', height: '60px', borderWidth: '4px' }} />
+          <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#031B4E', fontSize: '32px', fontWeight: 800, marginBottom: '8px' }}>Loading your itinerary...</h2>
+          <p style={{ color: '#64748B', fontSize: '16px' }}>Fetching destinations and structured plans for your journey</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="confirm-page">
@@ -279,6 +338,13 @@ function TripConfirmContent() {
       <div className="confirm-container">
         {/* Page Header */}
         <div className="confirm-header">
+          <button 
+            onClick={() => router.back()} 
+            style={{ position: 'absolute', top: '40px', left: '24px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', fontSize: '18px', color: '#031B4E' }}
+            title="Go Back"
+          >
+            ←
+          </button>
           <div className="confirm-badge">✈️ Trip Summary</div>
           <h1 className="confirm-title">Review &amp; Confirm Your Trip</h1>
           <p className="confirm-subtitle">Take a moment to confirm your itinerary before starting your journey</p>

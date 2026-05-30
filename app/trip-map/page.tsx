@@ -135,6 +135,9 @@ function TripMapContent() {
               }))
             }))
             setDayPlans(loadedDays)
+            if (loadedDays.length > 0) {
+              setDaysCount(loadedDays.length)
+            }
           }
         } catch (err) {
           console.error('Failed to load trip', err)

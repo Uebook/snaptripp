@@ -91,7 +91,7 @@ export default function SiteHeader() {
     <header className="home-header">
       <div className="header-container">
         <Link href="/" className="logo-container">
-          <span className="logo-text">SnapTrip</span>
+          <img src="/images/applogo.webp" alt="SnapTrip" className="logo-img" style={{ height: '64px', width: 'auto' }} />
         </Link>
 
         <nav className="nav-links">
