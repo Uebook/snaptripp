@@ -101,7 +101,8 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
         if (!mapRef.current || isSavedTripView) return;
 
         const handleMoveEnd = () => {
-            const zoom = mapRef.current?.getZoom();
+            if (!mapRef.current) return;
+            const zoom = mapRef.current.getZoom();
             if (zoom && zoom >= 12 && onCityClick) {
                 const center = mapRef.current.getCenter();
                 let closestCity = null;
