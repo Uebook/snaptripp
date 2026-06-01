@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -9,9 +9,26 @@ export default function ViewCountryData() {
     const country = decodeURIComponent(params.country as string)
     const [places, setPlaces] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [publishedIds, setPublishedIds] = useState<number[]>([])
+    const [selectedIds, setSelectedIds] = useState<number[]>([])
+    const [activeTab, setActiveTab] = useState<'all' | 'published'>('all')
     const [searchTerm, setSearchTerm] = useState('')
+    const [reviewFilter, setReviewFilter] = useState<number | null>(null)
+    const [categoryFilter, setCategoryFilter] = useState<string[]>([])
+    const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
     const [editingPlace, setEditingPlace] = useState<any>(null)
     const [showEditModal, setShowEditModal] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setCategoryDropdownOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
 
     useEffect(() => {
         fetchPlaces()
@@ -20,13 +37,21 @@ export default function ViewCountryData() {
     const fetchPlaces = async () => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/admin/sync/places?country=${encodeURIComponent(country)}`)
-            const data = await res.json()
-            if (data.success) {
-                setPlaces(data.data)
+            const [placesRes, publishedRes] = await Promise.all([
+                fetch(`/api/admin/sync/places?country=${encodeURIComponent(country)}`),
+                fetch(`/api/admin/sync/published-places?country=${encodeURIComponent(country)}`)
+            ])
+            const placesData = await placesRes.json()
+            const publishedData = await publishedRes.json()
+
+            if (placesData.success) {
+                setPlaces(placesData.data)
+            }
+            if (publishedData.success) {
+                setPublishedIds(publishedData.data)
             }
         } catch (err) {
-            console.error('Failed to fetch places', err)
+            console.error('Failed to fetch data', err)
         } finally {
             setLoading(false)
         }
@@ -83,11 +108,95 @@ export default function ViewCountryData() {
         }
     }
 
-    const filteredPlaces = places.filter(p =>
-        p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.city?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+
+
+    const handleSinglePublish = async (place: any, publish: boolean) => {
+        if (!window.confirm(`Are you sure you want to ${publish ? 'publish' : 'unpublish'} "${place.title}"?`)) return
+        
+        // Optimistic
+        if (publish) {
+            setPublishedIds(prev => [...prev, place.id])
+        } else {
+            setPublishedIds(prev => prev.filter(id => id !== place.id))
+        }
+
+        try {
+            const res = await fetch('/api/admin/sync/publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: publish ? 'publish' : 'unpublish',
+                    id: place.id,
+                    place: publish ? place : undefined
+                })
+            })
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error)
+        } catch (err) {
+            console.error('Publish toggle failed', err)
+            if (publish) {
+                setPublishedIds(prev => prev.filter(id => id !== place.id))
+            } else {
+                setPublishedIds(prev => [...prev, place.id])
+            }
+            alert('Failed to update publish status')
+        }
+    }
+
+    const handleBulkPublish = async (publish: boolean) => {
+        if (selectedIds.length === 0) return
+
+        if (!window.confirm(`Are you sure you want to ${publish ? 'publish' : 'unpublish'} ${selectedIds.length} selected places to the map?`)) return
+
+        const placesToUpdate = places.filter(p => selectedIds.includes(p.id))
+
+        // Optimistic
+        if (publish) {
+            setPublishedIds(prev => Array.from(new Set([...prev, ...selectedIds])))
+        } else {
+            setPublishedIds(prev => prev.filter(id => !selectedIds.includes(id)))
+        }
+
+        try {
+            const res = await fetch('/api/admin/sync/publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: publish ? 'publish_bulk' : 'unpublish_bulk',
+                    ids: selectedIds,
+                    places: publish ? placesToUpdate : undefined
+                })
+            })
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error)
+            alert(`Successfully ${publish ? 'published' : 'unpublished'} ${selectedIds.length} places.`)
+            setSelectedIds([]) // Clear selection
+        } catch (err) {
+            console.error('Bulk publish failed', err)
+            fetchPlaces()
+            alert('Bulk update failed. Refreshed data.')
+        }
+    }
+
+    const uniqueCategories = Array.from(new Set(places.map(p => p.categoryName).filter(Boolean))).sort();
+
+    const canPublishSelected = selectedIds.length > 0 && selectedIds.some(id => !publishedIds.includes(id));
+    const canUnpublishSelected = selectedIds.length > 0 && selectedIds.some(id => publishedIds.includes(id));
+
+    const filteredPlaces = places.filter(p => {
+        if (activeTab === 'published' && !publishedIds.includes(p.id)) return false;
+
+        const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.city?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesCategory = categoryFilter.length === 0 ? true : categoryFilter.includes(p.categoryName);
+        
+        const reviews = p.reviewsCount || 0;
+        const matchesReviews = reviewFilter === null ? true : reviews >= reviewFilter;
+
+        return matchesSearch && matchesCategory && matchesReviews;
+    })
 
     return (
         <div className="admin-dashboard">
@@ -96,23 +205,169 @@ export default function ViewCountryData() {
                     ← Back to Sync
                 </Link>
                 <h2>Synced Data: {country}</h2>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
-                    <input
-                        className="admin-search"
-                        placeholder="Search places, categories..."
-                        style={{ width: '300px', margin: 0 }}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <div className="badge info">{filteredPlaces.length} Places Found</div>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button 
+                        className="admin-button" 
+                        style={{ padding: '8px 12px', background: '#10b981', color: '#fff', border: 'none', opacity: canPublishSelected ? 1 : 0.5, cursor: canPublishSelected ? 'pointer' : 'not-allowed' }} 
+                        onClick={() => handleBulkPublish(true)}
+                        disabled={!canPublishSelected}
+                    >
+                        ✓ Publish Selected ({selectedIds.length})
+                    </button>
+                    <button 
+                        className="admin-button outline" 
+                        style={{ padding: '8px 12px', color: '#ef4444', borderColor: '#ef4444', opacity: canUnpublishSelected ? 1 : 0.5, cursor: canUnpublishSelected ? 'pointer' : 'not-allowed' }} 
+                        onClick={() => handleBulkPublish(false)}
+                        disabled={!canUnpublishSelected}
+                    >
+                        ✕ Unpublish Selected ({selectedIds.length})
+                    </button>
                 </div>
             </div>
 
+            <div style={{ marginBottom: '24px', display: 'flex', gap: '16px', borderBottom: '1px solid var(--admin-border)' }}>
+                <button 
+                    style={{ 
+                        padding: '12px 24px', 
+                        background: 'none', 
+                        border: 'none', 
+                        borderBottom: activeTab === 'all' ? '2px solid var(--admin-accent)' : '2px solid transparent',
+                        color: activeTab === 'all' ? 'var(--admin-accent)' : 'var(--admin-muted)',
+                        fontWeight: activeTab === 'all' ? '600' : '400',
+                        cursor: 'pointer',
+                        fontSize: '15px'
+                    }}
+                    onClick={() => setActiveTab('all')}
+                >
+                    All Scraped Data ({places.length})
+                </button>
+                <button 
+                    style={{ 
+                        padding: '12px 24px', 
+                        background: 'none', 
+                        border: 'none', 
+                        borderBottom: activeTab === 'published' ? '2px solid var(--admin-accent)' : '2px solid transparent',
+                        color: activeTab === 'published' ? 'var(--admin-accent)' : 'var(--admin-muted)',
+                        fontWeight: activeTab === 'published' ? '600' : '400',
+                        cursor: 'pointer',
+                        fontSize: '15px'
+                    }}
+                    onClick={() => setActiveTab('published')}
+                >
+                    Published to Map ({publishedIds.length})
+                </button>
+            </div>
+            
+            <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '150px' }} ref={dropdownRef}>
+                        <div 
+                            className="admin-search" 
+                            style={{ margin: 0, width: '100%', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '40px' }}
+                            onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                        >
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '14px' }}>
+                                {categoryFilter.length === 0 
+                                    ? 'All Categories' 
+                                    : `${categoryFilter.length} Selected`}
+                            </span>
+                            <span style={{ fontSize: '10px', color: 'var(--admin-muted)' }}>▼</span>
+                        </div>
+                        
+                        {categoryDropdownOpen && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                background: '#fff',
+                                border: '1px solid var(--admin-border)',
+                                borderRadius: '12px',
+                                marginTop: '4px',
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                zIndex: 100,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                padding: '8px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4px'
+                            }}>
+                                <label style={{ padding: '6px 8px', cursor: 'pointer', fontSize: '13px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, background: categoryFilter.length === 0 ? 'var(--admin-bg)' : 'transparent' }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={categoryFilter.length === 0} 
+                                        onChange={() => setCategoryFilter([])} 
+                                    />
+                                    <span>All Categories</span>
+                                </label>
+                                {uniqueCategories.map((cat: any) => (
+                                    <label key={cat} style={{ padding: '6px 8px', cursor: 'pointer', fontSize: '13px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, background: categoryFilter.includes(cat) ? 'var(--admin-bg)' : 'transparent' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={categoryFilter.includes(cat)} 
+                                            onChange={() => {
+                                                if (categoryFilter.includes(cat)) {
+                                                    setCategoryFilter(categoryFilter.filter(c => c !== cat))
+                                                } else {
+                                                    setCategoryFilter([...categoryFilter, cat])
+                                                }
+                                            }}
+                                        />
+                                        <span>{cat}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <select
+                        className="admin-search"
+                        style={{ flex: 1, minWidth: '150px', margin: 0, width: '100%' }}
+                        value={reviewFilter || ''}
+                        onChange={(e) => setReviewFilter(e.target.value ? parseInt(e.target.value) : null)}
+                    >
+                        <option value="">All Reviews</option>
+                        <option value="100">100+ Reviews</option>
+                        <option value="200">200+ Reviews</option>
+                        <option value="300">300+ Reviews</option>
+                        <option value="400">400+ Reviews</option>
+                        <option value="500">500+ Reviews</option>
+                        <option value="600">600+ Reviews</option>
+                        <option value="700">700+ Reviews</option>
+                        <option value="800">800+ Reviews</option>
+                        <option value="900">900+ Reviews</option>
+                        <option value="1000">1000+ Reviews</option>
+                    </select>
+
+                    <input
+                        className="admin-search"
+                        placeholder="Search places, categories..."
+                        style={{ flex: 1, minWidth: '150px', margin: 0, width: '100%' }}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <div className="badge info" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{filteredPlaces.length} Places Found</div>
+                </div>
+
             <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto', maxHeight: '70vh' }}>
+                <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                     <table className="admin-table">
                         <thead style={{ position: 'sticky', top: 0, zIndex: 1, background: '#fff' }}>
                             <tr>
+                                <th style={{ width: '60px', textAlign: 'center' }}>
+                                    <input 
+                                        type="checkbox"
+                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                        checked={filteredPlaces.length > 0 && selectedIds.length === filteredPlaces.length}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedIds(filteredPlaces.map(p => p.id))
+                                            } else {
+                                                setSelectedIds([])
+                                            }
+                                        }}
+                                    />
+                                </th>
                                 <th style={{ width: '80px' }}>Image</th>
                                 <th>Title & Category</th>
                                 <th>Location</th>
@@ -124,23 +379,45 @@ export default function ViewCountryData() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>Loading data...</td></tr>
+                                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>Loading data...</td></tr>
                             ) : filteredPlaces.length === 0 ? (
-                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>No data found for this country.</td></tr>
+                                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>No data found for this country.</td></tr>
                             ) : filteredPlaces.map((p, idx) => (
                                 <tr key={p.id || idx}>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                            checked={selectedIds.includes(p.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedIds(prev => [...prev, p.id])
+                                                } else {
+                                                    setSelectedIds(prev => prev.filter(id => id !== p.id))
+                                                }
+                                            }}
+                                        />
+                                    </td>
                                     <td>
                                         <div style={{ width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', background: 'var(--admin-bg)' }}>
                                             {p.image_url ? (
-                                                <img src={p.image_url} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <img src={p.image_url} alt={p.title} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
                                                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🖼️</div>
                                             )}
                                         </div>
                                     </td>
                                     <td>
-                                        <div style={{ fontWeight: '600', color: 'var(--admin-sidebar)' }}>{p.title}</div>
+                                        <div style={{ fontWeight: '600', color: 'var(--admin-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {p.title}
+                                            {publishedIds.includes(p.id) && (
+                                                <span className="badge success" style={{ fontSize: '9px', padding: '2px 6px' }}>Published</span>
+                                            )}
+                                        </div>
                                         <div style={{ fontSize: '12px', color: 'var(--admin-muted)' }}>{p.categoryName || p.subTitle}</div>
+                                        <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', fontWeight: 'bold' }}>
+                                            ⭐ {p.totalScore || 'N/A'} ({p.reviewsCount || 0} reviews)
+                                        </div>
                                     </td>
                                     <td>
                                         <div style={{ fontSize: '13px' }}>{p.city}, {p.address}</div>
@@ -176,6 +453,32 @@ export default function ViewCountryData() {
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
+                                            {activeTab === 'published' ? (
+                                                <button
+                                                    className="admin-button outline"
+                                                    style={{ padding: '4px 8px', fontSize: '11px', color: '#ef4444', borderColor: '#ef4444', width: '100%' }}
+                                                    onClick={() => handleSinglePublish(p, false)}
+                                                >
+                                                    ✕ Unpublish
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="admin-button outline"
+                                                    style={{ 
+                                                        padding: '4px 8px', 
+                                                        fontSize: '11px', 
+                                                        color: publishedIds.includes(p.id) ? 'var(--admin-muted)' : '#10b981', 
+                                                        borderColor: publishedIds.includes(p.id) ? 'var(--admin-border)' : '#10b981', 
+                                                        width: '100%',
+                                                        background: publishedIds.includes(p.id) ? 'var(--admin-bg)' : 'transparent',
+                                                        cursor: publishedIds.includes(p.id) ? 'not-allowed' : 'pointer'
+                                                    }}
+                                                    onClick={() => !publishedIds.includes(p.id) && handleSinglePublish(p, true)}
+                                                    disabled={publishedIds.includes(p.id)}
+                                                >
+                                                    {publishedIds.includes(p.id) ? '✓ Published' : '✓ Publish'}
+                                                </button>
+                                            )}
                                             <button
                                                 className="admin-button outline"
                                                 style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }}
@@ -272,7 +575,7 @@ export default function ViewCountryData() {
                                             onChange={(e) => setEditingPlace({ ...editingPlace, image_url: e.target.value })}
                                         />
                                         {editingPlace.image_url && (
-                                            <img src={editingPlace.image_url} alt="Preview" style={{ marginTop: '8px', width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                            <img src={editingPlace.image_url} alt="Preview" referrerPolicy="no-referrer" style={{ marginTop: '8px', width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
                                         )}
                                     </div>
                                 </div>

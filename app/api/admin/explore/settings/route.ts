@@ -38,22 +38,28 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { hero_tagline, hero_title, quote_text, quote_author } = body
+    const { hero_tagline, hero_title, quote_text, quote_author, hero_bg_image } = body
 
     if (!hero_tagline || !hero_title || !quote_text || !quote_author) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
+    const updateObj: any = {
+      id: 'default',
+      hero_tagline: hero_tagline.trim(),
+      hero_title: hero_title.trim(),
+      quote_text: quote_text.trim(),
+      quote_author: quote_author.trim(),
+      updated_at: new Date().toISOString()
+    }
+
+    if (hero_bg_image !== undefined) {
+      updateObj.hero_bg_image = hero_bg_image.trim()
+    }
+
     const { data: settings, error } = await supabaseAdmin
       .from('explore_settings')
-      .upsert({
-        id: 'default',
-        hero_tagline: hero_tagline.trim(),
-        hero_title: hero_title.trim(),
-        quote_text: quote_text.trim(),
-        quote_author: quote_author.trim(),
-        updated_at: new Date().toISOString()
-      })
+      .upsert(updateObj)
       .select()
       .single()
 

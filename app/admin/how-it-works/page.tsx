@@ -6,6 +6,7 @@ interface PageSettings {
   hero_badge: string
   hero_title: string
   hero_description: string
+  hero_bg_image: string
   planning_title: string
   how_works_title: string
   how_works_desc: string
@@ -43,6 +44,7 @@ export default function AdminHowItWorksPage() {
     hero_badge: '',
     hero_title: '',
     hero_description: '',
+    hero_bg_image: '',
     planning_title: '',
     how_works_title: '',
     how_works_desc: '',
@@ -66,7 +68,7 @@ export default function AdminHowItWorksPage() {
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' })
   const [uploadingImg, setUploadingImg] = useState(false)
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetField: 'demo_i_img_2' | 'hero_bg_image') => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -86,7 +88,7 @@ export default function AdminHowItWorksPage() {
         .from('blogs')
         .getPublicUrl(filePath)
 
-      setSettings(prev => ({ ...prev, demo_i_img_2: publicUrl }))
+      setSettings(prev => ({ ...prev, [targetField]: publicUrl }))
     } catch (error: any) {
       alert('Error uploading file: ' + error.message)
     } finally {
@@ -323,6 +325,40 @@ export default function AdminHowItWorksPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Background Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <input
+                  type="text"
+                  value={settings.hero_bg_image}
+                  onChange={e => setSettings({ ...settings, hero_bg_image: e.target.value })}
+                  placeholder="e.g. /images/how_hero.png"
+                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', flexGrow: 1, boxSizing: 'border-box' }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="hero-image-file"
+                    onChange={(e) => handleImageUpload(e, 'hero_bg_image')}
+                    style={{ display: 'none' }}
+                  />
+                  <label
+                    htmlFor="hero-image-file"
+                    className="admin-button outline"
+                    style={{ padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'inline-block', fontSize: '14px', margin: 0 }}
+                  >
+                    {uploadingImg ? 'Uploading...' : 'Upload Image'}
+                  </label>
+                </div>
+              </div>
+              {settings.hero_bg_image && (
+                <div style={{ marginTop: '8px', border: '1px dashed var(--admin-border)', padding: '8px', borderRadius: '12px', display: 'inline-block', background: '#fff' }}>
+                  <img src={settings.hero_bg_image} alt="Hero Preview" style={{ maxHeight: '100px', borderRadius: '8px', display: 'block' }} />
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Planning Section Title</label>
               <input
                 type="text"
@@ -496,7 +532,7 @@ export default function AdminHowItWorksPage() {
                         type="file"
                         accept="image/*"
                         id="slot-image-file"
-                        onChange={handleImageUpload}
+                        onChange={(e) => handleImageUpload(e, 'demo_i_img_2')}
                         style={{ display: 'none' }}
                       />
                       <label

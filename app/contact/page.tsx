@@ -1,10 +1,38 @@
 'use client'
 
-import React from 'react';
+import React, { useState } from 'react';
 import SiteHeader from '@/app/components/SiteHeader';
 import SiteFooter from '@/app/components/SiteFooter';
 
 export default function ContactPage() {
+    const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', subject: 'General Inquiry', message: '' })
+    const [status, setStatus] = useState({ type: '', msg: '' })
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsSubmitting(true)
+        setStatus({ type: '', msg: '' })
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            const data = await res.json()
+            if (res.ok) {
+                setStatus({ type: 'success', msg: 'Message sent successfully! We will get back to you soon.' })
+                setFormData({ first_name: '', last_name: '', email: '', subject: 'General Inquiry', message: '' })
+            } else {
+                setStatus({ type: 'danger', msg: data.error || 'Failed to send message.' })
+            }
+        } catch (err) {
+            setStatus({ type: 'danger', msg: 'Network error. Please try again.' })
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb', fontFamily: "'Inter', sans-serif" }}>
             <SiteHeader />
@@ -86,35 +114,40 @@ export default function ContactPage() {
                         </div>
                     </div>
                     <div style={{ padding: '60px' }}>
-                        <form style={{ display: 'grid', gap: '20px' }}>
+                        {status.msg && (
+                            <div style={{ padding: '16px', borderRadius: '8px', marginBottom: '20px', backgroundColor: status.type === 'success' ? '#dcfce7' : '#fee2e2', color: status.type === 'success' ? '#166534' : '#991b1b', fontWeight: '500' }}>
+                                {status.msg}
+                            </div>
+                        )}
+                        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>First Name</label>
-                                    <input type="text" placeholder="John" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                    <input type="text" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required placeholder="John" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Last Name</label>
-                                    <input type="text" placeholder="Doe" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                    <input type="text" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} required placeholder="Doe" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                                 </div>
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Email Address</label>
-                                <input type="email" placeholder="john@example.com" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="john@example.com" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Subject</label>
-                                <select style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}>
-                                    <option>General Inquiry</option>
-                                    <option>Technical Support</option>
-                                    <option>Feedback</option>
+                                <select value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}>
+                                    <option value="General Inquiry">General Inquiry</option>
+                                    <option value="Technical Support">Technical Support</option>
+                                    <option value="Feedback">Feedback</option>
                                 </select>
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Message</label>
-                                <textarea rows={4} placeholder="How can we help you?" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', resize: 'none' }} />
+                                <textarea rows={4} value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} required placeholder="How can we help you?" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', resize: 'none' }} />
                             </div>
-                            <button type="submit" style={{ backgroundColor: '#ffc107', color: '#0a192f', padding: '16px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1rem' }}>
-                                Send Message
+                            <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#ffc107', color: '#0a192f', padding: '16px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1rem', opacity: isSubmitting ? 0.7 : 1 }}>
+                                {isSubmitting ? 'Sending...' : 'Send Message'}
                             </button>
                         </form>
                     </div>

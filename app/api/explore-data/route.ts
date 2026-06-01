@@ -22,7 +22,8 @@ export async function GET() {
       hero_tagline: 'Explore the Unseen',
       hero_title: 'Where will your curiosity lead you next?',
       quote_text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.',
-      quote_author: 'MARCEL PROUST'
+      quote_author: 'MARCEL PROUST',
+      hero_bg_image: '/images/guide_hero.png'
     }
 
     const defaultGuides = [

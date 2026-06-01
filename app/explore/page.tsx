@@ -12,6 +12,7 @@ interface ExploreSettings {
   hero_title: string
   quote_text: string
   quote_author: string
+  hero_bg_image: string
 }
 
 interface GuideItem {
@@ -49,7 +50,8 @@ export default function CountryGuide() {
     hero_tagline: 'Explore the Unseen',
     hero_title: 'Where will your curiosity lead you next?',
     quote_text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.',
-    quote_author: 'MARCEL PROUST'
+    quote_author: 'MARCEL PROUST',
+    hero_bg_image: '/images/guide_hero.png'
   })
 
   const [featuredGuides, setFeaturedGuides] = useState<GuideItem[]>([
@@ -88,7 +90,7 @@ export default function CountryGuide() {
       {/* Hero Section */}
       <section 
         className={styles.hero} 
-        style={{ backgroundImage: 'url("/images/guide_hero.png")' }}
+        style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/guide_hero.png'}")` }}
       >
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>

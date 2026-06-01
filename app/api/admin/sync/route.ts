@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
                     title: item.title || item.name,
                     subTitle: item.subTitle || item.category,
                     reviewsCount: item.reviewsCount,
+                    totalScore: item.totalScore || item.rating || item.stars || null,
                     postalCode: item.postalCode,
                     phone: item.phone,
                     description: item.description,

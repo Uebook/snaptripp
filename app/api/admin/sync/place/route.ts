@@ -17,6 +17,9 @@ export async function DELETE(request: NextRequest) {
             .eq('id', id);
 
         if (error) throw error;
+        
+        // Also delete from published_places if it exists
+        await supabaseAdmin.from('published_places').delete().eq('id', id);
 
         return NextResponse.json({
             success: true,
@@ -46,6 +49,9 @@ export async function PUT(request: NextRequest) {
             .select();
 
         if (error) throw error;
+        
+        // Also update published_places if it exists (ignoring errors if it doesn't exist)
+        await supabaseAdmin.from('published_places').update(updates).eq('id', id);
 
         return NextResponse.json({
             success: true,

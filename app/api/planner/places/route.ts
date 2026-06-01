@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Country parameter is required' }, { status: 400 });
         }
 
-        // Fetch ALL data from the places table for the selected country
-        // This ensures the map only displays REAL places from the DB
+        // Fetch ALL data from the published_places table for the selected country
+        // This ensures the map only displays REAL curated places from the DB
         const { data: places, error: placesError } = await supabaseAdmin
-            .from('places')
+            .from('published_places')
             .select('*')
             .ilike('country', country)
             .order('city', { ascending: true });

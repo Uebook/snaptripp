@@ -42,7 +42,8 @@ export async function PUT(request: Request) {
       hero_badge, hero_title, hero_description, planning_title, how_works_title, how_works_desc,
       demo_i_time_1, demo_i_label_1, demo_i_title_1, demo_i_price_1, demo_i_desc_1, demo_i_tags_1,
       demo_i_time_2, demo_i_label_2, demo_i_title_2, demo_i_price_2, demo_i_desc_2, demo_i_img_2,
-      demo_i_ai_suggestion, demo_map_placeholder, demo_support_placeholder
+      demo_i_ai_suggestion, demo_map_placeholder, demo_support_placeholder,
+      hero_bg_image
     } = body
 
     if (!hero_badge || !hero_title || !hero_description || !planning_title || !how_works_title || !how_works_desc) {
@@ -60,6 +61,7 @@ export async function PUT(request: Request) {
       updated_at: new Date().toISOString()
     }
 
+    if (hero_bg_image !== undefined) updateObj.hero_bg_image = hero_bg_image.trim();
     if (demo_i_time_1 !== undefined) updateObj.demo_i_time_1 = demo_i_time_1.trim();
     if (demo_i_label_1 !== undefined) updateObj.demo_i_label_1 = demo_i_label_1.trim();
     if (demo_i_title_1 !== undefined) updateObj.demo_i_title_1 = demo_i_title_1.trim();

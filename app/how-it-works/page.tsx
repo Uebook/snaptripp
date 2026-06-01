@@ -10,6 +10,7 @@ interface PageSettings {
   hero_badge: string
   hero_title: string
   hero_description: string
+  hero_bg_image: string
   planning_title: string
   how_works_title: string
   how_works_desc: string
@@ -46,6 +47,7 @@ export default function HowItWorks() {
     hero_badge: 'INTRODUCING ATLAS LUMINA',
     hero_title: 'Crafting Your Next Odyssey.',
     hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
+    hero_bg_image: '/images/how_hero.png',
     planning_title: 'The Art of Seamless Planning',
     how_works_title: 'How It Works',
     how_works_desc: 'Snaptrip guides you through every step of your travel planning — from discovering destinations to creating a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly and without stress.',
@@ -100,7 +102,7 @@ export default function HowItWorks() {
     <div className={styles.container}>
       <SiteHeader />
 
-      <section className={styles.hero} style={{ backgroundImage: 'url("/images/how_hero.png")' }}>
+      <section className={styles.hero} style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/how_hero.png'}")` }}>
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
           <span className={styles.heroBadge}>{settings.hero_badge}</span>

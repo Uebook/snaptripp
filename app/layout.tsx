@@ -10,6 +10,7 @@ import '@fontsource/inter/700.css'
 export const metadata: Metadata = {
   title: 'Snaptrip',
   description: 'Your travel companion',
+  referrer: 'no-referrer',
 }
 
 export default function RootLayout({

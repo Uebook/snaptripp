@@ -7,6 +7,7 @@ interface ExploreSettings {
   hero_title: string
   quote_text: string
   quote_author: string
+  hero_bg_image: string
 }
 
 interface CountryGuide {
@@ -44,7 +45,8 @@ export default function AdminExplorePage() {
     hero_tagline: '',
     hero_title: '',
     quote_text: '',
-    quote_author: ''
+    quote_author: '',
+    hero_bg_image: ''
   })
   const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState({ text: '', type: '' })
@@ -516,6 +518,56 @@ export default function AdminExplorePage() {
                 required
                 style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
               />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Background Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <input
+                  type="text"
+                  value={settings.hero_bg_image || ''}
+                  onChange={e => setSettings({ ...settings, hero_bg_image: e.target.value })}
+                  placeholder="e.g. /images/guide_hero.png"
+                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', flexGrow: 1, boxSizing: 'border-box' }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="explore-hero-image-file"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setUploadingHeroImg(true)
+                      try {
+                        const fileExt = file.name.split('.').pop()
+                        const fileName = `explore-hero-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`
+                        const { error } = await supabase.storage.from('carousel').upload(fileName, file)
+                        if (error) throw error
+                        const { data: { publicUrl } } = supabase.storage.from('carousel').getPublicUrl(fileName)
+                        setSettings({ ...settings, hero_bg_image: publicUrl })
+                      } catch (err: any) {
+                        alert('Upload failed: ' + err.message)
+                      } finally {
+                        setUploadingHeroImg(false)
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                  <label
+                    htmlFor="explore-hero-image-file"
+                    className="admin-button outline"
+                    style={{ padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'inline-block', fontSize: '14px', margin: 0 }}
+                  >
+                    {uploadingHeroImg ? 'Uploading...' : 'Upload Image'}
+                  </label>
+                </div>
+              </div>
+              {settings.hero_bg_image && (
+                <div style={{ marginTop: '8px', border: '1px dashed var(--admin-border)', padding: '8px', borderRadius: '12px', display: 'inline-block', background: '#fff' }}>
+                  <img src={settings.hero_bg_image} alt="Hero Preview" style={{ maxHeight: '100px', borderRadius: '8px', display: 'block' }} />
+                </div>
+              )}
             </div>
 
             <button type="submit" disabled={isSavingSettings} className="admin-button" style={{ alignSelf: 'flex-start' }}>
