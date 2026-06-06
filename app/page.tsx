@@ -374,7 +374,7 @@ export default function Home() {
                 {destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.desc || 
                   `Discover the beauty of ${searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan'}, from its vibrant city life to its serene landscapes.`}
               </p>
-              <button className="explore-now-btn" onClick={() => router.push('/plan')}>Explore Now</button>
+              <button className="explore-now-btn" onClick={() => router.push(`/plan?country=${encodeURIComponent(searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan')}`)}>Explore Now</button>
             </div>
           </div>
         </div>
@@ -488,7 +488,7 @@ export default function Home() {
             <img src="/images/Property 1=S7 (1).png" alt="Step 5" className="journey-step-img img-step-5" />
           </div>
 
-          <button className={`start-journey-btn ${inter.className}`} onClick={() => router.push('/plan')}>
+          <button className={`start-journey-btn ${inter.className}`} onClick={() => router.push(`/plan?country=${encodeURIComponent(activeDest)}`)}>
             Start Your Journey
           </button>
         </div>

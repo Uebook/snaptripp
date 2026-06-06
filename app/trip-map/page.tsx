@@ -597,42 +597,7 @@ function TripMapContent() {
           className={`trip-map-main-wrapper ${activeMobileTab === 'map' ? 'mobile-active' : ''}`}
           style={{ flex: 1, position: 'relative', gridArea: 'map' }}
         >
-          {/* Popular Attractions Carousel (when no plan) */}
-          {dayPlans.length === 0 && (
-            <div className="popular-attractions-carousel animate-fade-in">
-              <div className="carousel-header">
-                <span style={{ color: '#F6B800', fontSize: '18px' }}>✨</span>
-                <h3>Popular attractions</h3>
-              </div>
-              <div className="carousel-track">
-                {(() => {
-                  const pool = selectedCity ? places.filter(p => p.city === selectedCity) : places;
-                  const displayPlaces = pool.slice(0, 4);
-                  
-                  if (displayPlaces.length === 0) return null;
-                  
-                  return displayPlaces.map((place) => (
-                    <div 
-                      key={place.id} 
-                      className="popular-card" 
-                      onClick={() => handleAddToItinerary(place)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <img 
-                        src={place.image_url || '/api/placeholder/400/200'} 
-                        alt="" 
-                        onError={(e) => { e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23ccc"><rect width="100" height="100" fill="%23eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="%23999">No Image</text></svg>'; }} 
-                      />
-                      <div className="popular-card-info">
-                        <h4 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{place.title}</h4>
-                        <p>{place.city} • {place.categoryName || 'Attraction'}</p>
-                      </div>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </div>
-          )}
+
 
           {/* Weather Widget */}
           <div className="weather-widget">

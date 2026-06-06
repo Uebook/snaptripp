@@ -1,19 +1,21 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import styles from './planner.module.css'
 
-export default function PlanTrip() {
+function PlanTripContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialCountry = searchParams.get('country') || 'Italy'
   const [plannerStep, setPlannerStep] = useState(1) 
   
   // Selection States
-  const [selectedCountry, setSelectedCountry] = useState<string>('Italy')
-  const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>('Intense')
-  const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>('Weekend')
+  const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry)
+  const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>(null)
+  const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
   const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [tripImmersion, setTripImmersion] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [countries, setCountries] = useState<string[]>([])
@@ -375,5 +377,13 @@ export default function PlanTrip() {
 
       <SiteFooter />
     </main>
+  )
+}
+
+export default function PlanTrip() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PlanTripContent />
+    </Suspense>
   )
 }
