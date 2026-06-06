@@ -99,6 +99,7 @@ export default function SiteHeader() {
           <Link href="/travel-map" className={getLinkClass('/travel-map')}>Travel Map</Link>
           <Link href="/explore" className={getLinkClass('/explore')}>Country Guide</Link>
           <Link href="/how-it-works" className={getLinkClass('/how-it-works')}>How SnapTrip Work</Link>
+          <Link href="/contact" className={getLinkClass('/contact')}>Contact Us</Link>
         </nav>
 
         <div className="header-actions">

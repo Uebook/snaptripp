@@ -186,42 +186,35 @@ const FALLBACK: Record<string, CountryData> = {
   }
 }
 
-// ── Reusable: Section with optional image split ──────────────────────
-function GuideSection({ label, title, subtitle, img, children }: {
-  label: string; title: string; subtitle: string; img?: string; children: React.ReactNode
-}) {
-  const hasImage = !!img
+// ── Reusable Components ─────────────────────────────────
+function Accordion({ title, children, initialOpen = false }: { title: string; children: React.ReactNode; initialOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(initialOpen)
   return (
-    <section className={styles.guideSection}>
-      <p className={styles.sectionLabel}>{label}</p>
-      <h2 className={styles.sectionTitle}>{title}</h2>
-      <p className={styles.sectionSubtitle}>{subtitle}</p>
-
-      {hasImage ? (
-        <div className={styles.sectionWithImg}>
-          <div className={styles.sectionPoints}>{children}</div>
-          <div className={styles.sectionImg} style={{ backgroundImage: `url(${img})` }} />
-        </div>
-      ) : (
-        <div className={styles.sectionFull}>{children}</div>
-      )}
-    </section>
+    <div style={{ background: '#fff', marginBottom: '16px', border: '1px solid #EBEBEB', borderRadius: '4px' }}>
+      <div className={styles.accordion} onClick={() => setIsOpen(!isOpen)} style={{ borderBottom: isOpen ? '1px solid #F5F5F5' : 'none' }}>
+        {title}
+        <span className={styles.arrow}>{isOpen ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        )}</span>
+      </div>
+      {isOpen && <div style={{padding: '18px 22px', color: '#555', fontSize: '0.87rem', lineHeight: 1.6}}>{children}</div>}
+    </div>
   )
 }
 
-// ── Reusable: Bullet point list ──────────────────────────────────────
-function BulletList({ items }: { items: { title: string; desc: string }[] }) {
+function SectionWrapper({ id, label, title, subtitle, children, bg = '#fff' }: { id: string; label?: string; title?: string; subtitle?: string; children: React.ReactNode; bg?: string }) {
   return (
-    <div className={styles.bulletList}>
-      {items.map((item, i) => (
-        <div key={i} className={styles.bulletItem}>
-          <div className={styles.bulletDot} />
-          <div>
-            <strong className={styles.bulletTitle}>{item.title}</strong>
-            <p className={styles.bulletDesc}>{item.desc}</p>
-          </div>
+    <div id={id} style={{ background: bg, padding: '60px 0' }}>
+      {(label || title) && (
+        <div style={{ padding: '0 64px', marginBottom: '36px', textAlign: 'center' }}>
+          {label && <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.22em', color: '#666', margin: '0 0 10px', textTransform: 'uppercase' }}>{label}</p>}
+          {title && <h2 className={styles.sectionTitle} style={{ textAlign: 'center' }}>{title}</h2>}
+          {subtitle && <p className={styles.sectionSubtitle} style={{ textAlign: 'center', marginBottom: 0 }}>{subtitle}</p>}
         </div>
-      ))}
+      )}
+      {children}
     </div>
   )
 }
@@ -255,24 +248,6 @@ export default function CountryPage() {
     load()
   }, [countryId])
 
-  const renderIcon = (type: string) => {
-    if (type === 'snapshot') return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/><circle cx="12" cy="14" r="3"/>
-      </svg>
-    )
-    if (type === 'clock') return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    )
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-      </svg>
-    )
-  }
-
   return (
     <div className={styles.container}>
       <SiteHeader />
@@ -287,12 +262,11 @@ export default function CountryPage() {
           <nav className={styles.sidebarNav}>
             {[
               { id: 'overview', label: 'OVERVIEW' },
-              { id: 'entry', label: 'ENTRY REQUIREMENTS' },
-              { id: 'safety', label: 'SAFETY & SECURITY' },
-              { id: 'culture', label: 'CULTURE & CONDUCT' },
+              { id: 'entry', label: 'REQUIREMENTS' },
+              { id: 'safety', label: 'SAFETY' },
+              { id: 'culture', label: 'CULTURE' },
               { id: 'logistics', label: 'LOGISTICS' },
-              { id: 'experiences', label: 'EXPERIENCES & RULES' },
-              { id: 'cities', label: 'TOP CITIES' },
+              { id: 'cities', label: 'PLACES' },
             ].map(n => (
               <a key={n.id} href={`#${n.id}`} className={activeNav === n.id ? styles.active : ''} onClick={() => setActiveNav(n.id)}>
                 {n.label}
@@ -305,7 +279,9 @@ export default function CountryPage() {
         {/* ── Main Content ── */}
         <main className={styles.mainContent}>
           {/* Hero */}
-          <div className={styles.heroImg} style={{ backgroundImage: `url(${data.heroImg})` }} />
+          <div style={{ padding: '0 64px', marginTop: '40px' }}>
+            <div className={styles.heroImg} style={{ backgroundImage: `url(${data.heroImg})`, borderRadius: '16px' }} />
+          </div>
 
           {/* Title */}
           <div className={styles.titleRow}>
@@ -332,149 +308,234 @@ export default function CountryPage() {
             ))}
           </div>
 
-          <div className={styles.contentDivider} />
+          <div className={styles.contentDivider} style={{ margin: '40px 64px' }} />
 
           {/* ── 01 OVERVIEW ── */}
           <div id="overview">
-            <GuideSection
-              label="01 — OVERVIEW"
-              title="Overview"
-              subtitle="First impressions and essential country context"
-              img={data.overviewImg}
-            >
-              <BulletList items={[
-                { title: 'Country Introduction', desc: data.countryIntro },
-                { title: 'Best Time to Visit', desc: data.bestTimeDesc },
-                { title: 'Public Holidays', desc: data.publicHolidays },
-                { title: 'Unique Accommodation', desc: data.uniqueAccommodation },
-                ...(data.bucketList || []).map(b => ({ title: '🗺 Bucket List', desc: b }))
-              ]} />
-            </GuideSection>
+            <div className={styles.cardsRow} style={{ padding: '0 64px 60px' }}>
+              <div className={styles.infoCard}>
+                <div className={styles.cardIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </div>
+                <h3>About</h3>
+                <p>{data.countryIntro}</p>
+              </div>
+              <div className={styles.infoCard}>
+                <div className={styles.cardIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+                <h3>Travel Snapshot</h3>
+                <p>Efficiency meets elegance. Navigate with ease using the Shinkansen, indulge in world-class culinary delights, and find peace in Zen gardens.</p>
+              </div>
+              <div className={styles.infoCard}>
+                <div className={styles.cardIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <h3>Best Time to Visit</h3>
+                <p>{data.bestTimeDesc}</p>
+              </div>
+            </div>
           </div>
-
-          <div className={styles.contentDivider} />
 
           {/* ── 02 ENTRY REQUIREMENTS ── */}
-          <div id="entry">
-            <GuideSection
-              label="02 — ENTRY REQUIREMENTS"
-              title="Entry Requirements"
-              subtitle="What you need before and at the border"
-              img={data.entryImg}
-            >
-              <BulletList items={[
-                { title: 'Visa & Entry', desc: data.visaEntry },
-                { title: 'Passport & Documentation', desc: data.passportDocs },
-                { title: 'Customs & Duty-Free', desc: data.customs },
-                { title: 'Health Requirements', desc: data.healthRequirements },
-                { title: 'Travel Insurance', desc: data.travelInsurance },
-              ]} />
-            </GuideSection>
-          </div>
-
-          <div className={styles.contentDivider} />
+          <SectionWrapper id="entry" bg="#F4F4F1">
+            <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+              <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.22em', color: '#666', margin: '0 0 10px', textTransform: 'uppercase' }}>ENTRY REQUIREMENTS</p>
+            </div>
+            <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 40px' }}>
+              <div>
+                <Accordion title="Visa Policy" initialOpen={true}>
+                  {data.visaEntry || 'Citizens of many countries, including the US, UK, Canada, and Australia, can enter Japan for tourism for up to 90 days without a visa. Ensure your travel purpose is strictly temporary.'}
+                </Accordion>
+                <Accordion title="Passport Validity">
+                  {data.passportDocs || 'Passport must be valid for the duration of your stay. Border control may request proof of onward travel and sufficient funds.'}
+                </Accordion>
+                <Accordion title="Arrival & Customs">
+                  {data.customs || 'Duty-free allowance: 3 bottles of alcohol, 400 cigarettes, and ¥200,000 in goods. Some medications and items are strictly prohibited.'}
+                </Accordion>
+              </div>
+            </div>
+          </SectionWrapper>
 
           {/* ── 03 SAFETY & SECURITY ── */}
-          <div id="safety">
-            <GuideSection
-              label="03 — SAFETY & SECURITY"
-              title="Safety & Security"
-              subtitle="Staying safe on the ground"
-              img={data.safetyImg}
-            >
-              <BulletList items={[
-                { title: 'Safety Alerts & Risk Level', desc: data.safetyRisk },
-                { title: 'Emergency Numbers', desc: `Police: ${data.emergencyNumbers?.police || '—'} · Ambulance: ${data.emergencyNumbers?.ambulance || '—'} · Fire: ${data.emergencyNumbers?.fire || '—'}` },
-                { title: 'Health & Medical', desc: data.healthMedical },
-                { title: 'Common Scams', desc: data.commonScams },
-                { title: 'Natural Hazards', desc: data.naturalHazards },
-                { title: 'LGBTQ+ Safety', desc: data.lgbtqSafety },
-                { title: 'Solo & Female Traveller Tips', desc: data.soloTips },
-              ]} />
-            </GuideSection>
+          <div id="safety" style={{ padding: '60px 64px' }}>
+            <div className={styles.darkBox} style={{ background: '#1A1A1A', borderColor: '#1A1A1A', borderRadius: '4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', padding: '40px 60px' }}>
+              <div>
+                <h4 style={{ fontSize: '0.8rem', color: '#F6B800', marginBottom: '20px' }}>Emergency & Safety</h4>
+                <p style={{ color: '#EBEBEB', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '30px' }}>
+                  {data.safetyRisk}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '10px', color: '#EBEBEB', fontSize: '0.85rem' }}>
+                  <strong style={{ color: '#F6B800' }}>POLICE</strong> <span>{data.emergencyNumbers?.police || '110'}</span>
+                  <strong style={{ color: '#F6B800' }}>AMBULANCE</strong> <span>{data.emergencyNumbers?.ambulance || '119'}</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                <div className={styles.darkColumn}>
+                  <h4 style={{ color: '#F6B800' }}>SAFETY TIPS</h4>
+                  <p style={{ fontStyle: 'italic', color: '#EBEBEB' }}>"{data.naturalHazards}"</p>
+                </div>
+                <div className={styles.darkColumn}>
+                  <h4 style={{ color: '#F6B800' }}>EMBASSY INFO</h4>
+                  <p style={{ color: '#EBEBEB' }}>Most major embassies are located in the Minato-ku district of Tokyo.</p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className={styles.contentDivider} />
 
           {/* ── 04 CULTURE & CONDUCT ── */}
-          <div id="culture">
-            <GuideSection
-              label="04 — CULTURE & CONDUCT"
-              title="Culture & Conduct"
-              subtitle="Blending in and showing respect"
-              img={data.cultureImg}
-            >
-              <BulletList items={[
-                ...(data.localEtiquette || []).map(e => ({ title: e.title, desc: e.desc })),
-                { title: 'Religion & Sacred Sites', desc: data.religion },
-                { title: 'Photography Rules', desc: data.photographyRules },
-                { title: 'Tipping', desc: data.tipping },
-                { title: 'Language Basics', desc: data.languageBasics },
-                { title: 'Social Norms', desc: data.socialNorms },
-                { title: 'Festivals & Events', desc: data.festivals },
-              ]} />
-            </GuideSection>
+          <div id="culture" className={styles.twoColGrid}>
+            <div className={styles.infoCol}>
+              <h3 className={styles.colTitle}>Laws & Regulations</h3>
+              <div className={styles.colItems}>
+                <div className={styles.colItem} style={{ border: 'none', padding: '0 0 16px', borderBottom: '1px solid #F3F3F3', borderRadius: 0, gap: '20px' }}>
+                  <div style={{ color: '#F6B800' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                  </div>
+                  <div>
+                    <h5>RESTRICTED ITEMS</h5>
+                    <p>{data.localLaws || 'Strict laws on medication; some common over-the-counter drugs are prohibited.'}</p>
+                  </div>
+                </div>
+                <div className={styles.colItem} style={{ border: 'none', padding: '0 0 16px', borderBottom: '1px solid #F3F3F3', borderRadius: 0, gap: '20px' }}>
+                  <div style={{ color: '#F6B800' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg>
+                  </div>
+                  <div>
+                    <h5>DRESS CODES</h5>
+                    <p>{data.religion || 'Modest dress is required at temples and shrines. Shoulders and knees should be covered.'}</p>
+                  </div>
+                </div>
+                <div className={styles.colItem} style={{ border: 'none', padding: '0', borderRadius: 0, gap: '20px' }}>
+                  <div style={{ color: '#F6B800' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                  </div>
+                  <div>
+                    <h5>PUBLIC SMOKING</h5>
+                    <p>{data.smokingRules || 'Smoking on streets is banned in many districts; use designated smoking areas only.'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.infoCol}>
+              <h3 className={styles.colTitle}>Cultural Etiquette</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: '#F9F9F9', borderRadius: '8px', padding: '20px' }}>
+                <div style={{ paddingRight: '15px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#F6B800', fontWeight: 700, fontSize: '0.85rem', marginBottom: '16px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    DO'S
+                  </div>
+                  <ul style={{ padding: 0, margin: 0, listStyle: 'none', fontSize: '0.85rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <li>Remove shoes when entering homes or certain restaurants.</li>
+                    <li>Bow slightly when greeting or thanking someone.</li>
+                    <li>Use both hands when giving or receiving business cards.</li>
+                  </ul>
+                </div>
+                <div style={{ paddingLeft: '15px', borderLeft: '1px solid #EBEBEB' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D32F2F', fontWeight: 700, fontSize: '0.85rem', marginBottom: '16px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    DON'TS
+                  </div>
+                  <ul style={{ padding: 0, margin: 0, listStyle: 'none', fontSize: '0.85rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <li>No tipping—it is often seen as insulting or confusing.</li>
+                    <li>Avoid talking loudly on trains or public transport.</li>
+                    <li>Never stick your chopsticks vertically in a bowl of rice.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.contentDivider} />
+          <div style={{ padding: '0 64px', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '0.9rem', color: '#555', fontWeight: 600 }}>Travel Essentials</h3>
+          </div>
 
           {/* ── 05 LOGISTICS ── */}
           <div id="logistics">
-            <GuideSection
-              label="05 — LOGISTICS"
-              title="Logistics"
-              subtitle="Getting around and staying connected"
-              img={data.logisticsImg}
-            >
-              <BulletList items={[
-                { title: 'Currency & Payments', desc: data.currencyPayments },
-                { title: 'Local Transport', desc: data.localTransport },
-                { title: 'Driving Rules', desc: data.drivingRules },
-                { title: 'SIM & Connectivity', desc: data.simConnectivity },
-                { title: 'VPN & Internet', desc: data.vpnInternet },
-                { title: 'Electricity & Plugs', desc: data.electricityPlugs },
-                { title: 'Essential Apps', desc: data.essentialApps },
-              ]} />
-            </GuideSection>
+            <div className={styles.cardsRow} style={{ padding: '0 64px 60px' }}>
+              <div className={styles.infoCard} style={{ background: '#fff' }}>
+                <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '16px', textTransform: 'uppercase' }}>MONEY</h4>
+                <p style={{ fontSize: '0.85rem', color: '#111', lineHeight: 1.6, marginBottom: '20px', fontWeight: 500 }}>
+                  {data.currencyPayments || 'While Japan is becoming more card-friendly, cash remains king in rural areas. 7-Eleven ATMs are most reliable for foreign cards.'}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                  NO TIPPING REQUIRED
+                </div>
+              </div>
+              <div className={styles.infoCard} style={{ background: '#fff' }}>
+                <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '16px', textTransform: 'uppercase' }}>CONNECTIVITY</h4>
+                <p style={{ fontSize: '0.85rem', color: '#111', lineHeight: 1.6, marginBottom: '20px', fontWeight: 500 }}>
+                  {data.simConnectivity || 'eSIMs like Airalo or Ubigi are highly recommended. Pocket WiFi is a popular alternative for groups.'}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                  PLUG TYPE A & B (100V)
+                </div>
+              </div>
+              <div className={styles.infoCard} style={{ background: '#fff' }}>
+                <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '16px', textTransform: 'uppercase' }}>TRANSPORT</h4>
+                <p style={{ fontSize: '0.85rem', color: '#111', lineHeight: 1.6, marginBottom: '20px', fontWeight: 500 }}>
+                  {data.localTransport || 'The Japan Rail (JR) Pass offers unlimited travel on most trains. Buy a Suica or Pasmo card for local subways.'}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                  USE GOOGLE MAPS
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.contentDivider} />
-
-          {/* ── 06 EXPERIENCES & RULES ── */}
-          <div id="experiences">
-            <GuideSection
-              label="06 — EXPERIENCES & RULES"
-              title="Experiences & Rules"
-              subtitle="Food, shopping, and what to know legally"
-              img={data.experiencesImg}
-            >
-              <BulletList items={[
-                { title: 'Must-Try Food & Drink', desc: data.mustTryFood },
-                { title: 'Alcohol Laws', desc: data.alcoholLaws },
-                { title: 'Smoking & Vaping Rules', desc: data.smokingRules },
-                { title: 'Shopping & Bargaining', desc: data.shopping },
-                { title: 'Souvenirs', desc: data.souvenirs },
-                { title: 'Environmental Considerations', desc: data.environmental },
-                { title: 'Laws & Local Bylaws', desc: data.localLaws },
-              ]} />
-            </GuideSection>
+          {/* ── 06 HEALTH & WELL-BEING ── */}
+          <div style={{ padding: '0 64px 60px' }}>
+            <div style={{ background: '#EAE9E4', borderRadius: '4px', padding: '60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
+              <div style={{ backgroundImage: `url(${data.experiencesImg || '/images/explore_japan.png'})`, backgroundSize: 'cover', backgroundPosition: 'center', height: '300px', borderRadius: '4px' }} />
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '30px', color: '#111' }}>Health & Well-being</h3>
+                
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>VACCINATIONS</h4>
+                  <p style={{ fontSize: '0.85rem', color: '#333', lineHeight: 1.5 }}>No specific vaccinations required for short-term travel, but standard boosters are recommended.</p>
+                </div>
+                
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>WATER SAFETY</h4>
+                  <p style={{ fontSize: '0.85rem', color: '#333', lineHeight: 1.5 }}>Tap water is safe to drink throughout the country and is of exceptionally high quality.</p>
+                </div>
+                
+                <div>
+                  <h4 style={{ fontSize: '0.75rem', color: '#F6B800', letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase' }}>WEATHER PRECAUTIONS</h4>
+                  <p style={{ fontSize: '0.85rem', color: '#333', lineHeight: 1.5 }}>Summers can be extremely humid (June-August). Typhoons are possible from August to October.</p>
+                </div>
+              </div>
+            </div>
           </div>
-
-
 
           {/* ── TOP CITIES ── */}
           {(data.cities || []).length > 0 && (
-            <section id="cities" className={styles.citiesSection}>
-              <div className={styles.citiesHeader}>
-                <p className={styles.sectionLabel}>TOP CITIES TO EXPLORE</p>
-                <h2>Must Visit Cities</h2>
+            <section id="cities" className={styles.citiesSection} style={{ padding: '40px 64px 80px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '36px' }}>
+                <div>
+                  <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.22em', color: '#F6B800', margin: '0 0 10px', textTransform: 'uppercase' }}>CURATED DESTINATIONS</p>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#333', margin: 0 }}>Top Places to Explore</h2>
+                </div>
+                {countryId === 'japan' && (
+                  <div style={{ width: '80px', height: '80px', background: '#C3D0CC', opacity: 0.8, borderRadius: '4px', position: 'relative' }}>
+                    <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', fill: 'none', stroke: '#fff', strokeWidth: 2 }}>
+                       <path d="M40 80 Q60 60 70 40 T80 20" />
+                       <path d="M45 75 Q65 55 75 35" />
+                    </svg>
+                  </div>
+                )}
               </div>
+              
               <div className={styles.citiesGrid}>
-                {(data.cities || []).map((city, i) => (
+                {(data.cities || []).slice(0, 3).map((city, i) => (
                   <div key={i} className={styles.cityCard}>
-                    <div className={styles.cityImg} style={{ backgroundImage: `url(${city.img})` }} />
-                    <h4>{city.name}</h4>
-                    <p>{city.desc}</p>
+                    <div className={styles.cityImg} style={{ backgroundImage: `url(${city.img})`, borderRadius: '4px', height: '280px' }} />
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 8px' }}>{city.name}</h4>
+                    <p style={{ fontSize: '0.85rem', color: '#666', lineHeight: 1.5 }}>{city.desc}</p>
                   </div>
                 ))}
               </div>
@@ -487,3 +548,4 @@ export default function CountryPage() {
     </div>
   )
 }
+

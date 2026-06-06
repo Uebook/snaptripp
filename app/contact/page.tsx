@@ -5,7 +5,7 @@ import SiteHeader from '@/app/components/SiteHeader';
 import SiteFooter from '@/app/components/SiteFooter';
 
 export default function ContactPage() {
-    const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', subject: 'General Inquiry', message: '' })
+    const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', phone: '', subject: 'General Inquiry', message: '' })
     const [status, setStatus] = useState({ type: '', msg: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -23,7 +23,7 @@ export default function ContactPage() {
             const data = await res.json()
             if (res.ok) {
                 setStatus({ type: 'success', msg: 'Message sent successfully! We will get back to you soon.' })
-                setFormData({ first_name: '', last_name: '', email: '', subject: 'General Inquiry', message: '' })
+                setFormData({ first_name: '', last_name: '', email: '', phone: '', subject: 'General Inquiry', message: '' })
             } else {
                 setStatus({ type: 'danger', msg: data.error || 'Failed to send message.' })
             }
@@ -130,9 +130,15 @@ export default function ContactPage() {
                                     <input type="text" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} required placeholder="Doe" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                                 </div>
                             </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Email Address</label>
-                                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="john@example.com" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Email Address</label>
+                                    <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="john@example.com" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Phone Number (Optional)</label>
+                                    <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 (555) 000-0000" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                </div>
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Subject</label>

@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { first_name, last_name, email, subject, message } = body
+    const { first_name, last_name, email, phone, subject, message } = body
 
     if (!first_name || !last_name || !email || !subject || !message) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
         last_name: last_name.trim(),
         email: email.trim(),
         subject: subject.trim(),
+        phone: phone ? phone.trim() : null,
         message: message.trim(),
         status: 'unread'
       })

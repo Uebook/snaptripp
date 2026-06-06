@@ -33,6 +33,7 @@ export default function SiteFooter() {
     { label: 'Plan Your Trip', url: '/plan', category: 'Quick Links' },
     { label: 'How it works', url: '/how-it-works', category: 'Quick Links' },
     { label: 'Blog', url: '/blog', category: 'Quick Links' },
+    { label: 'Contact Us', url: '/contact', category: 'Quick Links' },
     { label: 'Privacy Policy', url: '/privacy', category: 'Support' },
     { label: 'Terms Of Use', url: '/terms', category: 'Support' }
   ])
