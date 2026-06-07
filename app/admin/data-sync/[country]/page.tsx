@@ -445,7 +445,8 @@ export default function ViewCountryData() {
                                         </div>
                                     </td>
                                     <td>
-                                        <div style={{ fontSize: '11px', maxHeight: '60px', overflowY: 'auto' }}>
+                                        <div style={{ fontSize: '11px', maxHeight: '80px', overflowY: 'auto' }}>
+                                            {p.stay_time && <div style={{ marginBottom: '4px', fontWeight: '600', color: 'var(--admin-accent)' }}>Stay: {p.stay_time}</div>}
                                             {p.openingHours_0_day && <div>{p.openingHours_0_day}: {p.openingHours_0_hours}</div>}
                                             {p.openingHours_1_day && <div>{p.openingHours_1_day}: {p.openingHours_1_hours}</div>}
                                             {p.openingHours_2_day && <div style={{ color: 'var(--admin-muted)' }}>+ more days</div>}
@@ -577,6 +578,17 @@ export default function ViewCountryData() {
                                         {editingPlace.image_url && (
                                             <img src={editingPlace.image_url} alt="Preview" referrerPolicy="no-referrer" style={{ marginTop: '8px', width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
                                         )}
+                                    </div>
+                                    
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>Stay Time / Duration</label>
+                                        <input
+                                            className="admin-search"
+                                            style={{ width: '100%', margin: 0 }}
+                                            placeholder="e.g., 2-3 hours, Half day"
+                                            value={editingPlace.stay_time || ''}
+                                            onChange={(e) => setEditingPlace({ ...editingPlace, stay_time: e.target.value })}
+                                        />
                                     </div>
                                 </div>
                             </div>

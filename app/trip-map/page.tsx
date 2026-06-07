@@ -42,6 +42,7 @@ interface Place {
   reviewsCount?: number
   postalCode?: string
   subTitle?: string
+  stay_time?: string
   // Opening Hours
   openingHours_0_day?: string; openingHours_1_day?: string; openingHours_2_day?: string; openingHours_3_day?: string; openingHours_4_day?: string; openingHours_5_day?: string; openingHours_6_day?: string;
   openingHours_0_hours?: string; openingHours_1_hours?: string; openingHours_2_hours?: string; openingHours_3_hours?: string; openingHours_4_hours?: string; openingHours_5_hours?: string; openingHours_6_hours?: string;
@@ -567,8 +568,12 @@ function TripMapContent() {
                         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           <div style={{ fontSize: '13px', fontWeight: '600', color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                           <div style={{ fontSize: '11px', color: '#64748B', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            <span>09:00 AM</span>
-                            <span>•</span>
+                            {item.data?.stay_time && (
+                              <>
+                                <span>⏱️ {item.data.stay_time}</span>
+                                <span>•</span>
+                              </>
+                            )}
                             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.data?.city || 'City'}</span>
                           </div>
                         </div>

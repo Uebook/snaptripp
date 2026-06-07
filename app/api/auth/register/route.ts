@@ -55,14 +55,12 @@ export async function POST(request: Request) {
     }
 
     if (authData.user) {
-      // 3. Upsert the profile table manually to store extra metadata and plain text password
+      // 3. Update the profile table manually to store extra metadata
       const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
         id: authData.user.id,
-        email: email,
         username: finalUsername,
         full_name: fullName || '',
         phone: phone || '',
-        password: password, // Storing plain text password as per codebase pattern
         updated_at: new Date().toISOString(),
       })
 
@@ -73,7 +71,6 @@ export async function POST(request: Request) {
           username: finalUsername,
           full_name: fullName || '',
           phone: phone || '',
-          password: password,
           updated_at: new Date().toISOString(),
         }).eq('id', authData.user.id)
       }

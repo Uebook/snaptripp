@@ -28,21 +28,29 @@ export async function POST(request: NextRequest) {
                     'tourist attractions',
                     'must visit places',
                     targetCity ? `visit ${targetCity}` : `visit ${country}`,
-                    'popular attractions'
+                    'popular attractions',
+                    'things to do',
+                    'adventure',
+                    'activity',
+                    'fun activity'
                 ],
                 locationQuery: targetCity ? `${targetCity}, ${country}` : country,
-                maxCrawledPlacesPerSearch: 50, // Reduced from 250 to prevent Vercel timeouts
+                radiusKm: 25,
+                maxCrawledPlacesPerSearch: 10,
                 language: 'en',
                 scrapePlaceDetailPage: true,
                 minScore: 4, // 4+ stars filter
                 categoryWhitelist: [
                     'city park', 'garden', 'memorial park', 'park', 'tourist attraction',
-                    'museum', 'art museum', 'history museum', 'science museum',
-                    'landmark', 'historical landmark', 'monument', 'historical place',
-                    'castle', 'palace', 'fortress', 'cathedral', 'church', 'basilica',
-                    'temple', 'shrine', 'mosque', 'zoo', 'aquarium', 'botanical garden',
-                    'national park', 'state park', 'viewpoint', 'observation deck',
-                    'amusement park', 'theme park', 'water park'
+                    'art gallery', 'art museum', 'museum', 'heritage museum',
+                    'local history museum', 'national museum', 'cultural center',
+                    'visitor center', 'bridge', 'castle', 'cathedral', 'church',
+                    'fortress', 'historical landmark', 'historical place', 'monument',
+                    'sculpture', 'abbey', 'bazar', 'beach', 'brewery', 'club',
+                    'distillery', 'memorial', 'orchestra', 'scenic spot',
+                    'seafood market', 'shopping centre', 'shooting range',
+                    'shopping mall', 'ski resort', 'skydiving center', 'surf school',
+                    'swimming facility', 'swimming school'
                 ]
             };
 

@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { COUNTRIES } from '@/app/utils/countries'
 import SiteHeader from '@/app/components/SiteHeader'
 import SiteFooter from '@/app/components/SiteFooter'
-import { ShareJourneyModal, CityChecklist, WanderedPlaces } from '@/app/components/travel-map/TravelComponents'
+import { ShareJourneyModal, CityChecklist, WanderedPlaces, DigitalPassport } from '@/app/components/travel-map/TravelComponents'
 import InteractiveWorldMap from '@/app/components/travel-map/InteractiveWorldMap'
 import '@/app/components/travel-map/travel-map.css'
 import '@/app/trip-map/unauth.css'
@@ -23,13 +23,23 @@ export default function TravelMapPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [showRatingUI, setShowRatingUI] = useState(false);
+  const [showPassport, setShowPassport] = useState(false);
+  const [isCountryLevelRating, setIsCountryLevelRating] = useState(false);
 
   const handleCountryClick = (country: string) => {
+    setIsCountryLevelRating(false);
     setSelectedCountry(country);
     // Pre-fill selected cities from DB
     const existingCitiesForCountry = userRatingsDb.filter(r => r.country === country).map(r => r.city);
     setSelectedCities(existingCitiesForCountry);
     setShowRatingUI(false);
+  };
+
+  const handleMultipleCountriesSelect = (countries: string[]) => {
+    setIsCountryLevelRating(true);
+    setSelectedCountry('Multiple'); // Virtual selected country to show sidebar
+    setSelectedCities(countries);
+    setShowRatingUI(true); // Bypass city checklist
   };
 
   const handleCitiesContinue = (cities: string[]) => {
@@ -450,43 +460,79 @@ export default function TravelMapPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-          {/* Main Interactive Map */}
-          <div style={{ flex: selectedCountry ? '0 0 65%' : '1', transition: 'all 0.3s ease' }}>
-            <InteractiveWorldMap 
-              countryData={countryData} 
-              selectedCountry={selectedCountry}
-              onCountryClick={handleCountryClick}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', height: '600px' }}>
+            {/* Main Interactive Map */}
+            <div style={{ flex: selectedCountry ? '0 0 65%' : '1', height: '100%', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: '1', minHeight: 0 }}>
+                <InteractiveWorldMap 
+                  countryData={countryData} 
+                  selectedCountry={selectedCountry}
+                  onCountryClick={handleCountryClick}
+                />
+              </div>
+              
+              {!selectedCountry && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <button 
+                    onClick={() => setShowPassport(!showPassport)}
+                    style={{ 
+                      padding: '12px 32px', background: '#031B4E', color: 'white', border: 'none', 
+                      borderRadius: '8px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {showPassport ? 'Hide Country List' : 'Browse All Countries & Territories'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Dynamic Sidebar for Checklists and Ratings */}
+            {selectedCountry && (
+              <div style={{ flex: '1', height: '100%', animation: 'fadeIn 0.3s ease' }}>
+                {!showRatingUI ? (
+                  <CityChecklist 
+                    country={selectedCountry}
+                    initialSelectedCities={selectedCities}
+                    onContinue={handleCitiesContinue}
+                    onCancel={() => setSelectedCountry(null)}
+                  />
+                ) : (
+                  <WanderedPlaces 
+                    country={isCountryLevelRating ? undefined : (selectedCountry || undefined)}
+                    selectedCities={selectedCities}
+                    userId={user?.id}
+                    isCountryLevel={isCountryLevelRating}
+                    initialCityRatings={
+                      isCountryLevelRating 
+                        ? userRatingsDb
+                            .filter(r => selectedCities.includes(r.country) && r.city === r.country)
+                            .reduce((acc, curr) => {
+                              acc[curr.country] = curr.ratings;
+                              return acc;
+                            }, {} as any)
+                        : userRatingsDb
+                            .filter(r => r.country === selectedCountry && selectedCities.includes(r.city))
+                            .reduce((acc, curr) => {
+                              acc[curr.city] = curr.ratings;
+                              return acc;
+                            }, {} as any)
+                    }
+                    onSaveRating={handleSaveRating}
+                    onClose={() => setSelectedCountry(null)}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Dynamic Sidebar for Checklists and Ratings */}
-          {selectedCountry && (
-            <div style={{ flex: '1', animation: 'fadeIn 0.3s ease' }}>
-              {!showRatingUI ? (
-                <CityChecklist 
-                  country={selectedCountry}
-                  initialSelectedCities={selectedCities}
-                  onContinue={handleCitiesContinue}
-                  onCancel={() => setSelectedCountry(null)}
-                />
-              ) : (
-                <WanderedPlaces 
-                  country={selectedCountry}
-                  selectedCities={selectedCities}
-                  userId={user?.id}
-                  initialCityRatings={
-                    userRatingsDb
-                      .filter(r => r.country === selectedCountry && selectedCities.includes(r.city))
-                      .reduce((acc, curr) => {
-                        acc[curr.city] = curr.ratings;
-                        return acc;
-                      }, {} as any)
-                  }
-                  onSaveRating={handleSaveRating}
-                  onClose={() => setSelectedCountry(null)}
-                />
-              )}
+          {showPassport && !selectedCountry && (
+            <div style={{ width: '100%', marginTop: '24px', animation: 'fadeIn 0.3s ease', height: '600px' }}>
+              <DigitalPassport 
+                userRatingsDb={userRatingsDb}
+                onCountriesSelect={handleMultipleCountriesSelect}
+              />
             </div>
           )}
         </div>
