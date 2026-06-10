@@ -111,6 +111,7 @@ function TripMapContent() {
 
   // Load trip if ID exists
   useEffect(() => {
+    const draftId = searchParams.get('draftId');
     if (tripIdParam) {
       const fetchTrip = async () => {
         try {
@@ -145,33 +146,24 @@ function TripMapContent() {
         }
       }
       fetchTrip()
-    } else {
-      // Load from local storage draft if it's a new trip
-      try {
-        const draftCountry = localStorage.getItem('snaptrip_draft_country');
-        if (draftCountry === country) {
-          const draft = localStorage.getItem('snaptrip_draft');
-          if (draft) {
-            const parsed = JSON.parse(draft);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setDayPlans(parsed);
-              setDaysCount(parsed.length);
+    } else if (draftId) {
+      const fetchDraft = async () => {
+        try {
+          const res = await fetch(`/api/drafts/${draftId}`);
+          const data = await res.json();
+          if (data.success && data.draft && data.draft.data) {
+            setDayPlans(data.draft.data);
+            if (data.draft.data.length > 0) {
+              setDaysCount(data.draft.data.length);
             }
           }
+        } catch (err) {
+          console.error('Failed to load draft', err);
         }
-      } catch (e) {
-        console.error('Failed to load draft from local storage', e);
       }
+      fetchDraft();
     }
-  }, [tripIdParam, country])
-
-  // Save to localStorage on change so progress isn't lost
-  useEffect(() => {
-    if (!tripIdParam && dayPlans.length > 0 && country) {
-      localStorage.setItem('snaptrip_draft', JSON.stringify(dayPlans));
-      localStorage.setItem('snaptrip_draft_country', country);
-    }
-  }, [dayPlans, tripIdParam, country])
+  }, [tripIdParam, searchParams])
 
   // Fetch places for the selected country
   useEffect(() => {
@@ -505,7 +497,41 @@ function TripMapContent() {
               <div className="itinerary-actions-horizontal">
                 <button 
                   className="btn-confirm-itinerary"
-                  onClick={() => router.push(`/trip-confirm?country=${encodeURIComponent(country || '')}`)}
+                  onClick={async (e) => {
+                    const btn = e.currentTarget;
+                    btn.disabled = true;
+                    btn.textContent = 'SAVING...';
+                    try {
+                      const draftId = searchParams.get('draftId');
+                      if (draftId) {
+                        const res = await fetch(`/api/drafts/${draftId}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ data: dayPlans })
+                        });
+                        await res.json();
+                        router.push(`/trip-confirm?draftId=${draftId}&country=${encodeURIComponent(country || '')}`);
+                      } else {
+                        const res = await fetch('/api/drafts', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ country, data: dayPlans })
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                          router.push(`/trip-confirm?draftId=${json.draftId}&country=${encodeURIComponent(country || '')}`);
+                        } else {
+                          alert('Failed to save draft: ' + json.error);
+                        }
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert('An error occurred while saving the draft.');
+                    } finally {
+                      btn.disabled = false;
+                      btn.textContent = 'CONFIRM ITINERARY';
+                    }
+                  }}
                 >
                   CONFIRM ITINERARY
                 </button>

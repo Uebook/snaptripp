@@ -123,6 +123,8 @@ function TripConfirmContent() {
   useEffect(() => {
     const loadTripData = async () => {
       setIsInitializing(true)
+      const draftIdParam = searchParams.get('draftId')
+      
       if (tripIdParam) {
         try {
           const { data: { session } } = await supabase.auth.getSession()
@@ -153,21 +155,25 @@ function TripConfirmContent() {
         } catch (err) {
           console.error('Failed to fetch trip from API:', err)
         }
-      } else {
+      } else if (draftIdParam) {
         try {
-          const draft = localStorage.getItem('snaptrip_draft')
-          if (draft) {
-            const parsed = JSON.parse(draft)
+          const res = await fetch(`/api/drafts/${draftIdParam}`)
+          const data = await res.json()
+          if (data.success && data.draft && data.draft.data) {
+            const parsed = data.draft.data
             if (parsed.length > 0) {
               setDayPlans(parsed)
+              setCountry(data.draft.country || country)
             }
           }
-        } catch(e) {}
+        } catch(e) {
+          console.error('Failed to fetch draft:', e)
+        }
       }
       setIsInitializing(false)
     }
     loadTripData()
-  }, [tripIdParam])
+  }, [tripIdParam, searchParams])
 
   useEffect(() => {
     const fetchPlaces = async () => {
@@ -267,14 +273,20 @@ function TripConfirmContent() {
   }
 
   const handleEdit = () => {
+    const draftIdParam = searchParams.get('draftId')
     if (tripIdParam) {
       router.push(`/trip-map?country=${encodeURIComponent(country)}&tripId=${tripIdParam}`)
+    } else if (draftIdParam) {
+      router.push(
+        `/trip-map?country=${encodeURIComponent(country)}&duration=${duration}&style=${encodeURIComponent(style)}&immersion=${encodeURIComponent(immersion)}&draftId=${draftIdParam}`
+      )
     } else {
       router.push(
         `/trip-map?country=${encodeURIComponent(country)}&duration=${duration}&style=${encodeURIComponent(style)}&immersion=${encodeURIComponent(immersion)}`
       )
     }
   }
+
 
   const activeItems = itineraryDays.find(d => d.day === activeDay)?.items || []
 

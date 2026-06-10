@@ -9,11 +9,12 @@ import styles from './planner.module.css'
 function PlanTripContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialCountry = searchParams.get('country') || 'Italy'
+  const initialCountry = searchParams.get('country')
   const [plannerStep, setPlannerStep] = useState(1) 
   
   // Selection States
-  const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry)
+  const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry || '')
+  const [isFetchingCountries, setIsFetchingCountries] = useState(true)
   const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>(null)
   const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
   const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
@@ -27,8 +28,7 @@ function PlanTripContent() {
         const data = await res.json()
         if (data.success && data.countries.length > 0) {
           setCountries(data.countries)
-          // If the default 'Italy' is not in the list, set to the first available country
-          if (!data.countries.includes(selectedCountry)) {
+          if (!selectedCountry || !data.countries.includes(selectedCountry)) {
             setSelectedCountry(data.countries[0])
           }
         }
@@ -37,9 +37,11 @@ function PlanTripContent() {
         // Fallback
         const fallback = ['Japan', 'Greece', 'India', 'Germany', 'Brazil', 'Italy', 'Spain', 'UAE', 'USA', 'Canada', 'Thailand', 'Ireland']
         setCountries(fallback)
-        if (!fallback.includes(selectedCountry)) {
+        if (!selectedCountry || !fallback.includes(selectedCountry)) {
           setSelectedCountry(fallback[0])
         }
+      } finally {
+        setIsFetchingCountries(false)
       }
     }
     fetchCountries()
@@ -112,19 +114,23 @@ function PlanTripContent() {
         <header className={styles.header}>
           <h1 className={styles.welcomeText}>
             Welcome to 
-            <select 
-              className={styles.countrySelect}
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-            >
-              {countries.length > 0 ? (
-                countries.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))
-              ) : (
-                <option value="Italy">Italy</option>
-              )}
-            </select>
+            {isFetchingCountries && !selectedCountry ? (
+              <span style={{ display: 'inline-block', width: '120px', height: '40px', background: '#f3f4f6', animation: 'pulse 1.5s infinite', marginLeft: '12px', borderRadius: '8px' }} />
+            ) : (
+              <select 
+                className={styles.countrySelect}
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+              >
+                {countries.length > 0 ? (
+                  countries.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))
+                ) : (
+                  <option value={selectedCountry || "Italy"}>{selectedCountry || "Italy"}</option>
+                )}
+              </select>
+            )}
           </h1>
           <p className={styles.subHeaderText}>
             Recommended season : December through April
