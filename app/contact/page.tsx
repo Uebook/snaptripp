@@ -41,7 +41,7 @@ export default function ContactPage() {
             <section style={{
                 backgroundColor: '#0a192f',
                 color: 'white',
-                padding: '100px 20px',
+                padding: '60px 20px',
                 textAlign: 'center',
                 backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.05) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(255, 193, 7, 0.05) 0%, transparent 40%)'
             }}>
@@ -97,9 +97,9 @@ export default function ContactPage() {
                 <div style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '60px', backgroundColor: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
                     <div style={{ backgroundColor: '#0a192f', padding: '60px', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                            <h3 style={{ fontSize: '2rem', marginBottom: '20px', fontWeight: '800' }}>Send us a Message</h3>
+                            <h3 style={{ fontSize: '2rem', marginBottom: '20px', fontWeight: '800' }}>We’d love to hear from you.</h3>
                             <p style={{ opacity: 0.8, lineHeight: '1.6', fontSize: '1.05rem' }}>
-                                Fill out the form and our team will get back to you within 24 hours.
+                                Send us your feedback or questions.
                             </p>
                         </div>
                         <div style={{ marginTop: '40px' }}>
@@ -137,7 +137,7 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Phone Number (Optional)</label>
-                                    <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 (555) 000-0000" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                    <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="Enter your phone number" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                                 </div>
                             </div>
                             <div>
@@ -161,14 +161,16 @@ export default function ContactPage() {
             </section>
 
             {/* FAQ Section */}
-            <section style={{ padding: '100px 20px', backgroundColor: 'white' }}>
+            <section style={{ padding: '60px 20px', backgroundColor: 'white' }}>
                 <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '40px', color: '#0a192f', fontWeight: '800', textAlign: 'center' }}>Frequently Asked Questions</h2>
                     <div style={{ display: 'grid', gap: '20px' }}>
                         {[
-                            { q: 'Is SnapTrip free to use?', a: 'Yes! Our basic AI itinerary generator is free for all users.' },
-                            { q: 'How accurate is the AI planning?', a: 'Our AI is trained on millions of travel data points to provide highly accurate and realistic recommendations.' },
-                            { q: 'Can I Save my itineraries?', a: 'Absolutely! Just create a free account to save and manage all your trips in one place.' }
+                            { q: 'What is SnapTrip?', a: 'SnapTrip is an AI-powered travel planner that creates personalized itineraries in seconds. It helps you discover destinations, organize activities, and optimize your trip based on your budget and preferences.' },
+                            { q: 'How does SnapTrip generate itineraries?', a: 'Our smart AI analyzes your travel dates, budget, style, and interests to suggest the best attractions, restaurants, and hidden gems. It then organizes everything into a logical, day-by-day plan.' },
+                            { q: 'Can I edit my itinerary after it\'s generated?', a: 'Yes! Your itinerary is fully customizable. You can drag and drop activities, swap locations, and tweak timings until it’s exactly what you want.' },
+                            { q: 'Is SnapTrip free to use?', a: 'SnapTrip offers a free version with essential planning tools. We also provide premium features for travelers looking for advanced customization and exclusive perks.' },
+                            { q: 'Do I need to create an account to plan a trip?', a: 'While you can explore destinations without an account, signing up allows you to save your itineraries, edit them later, and access them across devices.' }
                         ].map((faq) => (
                             <div key={faq.q} style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
                                 <h4 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#0a192f', fontWeight: '700' }}>{faq.q}</h4>

@@ -198,11 +198,39 @@ export default function Dashboard() {
 
       try {
         // Fetch Profile
-        const { data: profileData, error: profileErr } = await supabase
+        let { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .single()
+
+        if (!profileData) {
+          const fullName = currentUser.user_metadata?.full_name || ''
+          const email = currentUser.email || ''
+          const cleanName = fullName ? fullName.toLowerCase().replace(/[^a-z0-9]/g, '') : (email?.split('@')[0] || 'traveler')
+          const suffix = Math.floor(1000 + Math.random() * 9000)
+          const avatarUrl = currentUser.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150'
+          
+          profileData = {
+            id: currentUser.id,
+            email: email,
+            username: `${cleanName}-${suffix}`,
+            full_name: fullName,
+            avatar_url: avatarUrl,
+            phone: '',
+            bio: '',
+            location: '',
+            preferences: {
+              email_notifications: true,
+              travel_recommendations: true,
+              public_profile: true
+            },
+            updated_at: new Date().toISOString()
+          }
+
+          // Auto-sync for OAuth users
+          await supabase.from('profiles').upsert(profileData)
+        }
 
         if (profileData) {
           const loadedProfile = {

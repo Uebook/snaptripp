@@ -21,8 +21,8 @@ export async function GET() {
 
     const defaultSettings = {
       description: 'Simplifying the way you plan, organize, and experience travel — so you can focus on what truly matters: the journey.',
-      phone: '(123) 456-7890',
-      email: 'ABC@gmail.com',
+      phone: '',
+      email: 'support@snaptrip.io',
       facebook_url: '#',
       twitter_url: '#',
       instagram_url: '#',
@@ -31,9 +31,10 @@ export async function GET() {
 
     const defaultLinks = [
       { label: 'Plan Your Trip', url: '/plan', category: 'Quick Links' },
-      { label: 'How it works', url: '/how-it-works', category: 'Quick Links' },
-      { label: 'Why Us', url: '/why-us', category: 'Quick Links' },
-      { label: 'Testimonial', url: '/testimonials', category: 'Quick Links' },
+      { label: 'Travel Map', url: '/travel-map', category: 'Quick Links' },
+      { label: 'Explore Countries', url: '/explore', category: 'Quick Links' },
+      { label: 'How snaptrip works', url: '/how-it-works', category: 'Quick Links' },
+      { label: 'Contact Us', url: '/contact', category: 'Quick Links' },
       { label: 'Blog', url: '/blog', category: 'Quick Links' },
       { label: 'Privacy Policy', url: '/privacy', category: 'Support' },
       { label: 'Terms Of Use', url: '/terms', category: 'Support' }

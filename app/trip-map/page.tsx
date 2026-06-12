@@ -97,6 +97,8 @@ function TripMapContent() {
   // Mobile layout state
   const [activeMobileTab, setActiveMobileTab] = useState<'itinerary' | 'map' | 'explore'>('map')
   const [activeDetailsPlace, setActiveDetailsPlace] = useState<Place | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [highlightedPlaceId, setHighlightedPlaceId] = useState<number | null>(null)
 
   // Use refs for potential interaction if needed (though logic moved to TripMap)
   const markersRef = useRef<any[]>([])
@@ -346,11 +348,7 @@ function TripMapContent() {
   }
 
   const handleDropOnDay = (toDayId: string) => {
-    if (!dragItem || dragItem.fromDayId === toDayId) {
-      setDragItem(null)
-      setDragOverDayId(null)
-      return
-    }
+    if (!dragItem) return
 
     if (dragItem.fromDayId === 'suggested') {
       const place = places.find(p => p.id.toString() === dragItem.itemId)
@@ -378,6 +376,54 @@ function TripMapContent() {
     if (itemIndex === -1) return
     const [movedItem] = fromDay.items.splice(itemIndex, 1)
     toDay.items.push(movedItem)
+    setDayPlans(newDays)
+    setDragItem(null)
+    setDragOverDayId(null)
+  }
+
+  const handleDropOnItem = (e: React.DragEvent, toDayId: string, toItemId: string) => {
+    e.stopPropagation();
+    if (!dragItem) return
+
+    if (dragItem.fromDayId === 'suggested') {
+      const place = places.find(p => p.id.toString() === dragItem.itemId)
+      if (place) {
+        const dayIndex = dayPlans.findIndex(d => d.id === toDayId)
+        // Add before the targeted item
+        const newDays = [...dayPlans];
+        const targetDay = newDays[dayIndex];
+        const targetItemIndex = targetDay.items.findIndex(i => i.id === toItemId);
+        const item: MapItem = {
+          id: `place-${place.id}`,
+          name: place.title,
+          type: 'place',
+          coordinates: { lat: place.location_lat, lng: place.location_lng },
+          data: place
+        }
+        if (!newDays.some(day => day.items.some(i => i.id === item.id))) {
+          targetDay.items.splice(targetItemIndex, 0, item);
+          setDayPlans(newDays);
+        }
+      }
+      setDragItem(null)
+      setDragOverDayId(null)
+      return
+    }
+
+    const newDays = dayPlans.map(day => ({ ...day, items: [...day.items] }))
+    const fromDay = newDays.find(d => d.id === dragItem.fromDayId)
+    const toDay = newDays.find(d => d.id === toDayId)
+    if (!fromDay || !toDay) return
+
+    const fromItemIndex = fromDay.items.findIndex(i => i.id === dragItem.itemId)
+    if (fromItemIndex === -1) return
+
+    const [movedItem] = fromDay.items.splice(fromItemIndex, 1)
+    
+    let toItemIndex = toDay.items.findIndex(i => i.id === toItemId)
+    if (toItemIndex === -1) toItemIndex = toDay.items.length;
+    
+    toDay.items.splice(toItemIndex, 0, movedItem)
     setDayPlans(newDays)
     setDragItem(null)
     setDragOverDayId(null)
@@ -498,6 +544,14 @@ function TripMapContent() {
                 <button 
                   className="btn-confirm-itinerary"
                   onClick={async (e) => {
+                    if (dayPlans.some(day => day.items.length === 0)) {
+                      alert('Please ensure there are no blank days in your itinerary before saving.');
+                      return;
+                    }
+                    if (!currentUser) {
+                      setIsAuthModalOpen(true);
+                      return;
+                    }
                     const btn = e.currentTarget;
                     btn.disabled = true;
                     btn.textContent = 'SAVING...';
@@ -529,11 +583,11 @@ function TripMapContent() {
                       alert('An error occurred while saving the draft.');
                     } finally {
                       btn.disabled = false;
-                      btn.textContent = 'CONFIRM ITINERARY';
+                      btn.textContent = 'CONFIRM ITINERARY AND SAVE TO WISHLIST';
                     }
                   }}
                 >
-                  CONFIRM ITINERARY
+                  CONFIRM ITINERARY AND SAVE TO WISHLIST
                 </button>
               </div>
             </div>
@@ -562,6 +616,8 @@ function TripMapContent() {
                         key={item.id}
                         draggable
                         onDragStart={() => handleDragStart(item.id, day.id)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDropOnItem(e, day.id, item.id)}
                         className="site-entry-premium"
                         style={{ 
                           padding: '8px 12px', 
@@ -610,12 +666,6 @@ function TripMapContent() {
                         >×</button>
                       </div>
                     ))}
-                    <div
-                      className="day-empty-drop"
-                      style={{ border: '2px dashed #E5E7EB', borderRadius: '8px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '12px', gap: '8px' }}
-                    >
-                      <span style={{ fontSize: '20px' }}>+</span> ADD ATTRACTION
-                    </div>
                   </div>
                 </div>
               ))}
@@ -660,6 +710,7 @@ function TripMapContent() {
               setActiveDetailsPlace(place);
               setIsRightSidebarOpen(true);
             }}
+            highlightedPlaceId={highlightedPlaceId}
           />
         </div> {/* ← closes trip-map-main-wrapper div */}
 
@@ -706,6 +757,20 @@ function TripMapContent() {
                   <span style={{ color: '#F6B800' }}>🔍</span>
                 </div>
               </div>
+              {selectedCity && (
+                <div style={{ padding: '0 24px', marginBottom: '16px' }}>
+                  <select 
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    <option value="">All Categories</option>
+                    {Array.from(new Set(places.filter(p => p.city === selectedCity && p.categoryName).map(p => p.categoryName))).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="discovery-scroll-area">
                 {selectedCity ? (
@@ -720,14 +785,16 @@ function TripMapContent() {
                       <span style={{ fontSize: '11px', color: '#F6B800', fontWeight: '700', letterSpacing: '1px' }}>VIEW GALLERY</span>
                     </div>
 
-                    {places.filter(p => p.city === selectedCity).map(place => (
+                    {places.filter(p => p.city === selectedCity && (!selectedCategory || p.categoryName === selectedCategory)).map(place => (
                       <div 
                         key={place.id} 
                         draggable
                         onDragStart={() => handleDragStart(place.id.toString(), 'suggested')}
+                        onClick={() => setHighlightedPlaceId(place.id)}
                         className="attraction-card-editorial" 
                         style={{
                           ...(isPlaceInPlanGlobal(place.id) ? { border: '2px solid #48bb78', boxShadow: '0 4px 15px rgba(72, 187, 120, 0.2)' } : {}),
+                          ...(highlightedPlaceId === place.id ? { borderColor: '#F6B800', background: '#FFFDF5' } : {}),
                           cursor: 'grab'
                         }}
                       >
@@ -772,31 +839,7 @@ function TripMapContent() {
                           Select any city on the map or zoom in to discover more attractions to add to your plan.
                         </p>
                       </div>
-                    ) : (
-                      <div className="explorer-steps">
-                        <div className="explorer-step">
-                          <div className="step-number">1</div>
-                          <div className="step-content">
-                            <h4>Select a City</h4>
-                            <p>Click a marker on the map to begin your journey.</p>
-                          </div>
-                        </div>
-                        <div className="explorer-step">
-                          <div className="step-number">2</div>
-                          <div className="step-content">
-                            <h4>Choose Attractions</h4>
-                            <p>Browse local landmarks and add them to your itinerary.</p>
-                          </div>
-                        </div>
-                        <div className="explorer-step">
-                          <div className="step-number">3</div>
-                          <div className="step-content">
-                            <h4>Finalize Itinerary</h4>
-                            <p>Review your day-wise plan and start your tour.</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    ) : null}
 
                     <div className="explorer-card">
                       <div className="explorer-card-icon">🏛️</div>

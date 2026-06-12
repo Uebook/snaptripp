@@ -176,6 +176,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     throw new Error(regData.error || 'Failed to create account')
                 }
 
+                // Auto-enroll in newsletter
+                try {
+                    await fetch('/api/newsletter', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                } catch (e) {
+                    // Ignore newsletter errors
+                }
+
                 // Attempt immediate sign in since email is auto-confirmed
                 const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                     email,

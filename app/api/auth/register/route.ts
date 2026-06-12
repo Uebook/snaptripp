@@ -54,10 +54,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
-    if (authData.user) {
+      if (authData.user) {
       // 3. Update the profile table manually to store extra metadata
       const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
         id: authData.user.id,
+        email: authData.user.email,
         username: finalUsername,
         full_name: fullName || '',
         phone: phone || '',
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
         console.warn('Could not upsert profile directly, trying update:', profileError)
         // If upsert failed, try simple update
         await supabaseAdmin.from('profiles').update({
+          email: authData.user.email,
           username: finalUsername,
           full_name: fullName || '',
           phone: phone || '',

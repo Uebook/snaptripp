@@ -45,9 +45,10 @@ interface TripMapProps {
     onRemoveFromPlan?: (placeId: number) => void
     onViewFullDetails?: (place: Place) => void
     isSavedTripView?: boolean
+    highlightedPlaceId?: number | null
 }
 
-export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick, onAddToPlan, onRemoveFromPlan, onViewFullDetails, isSavedTripView = false }: TripMapProps) {
+export default function TripMap({ places, dayPlans = [], selectedCity, onCityClick, onAddToPlan, onRemoveFromPlan, onViewFullDetails, isSavedTripView = false, highlightedPlaceId }: TripMapProps) {
     const mapRef = useRef<L.Map | null>(null)
     const mapContainerRef = useRef<HTMLDivElement>(null)
 
@@ -119,9 +120,6 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 if (closestCity && minDistance < 0.05 && closestCity !== selectedCity) {
                     onCityClick(closestCity);
                 }
-            } else if (zoom && zoom < 12 && selectedCity && onCityClick) {
-                // If zoomed out past the threshold, unselect the city
-                onCityClick('');
             }
         };
 
@@ -187,8 +185,13 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
 
         filteredPlaces.forEach((place, index) => {
             const isInPlan = isPlaceInPlan(place.id)
-            const iconHtml = `<div style="background: ${isInPlan ? 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}; color: white; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">${index + 1}</div>`;
-            const icon = L.divIcon({ className: 'custom-place-marker', html: iconHtml, iconSize: [38, 38], iconAnchor: [19, 19] })
+            const isHighlighted = place.id === highlightedPlaceId
+            const bgGradient = isHighlighted ? 'linear-gradient(135deg, #F6B800 0%, #F59E0B 100%)' : (isInPlan ? 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+            const iconHtml = `<div style="background: ${bgGradient}; color: white; border-radius: ${isHighlighted ? '50% 50% 50% 0' : '50%'}; width: ${isHighlighted ? '40px' : '34px'}; height: ${isHighlighted ? '40px' : '34px'}; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: ${isHighlighted ? '15px' : '13px'}; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.25); transition: all 0.3s ease; transform: ${isHighlighted ? 'rotate(-45deg)' : 'none'};"><span style="transform: ${isHighlighted ? 'rotate(45deg)' : 'none'}; display: block;">${index + 1}</span></div>`;
+            const iconSize = isHighlighted ? 46 : 38;
+            const iconAnchorX = isHighlighted ? 23 : 19;
+            const iconAnchorY = isHighlighted ? 46 : 19;
+            const icon = L.divIcon({ className: 'custom-place-marker', html: iconHtml, iconSize: [iconSize, iconSize], iconAnchor: [iconAnchorX, iconAnchorY] })
             const marker = L.marker([place.location_lat, place.location_lng], { icon })
 
             const popupContent = `
@@ -236,8 +239,8 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 if (!place || !place.location_lat || !place.location_lng) return
                 const colors = ['#e53e3e', '#d69e2e', '#38a169', '#3182ce', '#805ad5'];
                 const color = colors[dIdx % colors.length];
-                const iconHtml = `<div style="background: ${color}; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; border: 3px solid white; box-shadow: 0 6px 15px rgba(0,0,0,0.35);">${iIdx + 1}</div>`;
-                const icon = L.divIcon({ className: 'trip-place-marker', html: iconHtml, iconSize: [40, 40], iconAnchor: [20, 20] })
+                const iconHtml = `<div style="background: ${color}; color: white; border-radius: 50% 50% 50% 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; border: 3px solid white; box-shadow: 0 6px 15px rgba(0,0,0,0.35); transform: rotate(-45deg);"><span style="transform: rotate(45deg); display: block;">${iIdx + 1}</span></div>`;
+                const icon = L.divIcon({ className: 'trip-place-marker', html: iconHtml, iconSize: [46, 46], iconAnchor: [23, 46] })
                 const marker = L.marker([place.location_lat, place.location_lng], { icon, zIndexOffset: 2000 })
                 const popupContent = `
                     <div style="padding: 12px; font-family: 'Inter', sans-serif;">
@@ -249,34 +252,50 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
             })
         })
 
-    }, [places, dayPlans, onCityClick, onAddToPlan, onRemoveFromPlan, selectedCity])
+    }, [places, dayPlans, onCityClick, onAddToPlan, onRemoveFromPlan, selectedCity, highlightedPlaceId])
 
-    // Visibility Management (Strictly managed by state, NOT map zoom, to prevent overlap)
+    // Visibility Management
     useEffect(() => {
-        if (!mapRef.current || !placeLayerRef.current) return
-        const syncLayer = (layer: any, shouldBeVisible: boolean) => {
-            const hasLayer = mapRef.current?.hasLayer(layer)
-            if (shouldBeVisible && !hasLayer) mapRef.current?.addLayer(layer)
-            else if (!shouldBeVisible && hasLayer) mapRef.current?.removeLayer(layer)
-        }
+        if (!mapRef.current || !placeLayerRef.current) return;
 
-        if (isSavedTripView) {
-            // Saved trip: show route markers only
-            syncLayer(cityLayerRef.current, false)
-            syncLayer(placeLayerRef.current, false)
-            syncLayer(tripLayerRef.current, true)
-        } else if (selectedCity) {
-            // Local view: show clustered places AND itinerary
-            syncLayer(cityLayerRef.current, false)
-            syncLayer(tripLayerRef.current, true) // Kept visible on city zoom as requested!
-            syncLayer(placeLayerRef.current, true)
-        } else {
-            // Explore view: show decluttered cities only
-            syncLayer(cityLayerRef.current, true)
-            syncLayer(placeLayerRef.current, false)
-            syncLayer(tripLayerRef.current, false)
-        }
-    }, [isSavedTripView, selectedCity])
+        const updateVisibility = () => {
+            if (!mapRef.current) return;
+            const zoom = mapRef.current.getZoom();
+            const syncLayer = (layer: any, shouldBeVisible: boolean) => {
+                const hasLayer = mapRef.current?.hasLayer(layer)
+                if (shouldBeVisible && !hasLayer) mapRef.current?.addLayer(layer)
+                else if (!shouldBeVisible && hasLayer) mapRef.current?.removeLayer(layer)
+            }
+
+            if (isSavedTripView) {
+                // Saved trip: show route markers only
+                syncLayer(cityLayerRef.current, false)
+                syncLayer(placeLayerRef.current, false)
+                syncLayer(tripLayerRef.current, true)
+            } else if (zoom < 11) {
+                // Zoomed out: ALWAYS show cities, hide places to prevent large cluster numbers
+                syncLayer(cityLayerRef.current, true)
+                syncLayer(placeLayerRef.current, false)
+                syncLayer(tripLayerRef.current, false)
+            } else if (selectedCity) {
+                // Local view: show clustered places AND itinerary
+                syncLayer(cityLayerRef.current, false)
+                syncLayer(tripLayerRef.current, true) 
+                syncLayer(placeLayerRef.current, true)
+            } else {
+                // Explore view: show decluttered cities only
+                syncLayer(cityLayerRef.current, true)
+                syncLayer(placeLayerRef.current, false)
+                syncLayer(tripLayerRef.current, false)
+            }
+        };
+
+        updateVisibility();
+        mapRef.current.on('zoomend', updateVisibility);
+        return () => {
+            mapRef.current?.off('zoomend', updateVisibility);
+        };
+    }, [selectedCity, isSavedTripView])
 
     // Fit bounds
     useEffect(() => {
@@ -333,6 +352,26 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
         });
         return () => pLines.forEach(p => p.remove());
     }, [dayPlans]);
+
+    // Handle highlighted place
+    useEffect(() => {
+        if (!mapRef.current || !placeLayerRef.current || !highlightedPlaceId) return;
+        const place = places.find(p => p.id === highlightedPlaceId);
+        if (!place) return;
+
+        // Find the marker and zoom to it so it unclusters
+        const layers = placeLayerRef.current.getLayers() as L.Marker[];
+        const marker = layers.find((m: any) => m._latlng && Math.abs(m._latlng.lat - place.location_lat) < 0.0001 && Math.abs(m._latlng.lng - place.location_lng) < 0.0001);
+        
+        if (marker) {
+            (placeLayerRef.current as any).zoomToShowLayer(marker, () => {
+                // Ensure it's centered after unclustering
+                mapRef.current?.setView([place.location_lat, place.location_lng], mapRef.current.getZoom(), { animate: true });
+            });
+        } else {
+            mapRef.current.setView([place.location_lat, place.location_lng], 16, { animate: true });
+        }
+    }, [highlightedPlaceId, places]);
 
     return (
         <div ref={mapContainerRef} className="map-view premium-map" style={{ width: '100%', height: '100%', background: '#f8fafc' }}>

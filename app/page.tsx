@@ -102,7 +102,9 @@ export default function Home() {
   const [blogsData, setBlogsData] = useState<any[]>([])
   const [activeTestimIndex, setActiveTestimIndex] = useState(0)
 
-  const REEL_COUNTRIES = ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
+  const REEL_COUNTRIES = countries.length > 0 
+    ? countries.map(c => c.toUpperCase()) 
+    : ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
   const ITEM_HEIGHT = 90; // 55px height + 35px gap
   const destKeys = Object.keys(destinationsData)
   const currentIndex = destKeys.indexOf(activeDest)
@@ -199,7 +201,7 @@ export default function Home() {
     const timer = setInterval(() => {
       const nextIndex = (currentIndex + 1) % destKeys.length
       setActiveDest(destKeys[nextIndex])
-    }, 5000)
+    }, 3000)
     return () => clearInterval(timer)
   }, [currentIndex, destKeys])
 

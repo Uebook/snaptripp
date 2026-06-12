@@ -97,7 +97,7 @@
 
 /* Planning Section */
 .planningSection {
-  padding: 120px 5%;
+  padding: 80px 5%;
   background: white;
 }
 
@@ -180,7 +180,7 @@
 
 /* How It Works Arc Section */
 .howSection {
-  padding: 160px 5%;
+  padding: 80px 5%;
   position: relative;
   overflow: hidden;
   text-align: center;
@@ -294,7 +294,7 @@
 
 /* Tabs Section */
 .tabsSection {
-  padding: 120px 5%;
+  padding: 80px 5%;
   background: white;
 }
 

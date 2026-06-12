@@ -14,13 +14,22 @@ function PlanTripContent() {
   
   // Selection States
   const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry || '')
+  const [searchQuery, setSearchQuery] = useState(initialCountry || '')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [reelOffset, setReelOffset] = useState(32.5) 
+  const [landingIndex, setLandingIndex] = useState(2) 
+  const ITEM_HEIGHT = 90
   const [isFetchingCountries, setIsFetchingCountries] = useState(true)
   const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>(null)
   const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
   const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [tripImmersion, setTripImmersion] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [countries, setCountries] = useState<string[]>([])
-
+  
+  const REEL_COUNTRIES = countries.length > 0 
+    ? countries.map(c => c.toUpperCase()) 
+    : ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -30,6 +39,7 @@ function PlanTripContent() {
           setCountries(data.countries)
           if (!selectedCountry || !data.countries.includes(selectedCountry)) {
             setSelectedCountry(data.countries[0])
+            setSearchQuery(data.countries[0])
           }
         }
       } catch (err) {
@@ -117,24 +127,97 @@ function PlanTripContent() {
             {isFetchingCountries && !selectedCountry ? (
               <span style={{ display: 'inline-block', width: '120px', height: '40px', background: '#f3f4f6', animation: 'pulse 1.5s infinite', marginLeft: '12px', borderRadius: '8px' }} />
             ) : (
-              <select 
-                className={styles.countrySelect}
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-              >
-                {countries.length > 0 ? (
-                  countries.map(country => (
-                    <option key={country} value={country}>{country}</option>
-                  ))
-                ) : (
-                  <option value={selectedCountry || "Italy"}>{selectedCountry || "Italy"}</option>
-                )}
-              </select>
+              <span style={{ color: '#F6B800' }}> {selectedCountry}</span>
             )}
           </h1>
-          <p className={styles.subHeaderText}>
+          <p className={styles.subHeaderText} style={{ marginBottom: '40px' }}>
             Recommended season : December through April
           </p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px', marginBottom: '60px' }}>
+            <div className="compact-search" style={{ margin: '0 auto', width: '100%', maxWidth: '500px' }}>
+              <button className="search-orange-btn" onClick={() => setShowDropdown(!showDropdown)}>🔍</button>
+              <input
+                type="text"
+                placeholder="Search Country or destination"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowDropdown(true)}
+              />
+              <span className="search-chevron" onClick={() => setShowDropdown(!showDropdown)}>▼</span>
+
+              {showDropdown && (
+                <div className="country-dropdown-list">
+                  {countries
+                    .filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map(country => (
+                      <div
+                        key={country}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setSearchQuery(country);
+                          setSelectedCountry(country);
+                          setShowDropdown(false);
+                        }}
+                      >
+                        {country}
+                      </div>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+
+            <div className="spin-wheel-outer" style={{ transform: 'scale(0.8)', marginTop: '-20px' }}>
+              <div className="spin-indicator"></div>
+              <div className="spin-wheel-container">
+                <div
+                  className="spin-destinations-reel"
+                  style={{
+                    transform: `translateY(${reelOffset}px)`,
+                    transition: isSpinning ? 'transform 3s cubic-bezier(0.1, 0.7, 0.1, 1)' : 'none'
+                  }}
+                >
+                  {[...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES].map((d, i) => (
+                    <span
+                      key={`${d}-${i}`}
+                      className={i === landingIndex ? 'active' : ''}
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                className="spin-action-btn"
+                onClick={() => {
+                  setIsSpinning(true);
+                  const totalItems = REEL_COUNTRIES.length;
+                  const randomLanding = Math.floor(Math.random() * totalItems);
+                  const spinRounds = 3;
+                  const finalIndex = (spinRounds * totalItems) + randomLanding;
+                  const offset = 212.5 - (finalIndex * ITEM_HEIGHT);
+
+                  setReelOffset(offset);
+                  setTimeout(() => {
+                    setIsSpinning(false);
+                    setLandingIndex(finalIndex);
+                    
+                    const landedCountry = REEL_COUNTRIES[randomLanding];
+                    const formattedCountry = landedCountry === 'UAE' || landedCountry === 'USA' 
+                      ? landedCountry 
+                      : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase();
+                    
+                    setSearchQuery(formattedCountry);
+                    setSelectedCountry(formattedCountry);
+                  }, 3000);
+                }}
+                disabled={isSpinning}
+              >
+                {isSpinning ? 'Spinning...' : 'Spin the Compass'}
+              </button>
+            </div>
+          </div>
         </header>
 
         {renderStepper()}

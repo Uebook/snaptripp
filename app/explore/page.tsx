@@ -44,6 +44,8 @@ const REGIONS = [
 
 export default function CountryGuide() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [countries, setCountries] = useState<string[]>([])
+  const [showDropdown, setShowDropdown] = useState(false)
   const router = useRouter()
 
   const [settings, setSettings] = useState<ExploreSettings>({
@@ -60,6 +62,21 @@ export default function CountryGuide() {
     { id: 'morocco', title: 'Morocco: Colors of the Maghreb', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', image: '/images/guide_morocco.png', tag: 'Lifestyle' },
     { id: 'france', title: 'France: Beyond the City of Light', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', image: '/images/guide_france.png', tag: 'Vintage' }
   ])
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch('/api/admin/sync/countries')
+        const data = await res.json()
+        if (data.success && data.countries) {
+          setCountries(data.countries)
+        }
+      } catch (err) {
+        console.error('Failed to fetch countries', err)
+      }
+    }
+    fetchCountries()
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -80,7 +97,7 @@ export default function CountryGuide() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
-    router.push(`/trip-map?query=${encodeURIComponent(searchQuery)}`)
+    router.push(`/country/${encodeURIComponent(searchQuery.toLowerCase())}`)
   }
 
   return (
@@ -97,13 +114,18 @@ export default function CountryGuide() {
           <span className={styles.heroTagline}>{settings.hero_tagline}</span>
           <h1 className={styles.heroTitle}>{settings.hero_title}</h1>
           
-          <form className={styles.searchWrapper} onSubmit={handleSearch}>
+          <form className={styles.searchWrapper} onSubmit={handleSearch} style={{ position: 'relative' }}>
             <input 
               type="text" 
               className={styles.searchInput}
               placeholder="Search destinations, experiences, or stories..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setShowDropdown(true)
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
             />
             <button type="submit" className={styles.searchButton}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,6 +133,30 @@ export default function CountryGuide() {
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
             </button>
+
+            {showDropdown && countries.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: '8px', background: 'white', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', maxHeight: '250px', overflowY: 'auto' }}>
+                {countries
+                  .filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map(country => (
+                    <div
+                      key={country}
+                      style={{ padding: '14px 24px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', color: '#1a1a1a', textAlign: 'left', fontWeight: 600, fontSize: '1.05rem', fontFamily: 'var(--font-sans)' }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input blur
+                        setSearchQuery(country);
+                        setShowDropdown(false);
+                        router.push(`/country/${encodeURIComponent(country.toLowerCase())}`);
+                      }}
+                    >
+                      {country}
+                    </div>
+                  ))
+                }
+              </div>
+            )}
           </form>
         </div>
       </section>
@@ -181,12 +227,39 @@ export default function CountryGuide() {
               Curated travel inspiration, exclusive guides, and cultural insights delivered directly to your inbox.
             </p>
           </div>
-          <div className={styles.newsletterForm}>
+          <form className={styles.newsletterForm} onSubmit={async (e) => {
+            e.preventDefault()
+            const form = e.currentTarget
+            const input = form.querySelector('input') as HTMLInputElement
+            if (!input.value) return
+            
+            const btn = form.querySelector('button') as HTMLButtonElement
+            btn.disabled = true
+            btn.textContent = 'Subscribing...'
+            
+            try {
+              const res = await fetch('/api/newsletter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: input.value })
+              })
+              if (res.ok) {
+                input.value = ''
+                btn.textContent = 'Subscribed!'
+                setTimeout(() => { btn.textContent = 'Subscribe'; btn.disabled = false }, 3000)
+              } else {
+                throw new Error('Failed')
+              }
+            } catch (err) {
+              btn.textContent = 'Error'
+              setTimeout(() => { btn.textContent = 'Subscribe'; btn.disabled = false }, 3000)
+            }
+          }}>
             <div className={styles.newsletterInputWrapper}>
-              <input type="email" placeholder="Your email address" className={styles.newsletterInput} />
+              <input type="email" placeholder="Your email address" className={styles.newsletterInput} required />
             </div>
-            <button className={styles.newsletterSubmit}>Subscribe</button>
-          </div>
+            <button type="submit" className={styles.newsletterSubmit}>Subscribe</button>
+          </form>
         </div>
       </section>
 

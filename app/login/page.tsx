@@ -15,8 +15,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isForgotPassword, setIsForgotPassword] = useState(false)
-  const [resetSent, setResetSent] = useState(false)
+  const [resetStep, setResetStep] = useState<'none' | 'email' | 'otp' | 'password'>('none')
+  const [otp, setOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [resetToken, setResetToken] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,25 +62,70 @@ export default function LoginPage() {
     }
   }
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
     try {
-      if (!email.trim() || !email.includes('@')) {
-        throw new Error('Please enter a valid email address.')
-      }
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/dashboard`,
+      if (!email.trim() || !email.includes('@')) throw new Error('Please enter a valid email address.')
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() })
       })
-      
-      if (error) throw error
-      
-      setResetSent(true)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP')
+      setResetStep('otp')
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset link')
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      if (!otp.trim()) throw new Error('Please enter the OTP.')
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), otp: otp.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to verify OTP')
+      setResetToken(data.resetToken)
+      setResetStep('password')
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      if (!newPassword || newPassword.length < 6) throw new Error('Password must be at least 6 characters.')
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), resetToken, newPassword })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to reset password')
+      
+      // Auto login after reset
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password: newPassword })
+      if (signInError) throw signInError
+      
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -89,7 +136,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       })
       if (error) throw error
@@ -152,27 +199,34 @@ export default function LoginPage() {
 
             <div className={styles.divider}>OR</div>
 
-            <form onSubmit={isForgotPassword ? handleResetPassword : handleLogin}>
+            <form onSubmit={
+              resetStep === 'email' ? handleSendOtp : 
+              resetStep === 'otp' ? handleVerifyOtp : 
+              resetStep === 'password' ? handleResetPasswordSubmit : 
+              handleLogin
+            }>
               {error && <div style={{ color: 'red', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
-              {resetSent && <div style={{ color: '#10b981', marginBottom: '1rem', fontSize: '0.875rem', padding: '10px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>Reset link sent! Check your email to securely log in and update your password.</div>}
+              {resetStep === 'email' && <div style={{ color: '#4b5563', marginBottom: '1rem', fontSize: '0.875rem' }}>Enter your email address and we'll send you a 6-digit verification code.</div>}
               
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>{isForgotPassword ? "Enter your Email" : "Email or Username"}</label>
-                <input 
-                  type="text" 
-                  className={styles.input} 
-                  placeholder={isForgotPassword ? "name@example.com" : "name@example.com or username"} 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              {(resetStep === 'none' || resetStep === 'email') && (
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>{resetStep === 'email' ? "Enter your Email" : "Email or Username"}</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    placeholder={resetStep === 'email' ? "name@example.com" : "name@example.com or username"} 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
 
-              {!isForgotPassword && (
+              {resetStep === 'none' && (
                 <div className={styles.inputGroup}>
                   <div className={styles.labelWrapper}>
                     <label className={styles.label}>Password</label>
-                    <button type="button" onClick={() => { setIsForgotPassword(true); setError(null); setResetSent(false); }} className={styles.forgotLink} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Forgot Password?</button>
+                    <button type="button" onClick={() => { setResetStep('email'); setError(null); }} className={styles.forgotLink} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Forgot Password?</button>
                   </div>
                   <div style={{ position: 'relative' }}>
                     <input 
@@ -203,18 +257,43 @@ export default function LoginPage() {
                       }}
                     >
                       {showPassword ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
                       ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                       )}
                     </button>
                   </div>
+                </div>
+              )}
+
+              {resetStep === 'otp' && (
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Enter 6-Digit OTP</label>
+                  <input 
+                    type="text" 
+                    className={styles.input} 
+                    placeholder="123456" 
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    maxLength={6}
+                    style={{ letterSpacing: '4px', textAlign: 'center', fontSize: '20px' }}
+                  />
+                </div>
+              )}
+
+              {resetStep === 'password' && (
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>New Password</label>
+                  <input 
+                    type="password" 
+                    className={styles.input} 
+                    placeholder="New password (min 6 characters)" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
                 </div>
               )}
 
@@ -223,18 +302,18 @@ export default function LoginPage() {
                 className={styles.loginButton}
                 disabled={loading}
               >
-                {loading ? (isForgotPassword ? 'Sending...' : 'Signing in...') : (isForgotPassword ? 'Send Reset Link' : 'Log In')}
+                {loading ? 'Processing...' : resetStep === 'email' ? 'Send OTP' : resetStep === 'otp' ? 'Verify OTP' : resetStep === 'password' ? 'Update Password' : 'Log In'}
               </button>
 
-              {isForgotPassword && (
-                <button type="button" onClick={() => { setIsForgotPassword(false); setError(null); }} style={{ marginTop: '12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>
+              {resetStep !== 'none' && (
+                <button type="button" onClick={() => { setResetStep('none'); setError(null); }} style={{ marginTop: '12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>
                   Back to Login
                 </button>
               )}
             </form>
 
             <p className={styles.footer}>
-              Don't have an account? <Link href="/register" className={styles.signupLink}>Sign up for free</Link>
+              Don&apos;t have an account? <Link href="/register" className={styles.signupLink}>Sign up for free</Link>
             </p>
           </div>
 

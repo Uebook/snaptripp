@@ -27,8 +27,33 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && session) {
+      try {
+        const { supabaseAdmin } = await import('@/lib/supabaseAdmin')
+        const user = session.user
+        const email = user.email
+        const fullName = user.user_metadata?.full_name || ''
+        
+        const { data: existingProfile } = await supabaseAdmin.from('profiles').select('id').eq('id', user.id).maybeSingle()
+        
+        if (!existingProfile) {
+          const cleanName = fullName ? fullName.toLowerCase().replace(/[^a-z0-9]/g, '') : (email?.split('@')[0] || 'traveler')
+          const suffix = Math.floor(1000 + Math.random() * 9000)
+          
+          await supabaseAdmin.from('profiles').insert({
+            id: user.id,
+            email: email,
+            username: `${cleanName}-${suffix}`,
+            full_name: fullName,
+            avatar_url: user.user_metadata?.avatar_url || ''
+          })
+        } else {
+          await supabaseAdmin.from('profiles').update({ email: email }).eq('id', user.id)
+        }
+      } catch (err) {
+        console.error('Error syncing profile in callback:', err)
+      }
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

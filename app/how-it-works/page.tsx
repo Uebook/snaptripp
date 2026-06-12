@@ -44,7 +44,7 @@ export default function HowItWorks() {
   const [activeTab, setActiveTab] = useState('itinerary')
   
   const [settings, setSettings] = useState<PageSettings>({
-    hero_badge: 'INTRODUCING ATLAS LUMINA',
+    hero_badge: '',
     hero_title: 'Crafting Your Next Odyssey.',
     hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
     hero_bg_image: '/images/how_hero.png',
@@ -72,11 +72,10 @@ export default function HowItWorks() {
     { id: 'p1', type: 'planning', step_number: '01', title: 'Define Your Muse', description: 'Tell our AI your desired mood—whether it\'s the quiet zen of Kyoto or the kinetic pulse of Berlin.', display_order: 0 },
     { id: 'p2', type: 'planning', step_number: '02', title: 'Curated Logic', description: 'We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.', display_order: 1 },
     { id: 'p3', type: 'planning', step_number: '03', title: 'Dynamic Refinement', description: 'Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.', display_order: 2 },
-    { id: 'h1', type: 'how', step_number: '01', title: 'Pick your destination', description: 'Search 10,000+ destinations. See trending spots, seasonal highlights.', display_order: 0 },
-    { id: 'h2', type: 'how', step_number: '02', title: 'Choose your travel style', description: 'Adventure, culture, or food tour? Tell us your vibe.', display_order: 1 },
-    { id: 'h3', type: 'how', step_number: '03', title: 'Set duration & budget', description: 'Pick travel dates and a daily budget auto-calculated.', display_order: 2 },
-    { id: 'h4', type: 'how', step_number: '04', title: 'Select attractions', description: 'Browse curated must-sees and hidden gems.', display_order: 3 },
-    { id: 'h5', type: 'how', step_number: '05', title: 'Itinerary Complete!', description: 'Download your full plan maps and bookings.', display_order: 4 }
+    { id: 'h1', type: 'how', step_number: '01', title: 'Discover Global Destinations', description: 'Explore countries and hidden gems with rich, curated insights to spark your wanderlust.', display_order: 0 },
+    { id: 'h2', type: 'how', step_number: '02', title: 'Start Planning', description: 'Choose your destination, duration, and travel style to let SnapTrip craft your perfect journey.', display_order: 1 },
+    { id: 'h3', type: 'how', step_number: '03', title: 'Customize & Reorder', description: 'Review your AI-generated itinerary. Drag, drop, and tweak activities until it’s exactly what you want.', display_order: 2 },
+    { id: 'h4', type: 'how', step_number: '04', title: 'Save & Share (Soon)', description: 'Save your final plan to your wishlist or share it with friends to build excitement before you go.', display_order: 3 }
   ])
 
   useEffect(() => {
