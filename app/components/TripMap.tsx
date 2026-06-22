@@ -267,26 +267,26 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
                 else if (!shouldBeVisible && hasLayer) mapRef.current?.removeLayer(layer)
             }
 
-            if (isSavedTripView) {
-                // Saved trip: show route markers only
-                syncLayer(cityLayerRef.current, false)
-                syncLayer(placeLayerRef.current, false)
-                syncLayer(tripLayerRef.current, true)
-            } else if (zoom < 11) {
-                // Zoomed out: ALWAYS show cities, hide places to prevent large cluster numbers
+            if (zoom < 11) {
+                // Zoomed out: ALWAYS show cities, hide all individual places (even itinerary ones) to prevent clutter
                 syncLayer(cityLayerRef.current, true)
                 syncLayer(placeLayerRef.current, false)
                 syncLayer(tripLayerRef.current, false)
+            } else if (isSavedTripView) {
+                // Saved trip zoomed in: show route markers only
+                syncLayer(cityLayerRef.current, false)
+                syncLayer(placeLayerRef.current, false)
+                syncLayer(tripLayerRef.current, true)
             } else if (selectedCity) {
-                // Local view: show clustered places AND itinerary
+                // Local view zoomed in: show clustered places AND itinerary
                 syncLayer(cityLayerRef.current, false)
                 syncLayer(tripLayerRef.current, true) 
                 syncLayer(placeLayerRef.current, true)
             } else {
-                // Explore view: show decluttered cities only
-                syncLayer(cityLayerRef.current, true)
-                syncLayer(placeLayerRef.current, false)
-                syncLayer(tripLayerRef.current, false)
+                // Explore view zoomed in (no city selected): show places
+                syncLayer(cityLayerRef.current, false)
+                syncLayer(placeLayerRef.current, true)
+                syncLayer(tripLayerRef.current, true)
             }
         };
 
@@ -328,11 +328,31 @@ export default function TripMap({ places, dayPlans = [], selectedCity, onCityCli
             }
 
             if (bounds) {
-                const fitOptions: L.FitBoundsOptions = { animate: true }
+                let targetZoom = mapRef.current.getBoundsZoom(bounds.pad(0.05));
+                
+                // For small localized trips (1-2 cities), we enforce a minimum zoom of 11 or 12 
+                // so that the large HTML markers don't overlap as much.
+                // We don't do this for 3+ cities because that's usually a country-wide view and we want to see it all.
+                let cityCount = 0;
                 if (!selectedCity && !isSavedTripView) {
-                    fitOptions.maxZoom = 9 // Don't zoom in past city level overview on startup
+                    cityCount = (cityLayerRef.current.getLayers() as L.Marker[]).length;
+                } else if (isSavedTripView) {
+                    cityCount = dayPlans.length;
                 }
-                mapRef.current.fitBounds(bounds.pad(0.35), fitOptions)
+                
+                if (!selectedCity && !isSavedTripView) {
+                    // For explore view (no city selected), ALWAYS cap zoom at 10 so city markers are visible
+                    if (targetZoom > 10) {
+                        targetZoom = 10;
+                    }
+                } else if (isSavedTripView && targetZoom < 11) {
+                    // Saved trips zoomed out too far should zoom in to see the itinerary route
+                    targetZoom = 12;
+                }
+
+                if (targetZoom > 15) targetZoom = 15;
+
+                mapRef.current.setView(bounds.getCenter(), targetZoom, { animate: true });
                 lastFittedRef.current = currentViewState
             }
         }

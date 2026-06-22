@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { createBrowserClient } from '@supabase/ssr'
 import styles from './login.module.css'
 import SiteHeader from '@/app/components/SiteHeader'
 import SiteFooter from '@/app/components/SiteFooter'
@@ -18,6 +19,9 @@ export default function LoginPage() {
   const [resetStep, setResetStep] = useState<'none' | 'email' | 'otp' | 'password'>('none')
   const [otp, setOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const [resetToken, setResetToken] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -51,9 +55,9 @@ export default function LoginPage() {
       if (error) throw error
 
       if (loginEmail === 'admin@snaptrip.com') {
-        router.push('/admin')
+        window.location.href = '/admin'
       } else {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     } catch (err: any) {
       setError(err.message || 'Failed to sign in')
@@ -111,6 +115,7 @@ export default function LoginPage() {
     setError(null)
     try {
       if (!newPassword || newPassword.length < 6) throw new Error('Password must be at least 6 characters.')
+      if (newPassword !== confirmNewPassword) throw new Error('Passwords do not match.')
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,12 +136,15 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+  const handleSocialLogin = async (provider: 'google') => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('redirectAfterLogin', '/dashboard');
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `https://snaptrip-rho.vercel.app/`,
         },
       })
       if (error) throw error
@@ -186,15 +194,7 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </button>
-              <button 
-                className={styles.socialButton}
-                onClick={() => handleSocialLogin('facebook')}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Continue with Facebook
-              </button>
+
             </div>
 
             <div className={styles.divider}>OR</div>
@@ -283,18 +283,68 @@ export default function LoginPage() {
               )}
 
               {resetStep === 'password' && (
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>New Password</label>
-                  <input 
-                    type="password" 
-                    className={styles.input} 
-                    placeholder="New password (min 6 characters)" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
+                <>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>New Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showNewPassword ? "text" : "password"} 
+                        className={styles.input} 
+                        placeholder="New password (min 6 characters)" 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        style={{ paddingRight: '48px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        style={{
+                          position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                        }}
+                      >
+                        {showNewPassword ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Confirm New Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showConfirmNewPassword ? "text" : "password"} 
+                        className={styles.input} 
+                        placeholder="Confirm new password" 
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        style={{ paddingRight: '48px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                        style={{
+                          position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                        }}
+                      >
+                        {showConfirmNewPassword ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
 
               <button 

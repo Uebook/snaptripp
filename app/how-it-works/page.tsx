@@ -45,9 +45,9 @@ export default function HowItWorks() {
   
   const [settings, setSettings] = useState<PageSettings>({
     hero_badge: '',
-    hero_title: 'Crafting Your Next Odyssey.',
+    hero_title: 'Crafting Your<br/><span style="font-style: italic; font-family: var(--font-inria)">Next Odyssey</span>',
     hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
-    hero_bg_image: '/images/how_hero.png',
+    hero_bg_image: '/images/Container.png',
     planning_title: 'The Art of Seamless Planning',
     how_works_title: 'How It Works',
     how_works_desc: 'Snaptrip guides you through every step of your travel planning — from discovering destinations to creating a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly and without stress.',
@@ -69,13 +69,14 @@ export default function HowItWorks() {
   })
 
   const [steps, setSteps] = useState<StepItem[]>([
-    { id: 'p1', type: 'planning', step_number: '01', title: 'Define Your Muse', description: 'Tell our AI your desired mood—whether it\'s the quiet zen of Kyoto or the kinetic pulse of Berlin.', display_order: 0 },
-    { id: 'p2', type: 'planning', step_number: '02', title: 'Curated Logic', description: 'We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.', display_order: 1 },
-    { id: 'p3', type: 'planning', step_number: '03', title: 'Dynamic Refinement', description: 'Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.', display_order: 2 },
-    { id: 'h1', type: 'how', step_number: '01', title: 'Discover Global Destinations', description: 'Explore countries and hidden gems with rich, curated insights to spark your wanderlust.', display_order: 0 },
-    { id: 'h2', type: 'how', step_number: '02', title: 'Start Planning', description: 'Choose your destination, duration, and travel style to let SnapTrip craft your perfect journey.', display_order: 1 },
-    { id: 'h3', type: 'how', step_number: '03', title: 'Customize & Reorder', description: 'Review your AI-generated itinerary. Drag, drop, and tweak activities until it’s exactly what you want.', display_order: 2 },
-    { id: 'h4', type: 'how', step_number: '04', title: 'Save & Share (Soon)', description: 'Save your final plan to your wishlist or share it with friends to build excitement before you go.', display_order: 3 }
+    { id: 'p1', type: 'planning', step_number: '01', title: 'Discover Your Perfect Destination', description: 'Find destinations that match your travel style, interests, and preferences. Explore new places with personalized recommendations.', display_order: 0 },
+    { id: 'p2', type: 'planning', step_number: '02', title: 'Flexible Itinerary Management', description: 'Easily add, remove, or rearrange activities and destinations throughout your journey.', display_order: 1 },
+    { id: 'p3', type: 'planning', step_number: '03', title: 'Travel Smarter, Stress Less', description: 'Keep your plans organized in one place and make changes effortlessly as your trip evolves.', display_order: 2 },
+    { id: 'h1', type: 'how', step_number: '01', title: 'Pick your destination', description: 'Search 10,000+ destinations. See trending spots, seasonal highlights, and visa requirements upfront - no surprises at checkout.', display_order: 0 },
+    { id: 'h2', type: 'how', step_number: '02', title: 'Choose your travel style', description: 'Adventure, culture, relaxation, or food tour? Tell us your vibe and group size - solo, couple, family, or squad- and we tailor everything.', display_order: 1 },
+    { id: 'h3', type: 'how', step_number: '03', title: 'Plan Your Schedule', description: 'Select the number of days for your trip and let SnapTrip create a balanced itinerary.', display_order: 2 },
+    { id: 'h4', type: 'how', step_number: '04', title: 'Select attractions', description: 'Browse curated must-sees and hidden gems. Add or remove stops-the AI instantly recalculates your daily route to cut travel time.', display_order: 3 },
+    { id: 'h5', type: 'how', step_number: '05', title: 'Itinerary Complete!', description: 'Download your full plan maps, bookings, emergency contacts, and cost summary. Works offline too-ready wherever you land.', display_order: 4 }
   ])
 
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function HowItWorks() {
       <section className={styles.hero} style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/how_hero.png'}")` }}>
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
-          <span className={styles.heroBadge}>{settings.hero_badge}</span>
+
           <h1 
             className={styles.heroTitle}
             dangerouslySetInnerHTML={{ __html: settings.hero_title.replace('\n', '<br />') }}
@@ -114,7 +115,7 @@ export default function HowItWorks() {
           </p>
           <div className={styles.heroButtons}>
             <Link href="/plan" className={styles.btnPrimary}>Start Your Journey</Link>
-            <Link href="/explore" className={styles.btnSecondary}>View Journal</Link>
+            <Link href="/explore" className={styles.btnSecondary}>Explore Countries</Link>
           </div>
         </div>
       </section>
@@ -147,7 +148,7 @@ export default function HowItWorks() {
       </section>
 
       <section className={styles.howSection}>
-        <div className={styles.howBg} style={{ backgroundImage: 'url("/images/how_works_bg.png")' }} />
+        <div className={styles.howBg} style={{ backgroundImage: 'url("/images/image11.png")' }} />
         <div className={styles.howHeader}>
           <h2 className={styles.howTitle}>{settings.how_works_title}</h2>
           <p className={styles.howDesc}>
@@ -157,28 +158,39 @@ export default function HowItWorks() {
 
         <div className={styles.arcContainer}>
           <div className={styles.arcWrapper}>
-            <svg viewBox="0 0 1000 800" className={styles.arcSvg}>
-              <path d="M 120 250 A 150 150 0 0 1 120 550" fill="none" stroke="#F6B800" strokeWidth="40" strokeLinecap="round" opacity="0.6" />
-              <path d="M 120 250 A 150 150 0 0 1 120 550" fill="none" stroke="#F6B800" strokeWidth="20" strokeLinecap="round" />
-              <path id="mainArc" d="M 250 100 A 350 350 0 0 1 250 700" fill="none" stroke="#333" strokeWidth="2" strokeDasharray="10 10" />
-              <line x1="250" y1="250" x2="450" y2="250" stroke="#333" strokeWidth="2" />
-              <line x1="390" y1="150" x2="450" y2="150" stroke="#333" strokeWidth="2" />
-              <line x1="430" y1="400" x2="550" y2="400" stroke="#333" strokeWidth="2" />
-              <line x1="390" y1="650" x2="450" y2="650" stroke="#333" strokeWidth="2" />
-              <line x1="250" y1="550" x2="450" y2="550" stroke="#333" strokeWidth="2" />
-              <circle cx="250" cy="100" r="10" fill="#000" />
-              <circle cx="390" cy="150" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
-              <circle cx="250" cy="250" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
-              <circle cx="430" cy="400" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
-              <circle cx="250" cy="550" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
-              <circle cx="390" cy="650" r="8" fill="#F6B800" stroke="#000" strokeWidth="3" />
-              <circle cx="250" cy="700" r="10" fill="#000" />
-              <path d="M 280 120 L 300 110 L 295 130 Z" fill="#F6B800" transform="rotate(-15, 290, 120)" />
-              <path d="M 450 450 L 470 460 L 445 470 Z" fill="#F6B800" transform="rotate(30, 450, 460)" />
+            <svg viewBox="0 0 1000 700" className={styles.arcSvg}>
+              {/* Thick yellow arc */}
+              <path d="M 150 245 A 200 140 0 0 1 150 455" fill="none" stroke="#F6B800" strokeWidth="40" strokeLinecap="round" opacity="0.6" />
+              <path d="M 150 245 A 200 140 0 0 1 150 455" fill="none" stroke="#F6B800" strokeWidth="20" strokeLinecap="round" />
+              
+              {/* Main dashed arc */}
+              <path id="mainArc" d="M 250 105 Q 450 350 250 595" fill="none" stroke="#333" strokeWidth="2" strokeDasharray="10 10" />
+              
+              {/* Connecting lines */}
+              <line x1="301" y1="178" x2="430" y2="70" stroke="#333" strokeWidth="2" />
+              <line x1="334" y1="252" x2="490" y2="210" stroke="#333" strokeWidth="2" />
+              <line x1="350" y1="350" x2="530" y2="350" stroke="#333" strokeWidth="2" />
+              <line x1="334" y1="448" x2="490" y2="490" stroke="#333" strokeWidth="2" />
+              <line x1="301" y1="521" x2="430" y2="630" stroke="#333" strokeWidth="2" />
+              
+              {/* Black start/end dots */}
+              <circle cx="250" cy="105" r="12" fill="#000" />
+              <circle cx="250" cy="595" r="12" fill="#000" />
+
+              {/* Yellow dots on the dashed arc */}
+              <circle cx="301" cy="178" r="8" fill="#F6B800" stroke="#000" strokeWidth="2" />
+              <circle cx="334" cy="252" r="8" fill="#F6B800" stroke="#000" strokeWidth="2" />
+              <circle cx="350" cy="350" r="8" fill="#F6B800" stroke="#000" strokeWidth="2" />
+              <circle cx="334" cy="448" r="8" fill="#F6B800" stroke="#000" strokeWidth="2" />
+              <circle cx="301" cy="521" r="8" fill="#F6B800" stroke="#000" strokeWidth="2" />
+              
+              {/* Optional small decorative triangles */}
+              <path d="M 270 140 L 290 133 L 285 147 Z" fill="#F6B800" transform="rotate(-15, 280, 140)" />
+              <path d="M 320 420 L 340 427 L 315 434 Z" fill="#F6B800" transform="rotate(30, 320, 427)" />
             </svg>
 
             {howSteps[0] && (
-              <div className={styles.stepBubble} style={{ top: '15%', left: '45%' }}>
+              <div className={styles.stepBubble} style={{ top: '10%', left: '42%', background: '#F6B800' }}>
                 <div className={styles.stepNum}>{howSteps[0].step_number}</div>
                 <div className={styles.stepText}>
                   <h4>{howSteps[0].title}</h4>
@@ -187,7 +199,7 @@ export default function HowItWorks() {
               </div>
             )}
             {howSteps[1] && (
-              <div className={styles.stepBubble} style={{ top: '31%', left: '52%' }}>
+              <div className={styles.stepBubble} style={{ top: '30%', left: '48%', background: '#FDE68A' }}>
                 <div className={styles.stepNum}>{howSteps[1].step_number}</div>
                 <div className={styles.stepText}>
                   <h4>{howSteps[1].title}</h4>
@@ -196,7 +208,7 @@ export default function HowItWorks() {
               </div>
             )}
             {howSteps[2] && (
-              <div className={styles.stepBubble} style={{ top: '50%', left: '55%' }}>
+              <div className={styles.stepBubble} style={{ top: '50%', left: '52%', background: '#F6B800' }}>
                 <div className={styles.stepNum}>{howSteps[2].step_number}</div>
                 <div className={styles.stepText}>
                   <h4>{howSteps[2].title}</h4>
@@ -205,7 +217,7 @@ export default function HowItWorks() {
               </div>
             )}
             {howSteps[3] && (
-              <div className={styles.stepBubble} style={{ top: '69%', left: '52%' }}>
+              <div className={styles.stepBubble} style={{ top: '70%', left: '48%', background: '#FDE68A' }}>
                 <div className={styles.stepNum}>{howSteps[3].step_number}</div>
                 <div className={styles.stepText}>
                   <h4>{howSteps[3].title}</h4>
@@ -214,7 +226,7 @@ export default function HowItWorks() {
               </div>
             )}
             {howSteps[4] && (
-              <div className={styles.stepBubble} style={{ top: '81%', left: '45%' }}>
+              <div className={styles.stepBubble} style={{ top: '90%', left: '42%', background: '#F6B800' }}>
                 <div className={styles.stepNum}>{howSteps[4].step_number}</div>
                 <div className={styles.stepText}>
                   <h4>{howSteps[4].title}</h4>

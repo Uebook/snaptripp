@@ -21,9 +21,9 @@ export async function GET() {
 
     const defaultSettings = {
       hero_badge: '',
-      hero_title: 'Crafting Your Next Odyssey.',
+      hero_title: 'Crafting Your<br/><span style="font-style: italic; font-family: var(--font-inria)">Next Odyssey</span>',
       hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
-      hero_bg_image: '/images/how_hero.png',
+      hero_bg_image: '/images/Container.png',
       planning_title: 'The Art of Seamless Planning',
       how_works_title: 'How It Works',
       how_works_desc: 'Snaptrip guides you through every step of your travel planning — from discovering destinations to creating a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly and without stress.',
@@ -46,15 +46,16 @@ export async function GET() {
 
     const defaultSteps = [
       // Planning steps
-      { type: 'planning', step_number: '01', title: 'Define Your Muse', description: 'Tell our AI your desired mood—whether it\'s the quiet zen of Kyoto or the kinetic pulse of Berlin.' },
-      { type: 'planning', step_number: '02', title: 'Curated Logic', description: 'We calculate flight windows, seasonal shifts, and cultural events to anchor your dates perfectly.' },
-      { type: 'planning', step_number: '03', title: 'Dynamic Refinement', description: 'Your itinerary lives and breathes. Adjust one stop, and our system re-optimizes your entire journey.' },
+      { type: 'planning', step_number: '01', title: 'Discover Your Perfect Destination', description: 'Find destinations that match your travel style, interests, and preferences. Explore new places with personalized recommendations.' },
+      { type: 'planning', step_number: '02', title: 'Flexible Itinerary Management', description: 'Easily add, remove, or rearrange activities and destinations throughout your journey.' },
+      { type: 'planning', step_number: '03', title: 'Travel Smarter, Stress Less', description: 'Keep your plans organized in one place and make changes effortlessly as your trip evolves.' },
       
       // Walkthrough steps
-      { id: 'h1', type: 'how', step_number: '01', title: 'Discover Global Destinations', description: 'Explore countries and hidden gems with rich, curated insights to spark your wanderlust.', display_order: 0 },
-      { id: 'h2', type: 'how', step_number: '02', title: 'Start Planning', description: 'Choose your destination, duration, and travel style to let SnapTrip craft your perfect journey.', display_order: 1 },
-      { id: 'h3', type: 'how', step_number: '03', title: 'Customize & Reorder', description: 'Review your AI-generated itinerary. Drag, drop, and tweak activities until it’s exactly what you want.', display_order: 2 },
-      { id: 'h4', type: 'how', step_number: '04', title: 'Save & Share (Soon)', description: 'Save your final plan to your wishlist or share it with friends to build excitement before you go.', display_order: 3 }
+      { id: 'h1', type: 'how', step_number: '01', title: 'Pick your destination', description: 'Search 10,000+ destinations. See trending spots, seasonal highlights, and visa requirements upfront - no surprises at checkout.', display_order: 0 },
+      { id: 'h2', type: 'how', step_number: '02', title: 'Choose your travel style', description: 'Adventure, culture, relaxation, or food tour? Tell us your vibe and group size - solo, couple, family, or squad- and we tailor everything.', display_order: 1 },
+      { id: 'h3', type: 'how', step_number: '03', title: 'Plan Your Schedule', description: 'Select the number of days for your trip and let SnapTrip create a balanced itinerary.', display_order: 2 },
+      { id: 'h4', type: 'how', step_number: '04', title: 'Select attractions', description: 'Browse curated must-sees and hidden gems. Add or remove stops-the AI instantly recalculates your daily route to cut travel time.', display_order: 3 },
+      { id: 'h5', type: 'how', step_number: '05', title: 'Itinerary Complete!', description: 'Download your full plan maps, bookings, emergency contacts, and cost summary. Works offline too-ready wherever you land.', display_order: 4 }
     ]
 
     const isSettingsMissing = settingsError && (settingsError.code === 'PGRST205' || settingsError.message.includes('relation "how_it_works_settings" does not exist'))

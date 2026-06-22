@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react'
 import SiteHeader from './components/SiteHeader'
 import SiteFooter from './components/SiteFooter'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Inria_Serif, Inter } from 'next/font/google';
+import './home.css'
 
 const inriaSerif = Inria_Serif({
   subsets: ['latin'],
@@ -96,6 +98,34 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [animateSteps, setAnimateSteps] = useState(false)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [newsletterMsg, setNewsletterMsg] = useState('')
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newsletterEmail) return
+    setNewsletterStatus('loading')
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setNewsletterStatus('success')
+        setNewsletterMsg('Thanks for subscribing!')
+        setNewsletterEmail('')
+      } else {
+        setNewsletterStatus('error')
+        setNewsletterMsg(data.error || 'Failed to subscribe')
+      }
+    } catch (err: any) {
+      setNewsletterStatus('error')
+      setNewsletterMsg(err.message || 'Something went wrong')
+    }
+  }
   const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
   const [whyData, setWhyData] = useState<any[]>([])
   const [testimData, setTestimData] = useState<any[]>([])
@@ -345,7 +375,7 @@ export default function Home() {
             {showDropdown && (
               <div className="country-dropdown-list">
                 {countries
-                  .filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .filter(c => countries.includes(searchQuery) || c.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map(country => (
                     <div
                       key={country}
@@ -490,6 +520,14 @@ export default function Home() {
             <img src="/images/Property 1=S7 (1).png" alt="Step 5" className="journey-step-img img-step-5" />
           </div>
 
+          {/* 4 Overlapping Circles */}
+          <div className="journey-circles">
+            <div className="journey-circle circle-1" style={{ backgroundImage: 'url(/images/how_tokyo.png)', left: '100px', top: '0', zIndex: 2 }}></div>
+            <div className="journey-circle circle-2" style={{ backgroundImage: 'url(/images/hero_greece_oia.png)', left: '-30px', top: '140px', zIndex: 1 }}></div>
+            <div className="journey-circle circle-3" style={{ backgroundImage: 'url(/images/alpine_mountains.png)', left: '200px', top: '160px', zIndex: 3 }}></div>
+            <div className="journey-circle circle-4" style={{ backgroundImage: 'url(/images/how_positano.png)', left: '80px', top: '300px', zIndex: 4 }}></div>
+          </div>
+
           <button className={`start-journey-btn ${inter.className}`} onClick={() => router.push(`/plan?country=${encodeURIComponent(activeDest)}`)}>
             Start Your Journey
           </button>
@@ -632,10 +670,25 @@ export default function Home() {
         <div className="cta-content">
           <p className="cta-label">YOUR DIGITAL COMPANION</p>
           <h2>Access exclusive travel journals and curated guides.</h2>
-          <div className="cta-input-group">
-            <input type="text" placeholder="Write something..." />
-            <button className="cta-submit-btn">→</button>
-          </div>
+          
+          <form onSubmit={handleNewsletterSubmit} className="cta-input-group" style={{ position: 'relative' }}>
+            <input 
+              type="email" 
+              placeholder="Enter your email..." 
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              required
+              disabled={newsletterStatus === 'loading'}
+            />
+            <button type="submit" className="cta-submit-btn" disabled={newsletterStatus === 'loading'}>
+              {newsletterStatus === 'loading' ? '...' : '→'}
+            </button>
+          </form>
+          {newsletterMsg && (
+            <div style={{ marginTop: '12px', fontSize: '14px', color: newsletterStatus === 'success' ? '#10b981' : '#ef4444' }}>
+              {newsletterMsg}
+            </div>
+          )}
         </div>
       </section>
 

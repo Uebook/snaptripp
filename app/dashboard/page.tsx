@@ -260,15 +260,6 @@ export default function Dashboard() {
               public_profile: dbPrefs.public_profile ?? true
             })
           }
-
-          // Try parsing phone prefix
-          if (loadedProfile.phone && loadedProfile.phone.startsWith('+')) {
-            const parts = loadedProfile.phone.split(' ')
-            if (parts.length > 1) {
-              setPhonePrefix(parts[0])
-              setProfile((prev: any) => ({ ...prev, phone: parts.slice(1).join(' ') }))
-            }
-          }
         }
 
         // Fetch Trips
@@ -293,17 +284,18 @@ export default function Dashboard() {
   // Profile Save
   const handleSaveProfile = async () => {
     if (!user) return
+    
+    const cleanUsername = profile.username ? profile.username.toLowerCase().replace(/[^a-z0-9._]/g, '') : null;
+
     setIsSavingProfile(true)
 
     try {
-      const fullPhone = `${phonePrefix} ${profile.phone}`.trim()
       const { error } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           full_name: profile.full_name,
-          username: profile.username.toLowerCase().replace(/[^a-z0-9._]/g, ''),
-          phone: fullPhone,
+          username: cleanUsername,
           bio: profile.bio,
           location: profile.location,
           avatar_url: profile.avatar_url,
@@ -313,7 +305,7 @@ export default function Dashboard() {
 
       if (error) throw error
 
-      setInitialProfile({ ...profile, phone: profile.phone })
+      setInitialProfile({ ...profile, username: cleanUsername || '' })
       alert('Changes saved successfully!')
     } catch (err: any) {
       alert('Error saving profile changes: ' + (err.message || 'Unknown error'))
@@ -512,32 +504,9 @@ export default function Dashboard() {
                     <input 
                       type="text" 
                       className={styles["field-input-box"]}
-                      value={profile.username.startsWith('@') ? profile.username : `@${profile.username}`}
+                      value={profile.username ? (profile.username.startsWith('@') ? profile.username : `@${profile.username}`) : ''}
                       onChange={e => setProfile({...profile, username: e.target.value.replace('@', '')})}
                     />
-                  </div>
-
-                  <div className={styles["field-block"]}>
-                    <span className={styles["field-label-tag"]}>Phone Number</span>
-                    <div className={styles["phone-input-wrapper"]}>
-                      <select 
-                        className={styles["phone-prefix-select"]}
-                        value={phonePrefix}
-                        onChange={e => setPhonePrefix(e.target.value)}
-                      >
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
-                        <option value="+91">+91</option>
-                        <option value="+33">+33</option>
-                        <option value="+49">+49</option>
-                      </select>
-                      <input 
-                        type="tel" 
-                        className={`${styles["field-input-box"]} ${styles["phone-number-field"]}`}
-                        value={profile.phone}
-                        onChange={e => setProfile({...profile, phone: e.target.value})}
-                      />
-                    </div>
                   </div>
 
                   <div className={styles["field-block"]}>
@@ -832,7 +801,6 @@ export default function Dashboard() {
                         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', fontWeight: '800', color: '#031B4E', margin: '0 0 12px' }}>{trip.title}</h3>
                         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', fontSize: '13px', fontWeight: '600', color: '#64748B' }}>
                           <span>📅 {trip.duration}</span>
-                          <span>✨ {new Date(trip.created_at).toLocaleDateString()}</span>
                         </div>
                         
                         <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
@@ -862,7 +830,13 @@ export default function Dashboard() {
                               }
                             }}
                           >
-                            🗑️
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18"></path>
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                              <line x1="10" y1="11" x2="10" y2="17"></line>
+                              <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
                           </button>
                         </div>
                       </div>

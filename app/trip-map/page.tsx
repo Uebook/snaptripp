@@ -81,6 +81,7 @@ function TripMapContent() {
 
   // Auth & Saving State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isSaveTitleModalOpen, setIsSaveTitleModalOpen] = useState(false)
   const [saveTripTitle, setSaveTripTitle] = useState('')
@@ -474,9 +475,14 @@ function TripMapContent() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/trip-confirm${window.location.search}${currentDraftId && !window.location.search.includes('draftId') ? `&draftId=${currentDraftId}` : ''}` : undefined}
         onSuccess={() => {
           setIsAuthModalOpen(false);
-          handleSaveTripClick();
+          let searchStr = window.location.search;
+          if (currentDraftId && !searchStr.includes('draftId')) {
+            searchStr += (searchStr ? '&' : '?') + `draftId=${currentDraftId}`;
+          }
+          router.push(`/trip-confirm${searchStr}`);
         }}
       />
 
@@ -548,15 +554,11 @@ function TripMapContent() {
                       alert('Please ensure there are no blank days in your itinerary before saving.');
                       return;
                     }
-                    if (!currentUser) {
-                      setIsAuthModalOpen(true);
-                      return;
-                    }
                     const btn = e.currentTarget;
                     btn.disabled = true;
                     btn.textContent = 'SAVING...';
                     try {
-                      const draftId = searchParams.get('draftId');
+                      let draftId = searchParams.get('draftId');
                       if (draftId) {
                         const res = await fetch(`/api/drafts/${draftId}`, {
                           method: 'PUT',
@@ -564,7 +566,6 @@ function TripMapContent() {
                           body: JSON.stringify({ data: dayPlans })
                         });
                         await res.json();
-                        router.push(`/trip-confirm?draftId=${draftId}&country=${encodeURIComponent(country || '')}`);
                       } else {
                         const res = await fetch('/api/drafts', {
                           method: 'POST',
@@ -573,11 +574,23 @@ function TripMapContent() {
                         });
                         const json = await res.json();
                         if (json.success) {
-                          router.push(`/trip-confirm?draftId=${json.draftId}&country=${encodeURIComponent(country || '')}`);
+                          draftId = json.draftId;
+                          setCurrentDraftId(draftId);
+                          const newUrl = new URL(window.location.href);
+                          newUrl.searchParams.set('draftId', draftId || '');
+                          window.history.replaceState({}, '', newUrl.toString());
                         } else {
                           alert('Failed to save draft: ' + json.error);
+                          return;
                         }
                       }
+
+                      if (!currentUser) {
+                        setIsAuthModalOpen(true);
+                        return;
+                      }
+
+                      router.push(`/trip-confirm?draftId=${draftId}&country=${encodeURIComponent(country || '')}`);
                     } catch (err) {
                       console.error(err);
                       alert('An error occurred while saving the draft.');
@@ -601,7 +614,7 @@ function TripMapContent() {
                   onDragLeave={() => setDragOverDayId(null)}
                   onDrop={() => handleDropOnDay(day.id)}
                 >
-                  <div className="day-card-header" style={{ borderBottom: '1px solid #F3F4F6', padding: '16px' }}>
+                  <div className="day-card-header" style={{ borderBottom: '1px solid #F3F4F6', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div className="step-number" style={{ width: '28px', height: '28px', fontSize: '14px' }}>{idx + 1}</div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -609,6 +622,21 @@ function TripMapContent() {
                         <span style={{ fontSize: '11px', color: '#9CA3AF' }}>Oct {14 + idx}</span>
                       </div>
                     </div>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to remove ${day.title}?`)) {
+                          setDayPlans(prev => {
+                            const newDays = prev.filter(d => d.id !== day.id);
+                            setDaysCount(newDays.length);
+                            return newDays;
+                          });
+                        }
+                      }}
+                      style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '1.4rem', padding: '0 8px', fontWeight: 'bold' }}
+                      title={`Remove ${day.title}`}
+                    >
+                      ×
+                    </button>
                   </div>
                   <div className="site-list-premium" style={{ padding: '16px', gap: '12px', display: 'flex', flexDirection: 'column' }}>
                     {day.items.map(item => (
@@ -680,20 +708,7 @@ function TripMapContent() {
         >
 
 
-          {/* Weather Widget */}
-          <div className="weather-widget">
-            <div className="weather-main">
-              <span style={{ fontSize: '32px' }}>⛅</span>
-              <div className="weather-info">
-                <div className="weather-temp">24°C</div>
-                <strong>{country}</strong>
-                <span>Sunny</span>
-              </div>
-            </div>
-            <div className="weather-footer">
-              Best time to visit: <span>April - June</span>
-            </div>
-          </div>
+
 
           <TripMap
             places={places}
@@ -827,36 +842,7 @@ function TripMapContent() {
                       </div>
                     ))}
                   </>
-                ) : (
-                  <div className="explorer-view">
-                    <h2 style={{ fontSize: '24px', margin: '0 0 8px' }}>{country} Explorer</h2>
-                    <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 32px' }}>Welcome to your personal guide to {country}.</p>
-
-                    {dayPlans.length > 0 ? (
-                      <div style={{ padding: '20px', background: '#F0F9FF', borderRadius: '12px', border: '1px solid #BAE6FD', marginBottom: '32px' }}>
-                        <h4 style={{ color: '#0369A1', margin: '0 0 8px', fontSize: '16px' }}>Your itinerary is active! ✨</h4>
-                        <p style={{ color: '#0C4A6E', margin: 0, fontSize: '14px' }}>
-                          Select any city on the map or zoom in to discover more attractions to add to your plan.
-                        </p>
-                      </div>
-                    ) : null}
-
-                    <div className="explorer-card">
-                      <div className="explorer-card-icon">🏛️</div>
-                      <div className="explorer-card-text">
-                        <h5>Timeless Art &amp; Living Culture</h5>
-                        <p>Witness the genius of the masters as you wander through galleries.</p>
-                      </div>
-                    </div>
-                    <div className="explorer-card" style={{ background: '#FFF7ED' }}>
-                      <div className="explorer-card-icon" style={{ color: '#F97316' }}>🍴</div>
-                      <div className="explorer-card-text">
-                        <h5>Savor the Flavors of Tradition</h5>
-                        <p>Indulge in artisanal delicacies and world-class vintages.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </div>
           </div>
         </div> {/* ← closes right-sidebar div */}

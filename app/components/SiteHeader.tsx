@@ -3,13 +3,11 @@
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import AuthModal from './AuthModal'
 import { useRouter, usePathname } from 'next/navigation'
 
 export default function SiteHeader() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -38,6 +36,13 @@ export default function SiteHeader() {
       setUser(currentUser)
       if (currentUser) {
         fetchProfile(currentUser.id)
+        if (typeof window !== 'undefined') {
+          const redirect = localStorage.getItem('redirectAfterLogin')
+          if (redirect) {
+            localStorage.removeItem('redirectAfterLogin')
+            router.push(redirect)
+          }
+        }
       } else {
         setProfile(null)
       }
@@ -49,6 +54,13 @@ export default function SiteHeader() {
       setUser(currentUser)
       if (currentUser) {
         fetchProfile(currentUser.id)
+        if (_event === 'SIGNED_IN' && typeof window !== 'undefined') {
+          const redirect = localStorage.getItem('redirectAfterLogin')
+          if (redirect) {
+            localStorage.removeItem('redirectAfterLogin')
+            router.push(redirect)
+          }
+        }
       } else {
         setProfile(null)
       }
@@ -166,12 +178,6 @@ export default function SiteHeader() {
           )}
         </div>
       </div>
-
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => setIsAuthModalOpen(false)}
-      />
     </header>
   )
 }

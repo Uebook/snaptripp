@@ -6,10 +6,22 @@ import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import styles from './planner.module.css'
 
+const DESTINATIONS_DATA: Record<string, any> = {
+  Greece: { region: 'Europe', desc: 'Greece is famous for its iconic blue domes, ancient history, and stunning Aegean sunsets.', label: 'Santorini', image: '/images/hero_greece_oia.png', bgImage: '/images/hero_greece_oia.png', locationTag: 'Oia Village, Santorini' },
+  Italy: { region: 'Europe', desc: 'Italy is known for its historic art, culinary masterpieces, and the dramatic Amalfi Coast.', label: 'Positano', image: '/images/card_italy.png', bgImage: '/images/card_italy.png', locationTag: 'Amalfi Coast, Italy' },
+  Spain: { region: 'Region', desc: 'Spain is famous for its islands, beach holidays, surfing, diving and yachting.', label: 'Madrid', image: '/images/card_madrid.png', bgImage: '/images/hero_seoul_night.png', locationTag: 'Plaza Mayor, Madrid' },
+  UAE: { region: 'Middle East', desc: 'UAE offers a blend of futuristic skyscrapers, luxury shopping, and desert adventures.', label: 'Dubai', image: '/images/card_uae.png', bgImage: '/images/hero_uae_museum.png', locationTag: 'Museum of the Future, Dubai' },
+  USA: { region: 'North America', desc: 'USA features diverse landscapes from bustling New York streets to the Grand Canyon.', label: 'New York', image: '/images/card_usa.png', bgImage: '/images/card_usa.png', locationTag: 'Times Square, New York' },
+  Canada: { region: 'North America', desc: 'Canada is renowned for its vast wilderness, stunning lakes, and friendly multicultural cities.', label: 'Banff', image: '/images/card_canada.png', bgImage: '/images/card_canada.png', locationTag: 'Moraine Lake, Banff' },
+  Thailand: { region: 'Asia', desc: 'Thailand is a land of tropical beaches, ornate temples, and vibrant street life.', label: 'Phuket', image: '/images/card_thailand.png', bgImage: '/images/card_thailand.png', locationTag: 'Maya Bay, Phi Phi Islands' },
+  Ireland: { region: 'Europe', desc: 'Ireland is known for its lush green landscapes, historic castles, and vibrant culture.', label: 'Cliffs of Moher', image: '/images/why_mountains.png', bgImage: '/images/why_mountains.png', locationTag: 'Cliffs of Moher, County Clare' }
+};
+
 function PlanTripContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialCountry = searchParams.get('country')
+  const [hasUserSelectedCountry, setHasUserSelectedCountry] = useState(!!initialCountry)
   const [plannerStep, setPlannerStep] = useState(1) 
   
   // Selection States
@@ -26,10 +38,40 @@ function PlanTripContent() {
   const [tripPreference, setTripPreference] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [tripImmersion, setTripImmersion] = useState<'Unmissable' | 'ALotMore' | null>(null)
   const [countries, setCountries] = useState<string[]>([])
+  const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
+  const [isUnlocked, setIsUnlocked] = useState(false)
   
   const REEL_COUNTRIES = countries.length > 0 
     ? countries.map(c => c.toUpperCase()) 
     : ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
+
+  useEffect(() => {
+    const fetchHeroCarousel = async () => {
+      try {
+        const res = await fetch('/api/admin/carousel')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.items && data.items.length > 0) {
+            const formatted: Record<string, any> = {}
+            data.items.forEach((item: any) => {
+              formatted[item.country] = {
+                region: item.region,
+                desc: item.description,
+                label: item.label,
+                image: item.image_url,
+                bgImage: item.bg_image_url,
+                locationTag: item.location_tag
+              }
+            })
+            setDestinationsData(formatted)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch carousel, using fallback:', err)
+      }
+    }
+    fetchHeroCarousel()
+  }, [])
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -121,21 +163,24 @@ function PlanTripContent() {
       <SiteHeader />
 
       <div className={styles.mainContent}>
-        <header className={styles.header}>
-          <h1 className={styles.welcomeText}>
-            Welcome to 
-            {isFetchingCountries && !selectedCountry ? (
-              <span style={{ display: 'inline-block', width: '120px', height: '40px', background: '#f3f4f6', animation: 'pulse 1.5s infinite', marginLeft: '12px', borderRadius: '8px' }} />
-            ) : (
-              <span style={{ color: '#F6B800' }}> {selectedCountry}</span>
-            )}
-          </h1>
-          <p className={styles.subHeaderText} style={{ marginBottom: '40px' }}>
-            Recommended season : December through April
-          </p>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px', marginBottom: '60px' }}>
-            <div className="compact-search" style={{ margin: '0 auto', width: '100%', maxWidth: '500px' }}>
+        {hasUserSelectedCountry ? (
+          <header className={styles.header}>
+            <h1 className={styles.welcomeText}>
+              Welcome to 
+              {isFetchingCountries && !selectedCountry ? (
+                <span style={{ display: 'inline-block', width: '120px', height: '40px', background: '#f3f4f6', animation: 'pulse 1.5s infinite', marginLeft: '12px', borderRadius: '8px' }} />
+              ) : (
+                <span style={{ color: '#F6B800' }}> {selectedCountry}</span>
+              )}
+            </h1>
+            <p className={styles.subHeaderText} style={{ marginBottom: '40px' }}>
+              Recommended season : December through April
+            </p>
+          </header>
+        ) : (
+          <section className={`search-explore ${isUnlocked ? 'unlocked' : ''}`} style={{ width: '100%', marginBottom: '40px', background: 'transparent' }}>
+          <div className="explore-left">
+            <div className="compact-search">
               <button className="search-orange-btn" onClick={() => setShowDropdown(!showDropdown)}>🔍</button>
               <input
                 type="text"
@@ -149,7 +194,7 @@ function PlanTripContent() {
               {showDropdown && (
                 <div className="country-dropdown-list">
                   {countries
-                    .filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .filter(c => searchQuery === selectedCountry || c.toLowerCase().includes(searchQuery.toLowerCase()))
                     .map(country => (
                       <div
                         key={country}
@@ -158,6 +203,7 @@ function PlanTripContent() {
                           setSearchQuery(country);
                           setSelectedCountry(country);
                           setShowDropdown(false);
+                          setHasUserSelectedCountry(true);
                         }}
                       >
                         {country}
@@ -168,61 +214,106 @@ function PlanTripContent() {
               )}
             </div>
 
-            <div className="spin-wheel-outer" style={{ transform: 'scale(0.8)', marginTop: '-20px' }}>
-              <div className="spin-indicator"></div>
-              <div className="spin-wheel-container">
-                <div
-                  className="spin-destinations-reel"
-                  style={{
-                    transform: `translateY(${reelOffset}px)`,
-                    transition: isSpinning ? 'transform 3s cubic-bezier(0.1, 0.7, 0.1, 1)' : 'none'
-                  }}
-                >
-                  {[...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES].map((d, i) => (
-                    <span
-                      key={`${d}-${i}`}
-                      className={i === landingIndex ? 'active' : ''}
-                    >
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <button
-                className="spin-action-btn"
-                onClick={() => {
-                  setIsSpinning(true);
-                  const totalItems = REEL_COUNTRIES.length;
-                  const randomLanding = Math.floor(Math.random() * totalItems);
-                  const spinRounds = 3;
-                  const finalIndex = (spinRounds * totalItems) + randomLanding;
-                  const offset = 212.5 - (finalIndex * ITEM_HEIGHT);
-
-                  setReelOffset(offset);
-                  setTimeout(() => {
-                    setIsSpinning(false);
-                    setLandingIndex(finalIndex);
-                    
-                    const landedCountry = REEL_COUNTRIES[randomLanding];
-                    const formattedCountry = landedCountry === 'UAE' || landedCountry === 'USA' 
-                      ? landedCountry 
-                      : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase();
-                    
-                    setSearchQuery(formattedCountry);
-                    setSelectedCountry(formattedCountry);
-                  }, 3000);
+            <div className="explore-v-card">
+              <div 
+                className="v-card-img" 
+                style={{ 
+                  backgroundImage: `url(${destinationsData[selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan']?.image || '/images/explore_japan.png'})` 
                 }}
-                disabled={isSpinning}
-              >
-                {isSpinning ? 'Spinning...' : 'Spin the Compass'}
-              </button>
+              ></div>
+              <div className="v-card-overlay">
+                <h3>Explore <span>{selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan'}</span></h3>
+                <p>
+                  {destinationsData[selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan']?.desc || 
+                    `Discover the beauty of ${selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan'}, from its vibrant city life to its serene landscapes.`}
+                </p>
+              </div>
             </div>
           </div>
-        </header>
 
-        {renderStepper()}
+          <div className="vertical-slider-track">
+            <div
+              className="slider-handle"
+              style={{
+                top: isUnlocked ? '90%' : '50%',
+                transition: 'top 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              onClick={() => setIsUnlocked(!isUnlocked)}
+            >
+              ||
+            </div>
+          </div>
 
-        <div className={styles.modal} style={{ width: '100%', maxWidth: '1000px' }}>
+          <div className="explore-right">
+            {!isUnlocked ? (
+              <div className="drag-unlock-text">
+                <p>Drag to</p>
+                <span>Unlock Fun</span>
+              </div>
+            ) : (
+              <>
+                <h2 className="spin-title">No Plans? No Problem. <span>Spin It</span></h2>
+                <div className="spin-wheel-outer">
+                  <div className="spin-indicator"></div>
+                  <div className="spin-wheel-container">
+                    <div
+                      className="spin-destinations-reel"
+                      style={{
+                        transform: `translateY(${reelOffset}px)`,
+                        transition: isSpinning ? 'transform 3s cubic-bezier(0.1, 0.7, 0.1, 1)' : 'none'
+                      }}
+                    >
+                      {[...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES, ...REEL_COUNTRIES].map((d, i) => (
+                        <span
+                          key={`${d}-${i}`}
+                          className={i === landingIndex ? 'active' : ''}
+                        >
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    className="spin-action-btn"
+                    onClick={() => {
+                      setIsSpinning(true);
+                      const totalItems = REEL_COUNTRIES.length;
+                      const randomLanding = Math.floor(Math.random() * totalItems);
+                      const spinRounds = 3;
+                      const finalIndex = (spinRounds * totalItems) + randomLanding;
+                      const offset = 212.5 - (finalIndex * ITEM_HEIGHT);
+
+                      setReelOffset(offset);
+                      setTimeout(() => {
+                        setIsSpinning(false);
+                        setLandingIndex(finalIndex);
+                        
+                        const landedCountry = REEL_COUNTRIES[randomLanding];
+                        const formattedCountry = landedCountry === 'UAE' || landedCountry === 'USA' 
+                          ? landedCountry 
+                          : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase();
+                        
+                        setSearchQuery(formattedCountry);
+                        setSelectedCountry(formattedCountry);
+                        setTimeout(() => setHasUserSelectedCountry(true), 1500);
+                      }, 3000);
+                    }}
+                    disabled={isSpinning}
+                  >
+                    {isSpinning ? 'Spinning...' : 'Spin the Compass'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+        )}
+
+        {hasUserSelectedCountry && (
+          <>
+            {renderStepper()}
+
+            <div className={styles.modal} style={{ width: '100%', maxWidth: '1000px' }}>
           {plannerStep === 1 && (
             <>
               <h2 className={styles.selectionTitle} style={{ textAlign: 'center', marginBottom: '40px' }}>Choose your trip style</h2>
@@ -462,6 +553,8 @@ function PlanTripContent() {
             </>
           )}
         </div>
+        </>
+        )}
       </div>
 
       <SiteFooter />

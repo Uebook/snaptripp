@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { COUNTRIES } from '@/app/utils/countries'
 import SiteHeader from '@/app/components/SiteHeader'
 import SiteFooter from '@/app/components/SiteFooter'
-import { ShareJourneyModal, CityChecklist, WanderedPlaces, DigitalPassport } from '@/app/components/travel-map/TravelComponents'
+import { ShareJourneyModal, TravelScoreProfile, VisitedCountriesSection, CountryRatingModal } from '@/app/components/travel-map/TravelComponentsNew'
+import { AccordionCountrySelector } from '@/app/components/travel-map/AccordionCountrySelector'
 import InteractiveWorldMap from '@/app/components/travel-map/InteractiveWorldMap'
 import '@/app/components/travel-map/travel-map.css'
 import '@/app/trip-map/unauth.css'
@@ -19,55 +20,35 @@ export default function TravelMapPage() {
 
   // Interactive Map State
   const [countryData, setCountryData] = useState<Record<string, { rating: number }>>({});
-  const [userRatingsDb, setUserRatingsDb] = useState<any[]>([]);
+  const [userCountryLogs, setUserCountryLogs] = useState<any[]>([]);
+  const [userCityLogs, setUserCityLogs] = useState<any[]>([]);
+  
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [selectedCities, setSelectedCities] = useState<string[]>([]);
-  const [showRatingUI, setShowRatingUI] = useState(false);
-  const [showPassport, setShowPassport] = useState(false);
-  const [isCountryLevelRating, setIsCountryLevelRating] = useState(false);
+
+  const fetchUserData = async (userId: string) => {
+    // We swallow errors because if tables don't exist yet, we still want the UI to render empty
+    try {
+      const { data: countries, error: countriesError } = await supabase.from('user_country_logs').select('*').eq('user_id', userId);
+      const { data: cities, error: citiesError } = await supabase.from('user_city_logs').select('*').eq('user_id', userId);
+      
+      if (countries && !countriesError) {
+        setUserCountryLogs(countries);
+        const countryAvgs: Record<string, { rating: number }> = {};
+        countries.forEach(item => {
+          countryAvgs[item.country] = { rating: Math.max(1, Math.round(item.average_score || 1)) };
+        });
+        setCountryData(countryAvgs);
+      }
+      if (cities && !citiesError) {
+        setUserCityLogs(cities);
+      }
+    } catch (error) {
+      console.warn("Failed to fetch user data:", error);
+    }
+  };
 
   const handleCountryClick = (country: string) => {
-    setIsCountryLevelRating(false);
     setSelectedCountry(country);
-    // Pre-fill selected cities from DB
-    const existingCitiesForCountry = userRatingsDb.filter(r => r.country === country).map(r => r.city);
-    setSelectedCities(existingCitiesForCountry);
-    setShowRatingUI(false);
-  };
-
-  const handleMultipleCountriesSelect = (countries: string[]) => {
-    setIsCountryLevelRating(true);
-    setSelectedCountry('Multiple'); // Virtual selected country to show sidebar
-    setSelectedCities(countries);
-    setShowRatingUI(true); // Bypass city checklist
-  };
-
-  const handleCitiesContinue = (cities: string[]) => {
-    setSelectedCities(cities);
-    setShowRatingUI(true);
-  };
-
-  const handleSaveRating = (rating: number) => {
-    if (selectedCountry) {
-      setCountryData(prev => ({
-        ...prev,
-        [selectedCountry]: { rating: Math.max(1, Math.round(rating)) } // ensure it gets colored
-      }));
-    }
-    
-    // Refresh DB data
-    if (user) {
-      supabase.from('user_city_ratings').select('*').eq('user_id', user.id)
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setUserRatingsDb(data);
-          }
-        });
-    }
-
-    // Close the popups after saving
-    setSelectedCountry(null);
-    setShowRatingUI(false);
   };
 
   // Auth Card State
@@ -99,57 +80,25 @@ export default function TravelMapPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      }
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchUserData(session.user.id);
+      } else {
+        setCountryData({});
+        setUserCountryLogs([]);
+        setUserCityLogs([]);
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
-
-  // Fetch map data when user changes
-  useEffect(() => {
-    if (user) {
-      supabase.from('user_city_ratings').select('*').eq('user_id', user.id)
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setUserRatingsDb(data);
-            
-            // Reconstruct country data average for map
-            const countryAvgs: Record<string, { rating: number }> = {};
-            const countrySums: Record<string, { sum: number, count: number }> = {};
-            
-            data.forEach(item => {
-              if (!countrySums[item.country]) {
-                countrySums[item.country] = { sum: 0, count: 0 };
-              }
-              if (item.average_score > 0) {
-                countrySums[item.country].sum += item.average_score;
-                countrySums[item.country].count += 1;
-              }
-            });
-            
-            Object.keys(countrySums).forEach(country => {
-              if (countrySums[country].count > 0) {
-                countryAvgs[country] = { 
-                  rating: Math.max(1, Math.round(countrySums[country].sum / countrySums[country].count)) 
-                };
-              } else {
-                countryAvgs[country] = { rating: 1 }; // visited but no ratings
-              }
-            });
-            
-            setCountryData(countryAvgs);
-          }
-        });
-    } else {
-      // Clear data if not logged in
-      setCountryData({});
-      setUserRatingsDb([]);
-    }
-  }, [user]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -158,7 +107,6 @@ export default function TravelMapPage() {
 
     try {
       if (isLoginMode) {
-        // Login logic (copied from login/page.tsx logic)
         let loginEmail = email.trim()
         if (!loginEmail.includes('@')) {
           const cleanUsername = loginEmail.replace('@', '').toLowerCase().trim()
@@ -181,7 +129,6 @@ export default function TravelMapPage() {
         })
         if (error) throw error
       } else {
-        // Signup logic using /api/auth/register
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -204,18 +151,21 @@ export default function TravelMapPage() {
         if (signInError) throw signInError
       }
     } catch (err: any) {
-      setAuthError(err.message || 'Authentication failed')
+      setAuthError(err.message)
     } finally {
       setAuthLoading(false)
     }
   }
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+  const handleSocialLogin = async (provider: 'google') => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('redirectAfterLogin', '/travel-map');
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `https://snaptrip-rho.vercel.app/`,
         },
       })
       if (error) throw error
@@ -224,79 +174,57 @@ export default function TravelMapPage() {
     }
   }
 
-  if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>
-  }
+  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading map...</div>
 
   if (!user) {
     return (
       <div className="unauth-travel-map">
         <SiteHeader />
         
-        <div className="top-actions">
-          <button className="btn-share" onClick={() => router.push('/login')}>Share your Masterpiece</button>
-          <button className="btn-add" onClick={() => router.push('/login')}>Add trip</button>
-        </div>
-
         <div className="unauth-hero">
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg" 
-            alt="World Map Background" 
-            className="unauth-world-map-bg"
-          />
-          
-          <div className="unauth-hero-text">
+          <div className="unauth-hero-text animate-fade-in">
             <span className="unauth-hero-pill">GLOBAL TRAVEL JOURNAL</span>
             <h1 className="unauth-hero-title">Your world,<br/><span>beautifully mapped.</span></h1>
-            <p className="unauth-hero-desc">
-              Transform your memories into a living map. SnapTrip is the premium space for modern travelers to document their global footprint with sophisticated precision.
-            </p>
-            
+            <p className="unauth-hero-desc">Transform your memories into a living map. SnapTrip is the premium space for modern travelers to document their global footprint with sophisticated precision.</p>
             <div className="unauth-social-proof">
               <div className="unauth-avatars">
-                <div className="unauth-avatar">JD</div>
+                <div className="unauth-avatar">JR</div>
                 <div className="unauth-avatar">AS</div>
                 <div className="unauth-avatar">+</div>
               </div>
-              <span className="unauth-social-text">Join 50k+ explorers documenting their path</span>
+              <span style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 500 }}>Join 50k+ explorers documenting their path</span>
             </div>
           </div>
+          
+          <div className="unauth-login-card animate-slide-up">
+            <form onSubmit={handleAuth} className="auth-form-card">
+              <h2>{isLoginMode ? 'Welcome Back' : 'Start Your Journey'}</h2>
+              <p style={{ textAlign: 'center', color: '#6B7280', fontSize: '0.9rem', marginBottom: '24px' }}>
+                Sign in to unlock your personalized map
+              </p>
+              
+              {authError && <div className="auth-error-msg">{authError}</div>}
+              
+              <button type="button" onClick={() => handleSocialLogin('google')} className="social-login-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+              </button>
 
-          <div className="unauth-login-card">
-            <h2>{isLoginMode ? 'Welcome Back' : 'Create Account'}</h2>
-            <p>{isLoginMode ? 'Sign in to unlock your personalized map' : 'Start tracking your global footprint today'}</p>
-            
-            {authError && <div style={{ color: 'red', fontSize: '13px', textAlign: 'center', marginBottom: '16px' }}>{authError}</div>}
 
-            <button className="social-login-btn" onClick={() => handleSocialLogin('google')} disabled={authLoading}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </button>
-            
-            <button className="social-login-btn" onClick={() => handleSocialLogin('facebook')} disabled={authLoading}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Continue with Facebook
-            </button>
+              <div className="login-divider"><span>OR EMAIL</span></div>
 
-            <div className="login-divider">
-              <span>OR EMAIL</span>
-            </div>
-
-            <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {!isLoginMode && (
                 <>
                   <div className="input-group" style={{ marginBottom: 0 }}>
                     <label>Full Name</label>
                     <input 
                       type="text" 
-                      placeholder="Julian Alvarez" 
+                      placeholder="Alex Wanderer" 
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       required
@@ -340,11 +268,6 @@ export default function TravelMapPage() {
                           fontSize: '14px', cursor: 'pointer' 
                         }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
-                          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
-                          <path d="M2 12H22" />
-                          <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z" />
-                        </svg>
                         <span>{phoneCode}</span>
                       </div>
                       {isDropdownOpen && (
@@ -380,21 +303,21 @@ export default function TravelMapPage() {
               )}
               
               <div className="input-group" style={{ marginBottom: 0 }}>
-                <label>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                  />
-                  {isLoginMode && <a href="/forgot-password" className="forgot-link" style={{ top: '-24px' }}>Forgot?</a>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ marginBottom: 0 }}>Password</label>
+                  {isLoginMode && <a href="/forgot-password" style={{ fontSize: '0.75rem', color: '#F6B800', fontWeight: 600, textDecoration: 'none' }}>Forgot?</a>}
                 </div>
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
               </div>
 
-              <button className="btn-signin" type="submit" disabled={authLoading} style={{ marginTop: '8px' }}>
-                {authLoading ? 'Processing...' : (isLoginMode ? 'Sign In with SnapTrip' : 'Create Account')}
+              <button type="submit" disabled={authLoading} className="btn-signin">
+                {authLoading ? 'Please wait...' : (isLoginMode ? 'Sign In with SnapTrip' : 'Create Account')}
               </button>
             </form>
             
@@ -410,7 +333,7 @@ export default function TravelMapPage() {
         <div className="unauth-cta-section">
           <h2>Ready for the next<br/>adventure?</h2>
           <p>Join the community documenting their world journey in a way that truly matters. Your story deserves a canvas this grand.</p>
-          <button className="btn-get-started" onClick={() => router.push('/login')}>Get Started Now</button>
+          <button className="btn-get-started" onClick={() => setIsLoginMode(false)}>Get Started Now</button>
         </div>
         
         <SiteFooter />
@@ -439,113 +362,48 @@ export default function TravelMapPage() {
           </button>
         </div>
 
-        {/* Global Stats Overview */}
-        <div style={{ display: 'flex', gap: '32px', padding: '24px', background: '#fff', borderRadius: '16px', border: '1px solid #F1F5F9', marginBottom: '24px' }}>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', color: '#F6B800', fontFamily: '"Playfair Display", serif', fontWeight: 700 }}>{Array.from(new Set(userRatingsDb.map(r => r.country))).length}</div>
-            <div style={{ fontSize: '18px', color: '#374151', margin: '4px 0 2px' }}>Countries</div>
-            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Visited across continents</div>
-          </div>
-          <div style={{ width: '1px', background: '#F1F5F9' }}></div>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', color: '#F6B800', fontFamily: '"Playfair Display", serif', fontWeight: 700 }}>{userRatingsDb.length}</div>
-            <div style={{ fontSize: '18px', color: '#374151', margin: '4px 0 2px' }}>Cities</div>
-            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Memories made in every corner</div>
-          </div>
-          <div style={{ width: '1px', background: '#F1F5F9' }}></div>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', color: '#F6B800', fontFamily: '"Playfair Display", serif', fontWeight: 700 }}>{userRatingsDb.length > 0 ? userRatingsDb.length * 3 : 0}</div>
-            <div style={{ fontSize: '18px', color: '#374151', margin: '4px 0 2px' }}>Places</div>
-            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Explored beautiful places</div>
+
+
+        <div style={{ display: 'flex', gap: '24px', marginTop: '40px' }}>
+          <div style={{ flex: '1', height: '600px', background: '#FFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
+            <InteractiveWorldMap 
+              countryData={countryData} 
+              selectedCountry={selectedCountry}
+              onCountryClick={handleCountryClick}
+            />
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', height: '600px' }}>
-            {/* Main Interactive Map */}
-            <div style={{ flex: selectedCountry ? '0 0 65%' : '1', height: '100%', transition: 'all 0.3s ease', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ flex: '1', minHeight: 0 }}>
-                <InteractiveWorldMap 
-                  countryData={countryData} 
-                  selectedCountry={selectedCountry}
-                  onCountryClick={handleCountryClick}
-                />
-              </div>
-              
-              {!selectedCountry && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                  <button 
-                    onClick={() => setShowPassport(!showPassport)}
-                    style={{ 
-                      padding: '12px 32px', background: '#031B4E', color: 'white', border: 'none', 
-                      borderRadius: '8px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    {showPassport ? 'Hide Country List' : 'Browse All Countries & Territories'}
-                  </button>
-                </div>
-              )}
-            </div>
+        <AccordionCountrySelector 
+          userCountryLogs={userCountryLogs} 
+          onCountrySelect={handleCountryClick} 
+        />
 
-            {/* Dynamic Sidebar for Checklists and Ratings */}
-            {selectedCountry && (
-              <div style={{ flex: '1', height: '100%', animation: 'fadeIn 0.3s ease' }}>
-                {!showRatingUI ? (
-                  <CityChecklist 
-                    country={selectedCountry}
-                    initialSelectedCities={selectedCities}
-                    onContinue={handleCitiesContinue}
-                    onCancel={() => setSelectedCountry(null)}
-                  />
-                ) : (
-                  <WanderedPlaces 
-                    country={isCountryLevelRating ? undefined : (selectedCountry || undefined)}
-                    selectedCities={selectedCities}
-                    userId={user?.id}
-                    isCountryLevel={isCountryLevelRating}
-                    initialCityRatings={
-                      isCountryLevelRating 
-                        ? userRatingsDb
-                            .filter(r => selectedCities.includes(r.country) && r.city === r.country)
-                            .reduce((acc, curr) => {
-                              acc[curr.country] = curr.ratings;
-                              return acc;
-                            }, {} as any)
-                        : userRatingsDb
-                            .filter(r => r.country === selectedCountry && selectedCities.includes(r.city))
-                            .reduce((acc, curr) => {
-                              acc[curr.city] = curr.ratings;
-                              return acc;
-                            }, {} as any)
-                    }
-                    onSaveRating={handleSaveRating}
-                    onClose={() => setSelectedCountry(null)}
-                  />
-                )}
-              </div>
-            )}
-          </div>
 
-          {showPassport && !selectedCountry && (
-            <div style={{ width: '100%', marginTop: '24px', animation: 'fadeIn 0.3s ease', height: '600px' }}>
-              <DigitalPassport 
-                userRatingsDb={userRatingsDb}
-                onCountriesSelect={handleMultipleCountriesSelect}
-              />
-            </div>
-          )}
-        </div>
+
+        {selectedCountry && (
+          <CountryRatingModal 
+            country={selectedCountry}
+            userId={user.id}
+            userCountryLogs={userCountryLogs}
+            userCityLogs={userCityLogs}
+            onClose={() => setSelectedCountry(null)}
+            onSave={() => fetchUserData(user.id)}
+          />
+        )}
       </div>
 
-        {isShareModalOpen && (
-          <ShareJourneyModal 
-            userRatingsDb={userRatingsDb}
-            countryData={countryData}
-            username={user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Wanderer"}
-            onClose={() => setIsShareModalOpen(false)} 
-          />
-        )}<div style={{ marginTop: '60px' }}>
+      {isShareModalOpen && (
+        <ShareJourneyModal 
+          userCountryLogs={userCountryLogs}
+          userCityLogs={userCityLogs}
+          countryData={countryData}
+          username={user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Wanderer"}
+          onClose={() => setIsShareModalOpen(false)} 
+        />
+      )}
+      
+      <div style={{ marginTop: '60px' }}>
         <SiteFooter />
       </div>
     </div>

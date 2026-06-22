@@ -56,8 +56,9 @@ export default function AdminDataSync() {
 
     // City selection state
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+    const [customCountry, setCustomCountry] = useState('')
     const [cities, setCities] = useState<any[]>([])
-    const [selectedCities, setSelectedCities] = useState<string[]>([])
+    const [selectedCities, setSelectedCities] = useState<{name: string, lat: string, lng: string, radius: string}[]>([])
     const [manualCity, setManualCity] = useState('')
     const [isLoadingCities, setIsLoadingCities] = useState(false)
 
@@ -144,20 +145,20 @@ export default function AdminDataSync() {
 
     const handleCityToggle = (cityName: string) => {
         setSelectedCities(prev =>
-            prev.includes(cityName)
-                ? prev.filter(c => c !== cityName)
-                : [...prev, cityName]
+            prev.some(c => c.name === cityName)
+                ? prev.filter(c => c.name !== cityName)
+                : [...prev, { name: cityName, lat: '', lng: '', radius: '25' }]
         )
     }
 
     const handleAddManualCity = () => {
-        if (manualCity && !selectedCities.includes(manualCity)) {
-            setSelectedCities([...selectedCities, manualCity])
+        if (manualCity && !selectedCities.some(c => c.name === manualCity)) {
+            setSelectedCities([...selectedCities, { name: manualCity, lat: '', lng: '', radius: '25' }])
             setManualCity('')
         }
     }
 
-    const handleSync = async (id: number, country: string, specificCities?: string[]) => {
+    const handleSync = async (id: number, country: string, specificCities?: {name: string, lat: string, lng: string, radius: string}[]) => {
         // Ensure the country is in the tracking list for visual feedback
         const exists = syncCountries.find(c => c.name === country)
         if (!exists) {
@@ -272,15 +273,38 @@ export default function AdminDataSync() {
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'rgba(255,255,255,0.7)' }}>1. Select Country</label>
                             <select
                                 className="admin-search"
-                                style={{ width: '100%', padding: '10px 12px' }}
-                                value={selectedCountry || ''}
-                                onChange={(e) => handleCountrySelect(e.target.value)}
+                                style={{ width: '100%', padding: '10px 12px', marginBottom: '8px' }}
+                                value={COUNTRY_LIST.includes(selectedCountry || '') ? selectedCountry : (selectedCountry ? 'custom' : '')}
+                                onChange={(e) => {
+                                    if (e.target.value === 'custom') {
+                                        handleCountrySelect(customCountry)
+                                    } else {
+                                        handleCountrySelect(e.target.value)
+                                        setCustomCountry('')
+                                    }
+                                }}
                             >
                                 <option value="">Select a country...</option>
                                 {COUNTRY_LIST.map(country => (
                                     <option key={country} value={country}>{country}</option>
                                 ))}
+                                <option value="custom">Other / Custom</option>
                             </select>
+                            {((selectedCountry && !COUNTRY_LIST.includes(selectedCountry)) || selectedCountry === 'custom' || (!COUNTRY_LIST.includes(selectedCountry || '') && selectedCountry !== null)) ? (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        className="admin-search"
+                                        placeholder="Enter custom country..."
+                                        style={{ flex: 1, padding: '8px 12px' }}
+                                        value={customCountry}
+                                        onChange={(e) => {
+                                            setCustomCountry(e.target.value)
+                                            setSelectedCountry(e.target.value)
+                                        }}
+                                        onBlur={() => handleCountrySelect(customCountry)}
+                                    />
+                                </div>
+                            ) : null}
                         </div>
 
                         {selectedCountry && (
@@ -296,7 +320,7 @@ export default function AdminDataSync() {
                                         disabled={isLoadingCities || cities.length === 0}
                                     >
                                         <option value="">Choose from existing cities...</option>
-                                        {cities.filter(city => !selectedCities.includes(city.name)).map(city => (
+                                        {cities.filter(city => !selectedCities.some(c => c.name === city.name)).map(city => (
                                             <option key={city.name} value={city.name}>{city.name}</option>
                                         ))}
                                     </select>
@@ -305,7 +329,7 @@ export default function AdminDataSync() {
                                 {selectedCities.length > 0 && (
                                     <div style={{
                                         display: 'flex',
-                                        flexWrap: 'wrap',
+                                        flexDirection: 'column',
                                         gap: '8px',
                                         marginBottom: '16px',
                                         padding: '12px',
@@ -313,40 +337,86 @@ export default function AdminDataSync() {
                                         borderRadius: '8px',
                                         border: '1px dashed rgba(59, 130, 246, 0.3)'
                                     }}>
-                                        {selectedCities.map(cityName => (
+                                        {selectedCities.map((city, index) => (
                                             <div
-                                                key={cityName}
+                                                key={city.name}
                                                 style={{
                                                     display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    padding: '6px 12px',
-                                                    fontSize: '13px',
-                                                    borderRadius: '20px',
-                                                    background: 'var(--admin-accent)',
-                                                    color: '#fff',
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                                    flexDirection: 'column',
+                                                    gap: '8px',
+                                                    padding: '12px',
+                                                    width: '100%',
+                                                    borderRadius: '8px',
+                                                    background: '#fff',
+                                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                                                 }}
                                             >
-                                                {cityName}
-                                                <span
-                                                    onClick={() => handleCityToggle(cityName)}
-                                                    style={{
-                                                        cursor: 'pointer',
-                                                        fontSize: '16px',
-                                                        lineHeight: '1',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        width: '18px',
-                                                        height: '18px',
-                                                        borderRadius: '50%',
-                                                        background: 'rgba(255,255,255,0.2)',
-                                                        marginLeft: '2px'
-                                                    }}
-                                                >
-                                                    ×
-                                                </span>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 600, color: '#1e3a8a' }}>{city.name}</span>
+                                                    <span
+                                                        onClick={() => handleCityToggle(city.name)}
+                                                        style={{
+                                                            cursor: 'pointer',
+                                                            fontSize: '16px',
+                                                            lineHeight: '1',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            width: '20px',
+                                                            height: '20px',
+                                                            borderRadius: '50%',
+                                                            background: 'rgba(239, 68, 68, 0.1)',
+                                                            color: '#ef4444'
+                                                        }}
+                                                    >
+                                                        ×
+                                                    </span>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                    <div style={{ flex: 1, minWidth: '100px' }}>
+                                                        <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Lat (Optional)</label>
+                                                        <input 
+                                                            className="admin-search" 
+                                                            placeholder="e.g. 48.8566" 
+                                                            style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
+                                                            value={city.lat}
+                                                            onChange={(e) => {
+                                                                const newCities = [...selectedCities];
+                                                                newCities[index].lat = e.target.value;
+                                                                setSelectedCities(newCities);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div style={{ flex: 1, minWidth: '100px' }}>
+                                                        <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Lng (Optional)</label>
+                                                        <input 
+                                                            className="admin-search" 
+                                                            placeholder="e.g. 2.3522" 
+                                                            style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
+                                                            value={city.lng}
+                                                            onChange={(e) => {
+                                                                const newCities = [...selectedCities];
+                                                                newCities[index].lng = e.target.value;
+                                                                setSelectedCities(newCities);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div style={{ flex: 1, minWidth: '100px' }}>
+                                                        <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Radius (km)</label>
+                                                        <input 
+                                                            className="admin-search" 
+                                                            type="number"
+                                                            style={{ width: '100%', padding: '6px 8px', fontSize: '13px' }}
+                                                            value={city.radius}
+                                                            onChange={(e) => {
+                                                                const newCities = [...selectedCities];
+                                                                newCities[index].radius = e.target.value;
+                                                                setSelectedCities(newCities);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

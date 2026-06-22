@@ -17,25 +17,29 @@ export async function POST(request: NextRequest) {
         }
 
         const client = new ApifyClient({ token: apiToken });
-        const targetCities = cities && Array.isArray(cities) ? cities : (city ? [city] : [null]);
+        const targetCities = cities && Array.isArray(cities) ? cities : (city ? [{ name: city }] : [{ name: null }]);
 
         let allSyncedItems: any[] = [];
 
-        for (const targetCity of targetCities) {
+        for (const cityObj of targetCities) {
+            const isObject = typeof cityObj === 'object' && cityObj !== null;
+            const targetCityName = isObject ? cityObj.name : cityObj;
+            const targetLat = isObject && cityObj.lat ? parseFloat(cityObj.lat) : null;
+            const targetLng = isObject && cityObj.lng ? parseFloat(cityObj.lng) : null;
+            const targetRadius = isObject && cityObj.radius ? parseInt(cityObj.radius, 10) : 25;
+
             // 1. Prepare crawler input
-            const input = {
+            const input: any = {
                 searchStringsArray: searchTerms || [
                     'tourist attractions',
                     'must visit places',
-                    targetCity ? `visit ${targetCity}` : `visit ${country}`,
+                    targetCityName ? `visit ${targetCityName}` : `visit ${country}`,
                     'popular attractions',
                     'things to do',
                     'adventure',
                     'activity',
                     'fun activity'
                 ],
-                locationQuery: targetCity ? `${targetCity}, ${country}` : country,
-                radiusKm: 25,
                 maxCrawledPlacesPerSearch: 10,
                 language: 'en',
                 scrapePlaceDetailPage: true,
@@ -49,10 +53,17 @@ export async function POST(request: NextRequest) {
                     'sculpture', 'abbey', 'bazar', 'beach', 'brewery', 'club',
                     'distillery', 'memorial', 'orchestra', 'scenic spot',
                     'seafood market', 'shopping centre', 'shooting range',
-                    'shopping mall', 'ski resort', 'skydiving center', 'surf school',
                     'swimming facility', 'swimming school'
                 ]
             };
+
+            if (targetLat && !isNaN(targetLat) && targetLng && !isNaN(targetLng)) {
+                input.lat = targetLat;
+                input.lng = targetLng;
+            } else {
+                input.locationQuery = targetCityName ? `${targetCityName}, ${country}` : country;
+            }
+            input.radiusKm = targetRadius || 25;
 
             // 2. Run crawler
             const run = await client.actor('compass/crawler-google-places').call(input);
@@ -106,7 +117,7 @@ export async function POST(request: NextRequest) {
                     postalCode: item.postalCode,
                     phone: item.phone,
                     description: item.description,
-                    city: item.city || targetCity || country, // Correct fallback inside loop
+                    city: item.city || targetCityName || country, // Correct fallback inside loop
                     categoryName: item.categoryName || item.category,
                     address: item.address,
                     country: country,

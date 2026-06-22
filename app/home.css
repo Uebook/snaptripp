@@ -569,9 +569,8 @@
   width: 100%;
   height: 100%;
   z-index: 1;
-  opacity: 0.08;
-  filter: grayscale(1);
-  background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg');
+  opacity: 1; /* Fully visible */
+  background-image: url('/images/bgwhy.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -612,6 +611,45 @@
   margin: 0;
 }
 
+/* Circular Images */
+.journey-circles {
+  position: absolute;
+  top: 15%;
+  left: 45%;
+  width: 320px;
+  height: 380px;
+  z-index: 6;
+}
+
+.journey-circle {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 10px 25px rgba(235, 164, 36, 0.4);
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease;
+  opacity: 0;
+}
+
+.journey-circle:hover {
+  transform: scale(1.05);
+  z-index: 10 !important;
+}
+
+/* Animations for circles */
+.journey-map.animate .circle-1 { animation: circleFadeIn 0.5s 0.1s forwards; }
+.journey-map.animate .circle-2 { animation: circleFadeIn 0.5s 0.25s forwards; }
+.journey-map.animate .circle-3 { animation: circleFadeIn 0.5s 0.4s forwards; }
+.journey-map.animate .circle-4 { animation: circleFadeIn 0.5s 0.55s forwards; }
+
+@keyframes circleFadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Map Container (right side with path + steps) */
 .map-container {
   position: absolute;
@@ -639,11 +677,11 @@
 .img-step-5 { width: 100%; }
 
 /* Crossfade animations */
-.journey-map.animate .img-step-1 { animation: stepCrossFade 1.2s 0s forwards; }
-.journey-map.animate .img-step-2 { animation: stepCrossFade 1.2s 0.8s forwards; }
-.journey-map.animate .img-step-3 { animation: stepCrossFade 1.2s 1.6s forwards; }
-.journey-map.animate .img-step-4 { animation: stepCrossFade 1.2s 2.4s forwards; }
-.journey-map.animate .img-step-5 { animation: stepFadeIn 1.2s 3.2s forwards; }
+.journey-map.animate .img-step-1 { animation: stepCrossFade 0.6s 0s forwards; }
+.journey-map.animate .img-step-2 { animation: stepCrossFade 0.6s 0.4s forwards; }
+.journey-map.animate .img-step-3 { animation: stepCrossFade 0.6s 0.8s forwards; }
+.journey-map.animate .img-step-4 { animation: stepCrossFade 0.6s 1.2s forwards; }
+.journey-map.animate .img-step-5 { animation: stepFadeIn 0.6s 1.6s forwards; }
 
 @keyframes stepCrossFade {
   0%   { opacity: 0; }
@@ -796,7 +834,7 @@
 }
 
 .search-explore.unlocked .explore-v-card {
-  max-width: 420px;
+  max-width: 100%;
 }
 
 .search-orange-btn {
@@ -912,7 +950,7 @@
 }
 
 .search-explore.unlocked .explore-right {
-  flex: 2;
+  flex: 1;
 }
 
 .spin-title {

@@ -86,6 +86,9 @@ export async function POST(request: Request) {
       subject: 'Your Password Reset Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaec; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eaeaec;">
+            <h1 style="color: #F6B800; margin: 0; font-size: 28px; letter-spacing: 1px;">SnapTrip.io</h1>
+          </div>
           <h2 style="color: #031B4E;">Password Reset Request</h2>
           <p style="color: #4b5563; font-size: 16px;">Hello,</p>
           <p style="color: #4b5563; font-size: 16px;">We received a request to reset the password for your SnapTrip account. Your verification code is:</p>
