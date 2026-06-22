@@ -409,11 +409,29 @@
 @media (max-width: 768px) {
   .editorialGrid {
     grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .guideCard:nth-child(1),
+  .guideCard:nth-child(2),
+  .guideCard:nth-child(3),
+  .guideCard:nth-child(4) {
+    grid-column: 1;
+    grid-row: auto;
+    padding-top: 0;
+  }
+  .regionsGrid {
+    grid-template-columns: 1fr;
+    gap: 30px;
   }
   .heroTitle {
     font-size: 2.5rem;
   }
   .quoteText {
     font-size: 1.75rem;
+  }
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 }

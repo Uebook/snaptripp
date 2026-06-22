@@ -82,7 +82,8 @@ export default function Dashboard() {
   const [preferences, setPreferences] = useState({
     email_notifications: true,
     travel_recommendations: true,
-    public_profile: true
+    public_profile: true,
+    newsletter_subscription: true
   })
 
   // Travel History Modals / Receipts
@@ -223,7 +224,8 @@ export default function Dashboard() {
             preferences: {
               email_notifications: true,
               travel_recommendations: true,
-              public_profile: true
+              public_profile: true,
+              newsletter_subscription: true
             },
             updated_at: new Date().toISOString()
           }
@@ -248,17 +250,10 @@ export default function Dashboard() {
           let dbPrefs = profileData.preferences
           if (dbPrefs) {
             if (typeof dbPrefs === 'string') {
-              try {
-                dbPrefs = JSON.parse(dbPrefs)
-              } catch (e) {
-                console.error('Failed to parse preferences:', e)
-              }
+              try { setPreferences({ ...preferences, ...JSON.parse(dbPrefs) }) } catch(e){}
+            } else {
+              setPreferences({ ...preferences, ...dbPrefs })
             }
-            setPreferences({
-              email_notifications: dbPrefs.email_notifications ?? true,
-              travel_recommendations: dbPrefs.travel_recommendations ?? true,
-              public_profile: dbPrefs.public_profile ?? true
-            })
           }
         }
 
@@ -304,6 +299,17 @@ export default function Dashboard() {
         })
 
       if (error) throw error
+
+      if (user.email) {
+        await fetch('/api/newsletter', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            status: preferences.newsletter_subscription ? 'active' : 'unsubscribed'
+          })
+        }).catch(err => console.error('Failed to sync newsletter subscription', err))
+      }
 
       setInitialProfile({ ...profile, username: cleanUsername || '' })
       alert('Changes saved successfully!')
@@ -646,6 +652,22 @@ export default function Dashboard() {
                     className={`${styles["switch-toggle-btn"]} ${preferences.travel_recommendations ? styles["switch-active"] : ''}`}
                     onClick={() => {
                       const newPrefs = { ...preferences, travel_recommendations: !preferences.travel_recommendations }
+                      setPreferences(newPrefs)
+                    }}
+                  >
+                    <span className={styles["switch-knob"]}></span>
+                  </button>
+                </div>
+
+                <div className={styles["pref-checkbox-row"]}>
+                  <div className={styles["pref-checkbox-left"]}>
+                    <span className={styles["pref-checkbox-title"]}>Newsletter Subscription</span>
+                    <span className={styles["pref-checkbox-desc"]}>Receive our weekly dispatch, latest news, and exclusive updates from Snaptrip.</span>
+                  </div>
+                  <button 
+                    className={`${styles["switch-toggle-btn"]} ${preferences.newsletter_subscription ? styles["switch-active"] : ''}`}
+                    onClick={() => {
+                      const newPrefs = { ...preferences, newsletter_subscription: !preferences.newsletter_subscription }
                       setPreferences(newPrefs)
                     }}
                   >

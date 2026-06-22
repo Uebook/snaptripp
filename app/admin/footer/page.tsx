@@ -8,7 +8,7 @@ interface FooterSettings {
   facebook_url: string
   twitter_url: string
   instagram_url: string
-  youtube_url: string
+  linkedin_url: string
 }
 
 interface FooterLinkItem {
@@ -30,7 +30,7 @@ export default function AdminFooterPage() {
     facebook_url: '',
     twitter_url: '',
     instagram_url: '',
-    youtube_url: ''
+    linkedin_url: ''
   })
   const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState({ text: '', type: '' })
@@ -284,11 +284,11 @@ export default function AdminFooterPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>YouTube URL</label>
+                <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>LinkedIn URL</label>
                 <input
                   type="text"
-                  value={settings.youtube_url}
-                  onChange={e => setSettings({ ...settings, youtube_url: e.target.value })}
+                  value={settings.linkedin_url}
+                  onChange={e => setSettings({ ...settings, linkedin_url: e.target.value })}
                   placeholder="#"
                   style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
                 />

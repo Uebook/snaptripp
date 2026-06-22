@@ -26,3 +26,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { email, status } = await request.json()
+    if (!email || !status) {
+      return NextResponse.json({ error: 'Email and status are required' }, { status: 400 })
+    }
+
+    const { error } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .upsert({ email, status }, { onConflict: 'email' })
+      
+    if (error) {
+      console.error('Newsletter update error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

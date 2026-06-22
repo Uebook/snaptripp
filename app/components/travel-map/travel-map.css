@@ -796,3 +796,72 @@
 .btn-copy-link:hover {
   background: #D9A200;
 }
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .dashboard-hero-card {
+    margin-left: 0;
+  }
+  .destinations-grid, .country-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .wandered-places {
+    flex-direction: column;
+  }
+  .places-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .rating-area {
+    padding: 40px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-map-nav {
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 0 20px;
+  }
+  .dashboard-stats-row {
+    flex-direction: column;
+    gap: 30px;
+  }
+  .stat-item:not(:last-child)::after {
+    display: none;
+  }
+  .destinations-grid, .country-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-hero {
+    height: auto;
+    padding: 40px 0;
+  }
+  .dashboard-hero-card {
+    margin-top: 0;
+    max-width: 100%;
+  }
+  .passport-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .passport-search {
+    width: 100%;
+  }
+  .digital-passport {
+    padding: 30px 20px;
+  }
+  .rating-title h2 {
+    font-size: 2rem;
+  }
+  .rating-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .rating-score {
+    text-align: left;
+  }
+}

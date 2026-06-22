@@ -259,7 +259,7 @@ export default function AdminHowItWorksPage() {
           className={`admin-button ${activeTab === 'settings' ? '' : 'outline'}`}
           style={{ padding: '10px 20px', borderRadius: '10px' }}
         >
-          Hero & Page Intros
+          Interactive Demo
         </button>
         <button
           onClick={() => setActiveTab('planning_steps')}
@@ -280,7 +280,7 @@ export default function AdminHowItWorksPage() {
       {/* Tab 1: Hero & Layout Settings */}
       {activeTab === 'settings' && (
         <div className="admin-card">
-          <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>Hero Section & General Text</h3>
+
 
           {settingsMsg.text && (
             <div className={`badge ${settingsMsg.type}`} style={{ display: 'block', padding: '12px 16px', borderRadius: '12px', marginBottom: '20px', fontSize: '14px' }}>
@@ -289,109 +289,7 @@ export default function AdminHowItWorksPage() {
           )}
 
           <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Badge Text</label>
-                <input
-                  type="text"
-                  value={settings.hero_badge}
-                  onChange={e => setSettings({ ...settings, hero_badge: e.target.value })}
-                  required
-                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Title</label>
-                <input
-                  type="text"
-                  value={settings.hero_title}
-                  onChange={e => setSettings({ ...settings, hero_title: e.target.value })}
-                  required
-                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Subtitle / Description</label>
-              <textarea
-                value={settings.hero_description}
-                onChange={e => setSettings({ ...settings, hero_description: e.target.value })}
-                rows={3}
-                required
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', resize: 'vertical', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Hero Background Image</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <input
-                  type="text"
-                  value={settings.hero_bg_image}
-                  onChange={e => setSettings({ ...settings, hero_bg_image: e.target.value })}
-                  placeholder="e.g. /images/how_hero.png"
-                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', flexGrow: 1, boxSizing: 'border-box' }}
-                />
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    id="hero-image-file"
-                    onChange={(e) => handleImageUpload(e, 'hero_bg_image')}
-                    style={{ display: 'none' }}
-                  />
-                  <label
-                    htmlFor="hero-image-file"
-                    className="admin-button outline"
-                    style={{ padding: '12px 16px', borderRadius: '12px', cursor: 'pointer', display: 'inline-block', fontSize: '14px', margin: 0 }}
-                  >
-                    {uploadingImg ? 'Uploading...' : 'Upload Image'}
-                  </label>
-                </div>
-              </div>
-              {settings.hero_bg_image && (
-                <div style={{ marginTop: '8px', border: '1px dashed var(--admin-border)', padding: '8px', borderRadius: '12px', display: 'inline-block', background: '#fff' }}>
-                  <img src={settings.hero_bg_image} alt="Hero Preview" style={{ maxHeight: '100px', borderRadius: '8px', display: 'block' }} />
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>Planning Section Title</label>
-              <input
-                type="text"
-                value={settings.planning_title}
-                onChange={e => setSettings({ ...settings, planning_title: e.target.value })}
-                required
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>How It Works Section Title</label>
-              <input
-                type="text"
-                value={settings.how_works_title}
-                onChange={e => setSettings({ ...settings, how_works_title: e.target.value })}
-                required
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontWeight: '600', fontSize: '14px', color: 'var(--admin-muted)' }}>How It Works Section Description</label>
-              <textarea
-                value={settings.how_works_desc}
-                onChange={e => setSettings({ ...settings, how_works_desc: e.target.value })}
-                rows={3}
-                required
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', resize: 'vertical', width: '100%', boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: '24px', marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <h4 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '4px', color: 'var(--admin-accent)' }}>Interactive Demo - Itinerary Tab</h4>
               
               <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid var(--admin-border)' }}>

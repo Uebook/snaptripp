@@ -56,12 +56,20 @@ export async function POST(request: Request) {
 
       if (authData.user) {
       // 3. Update the profile table manually to store extra metadata
+      const defaultPreferences = {
+        email_notifications: true,
+        travel_recommendations: true,
+        public_profile: true,
+        newsletter_subscription: true
+      }
+
       const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
         id: authData.user.id,
         email: authData.user.email,
         username: finalUsername,
         full_name: fullName || '',
         phone: phone || '',
+        preferences: defaultPreferences,
         updated_at: new Date().toISOString(),
       })
 
@@ -73,8 +81,17 @@ export async function POST(request: Request) {
           username: finalUsername,
           full_name: fullName || '',
           phone: phone || '',
+          preferences: defaultPreferences,
           updated_at: new Date().toISOString(),
         }).eq('id', authData.user.id)
+      }
+
+      // Auto-enroll in newsletter
+      if (authData.user.email) {
+        await supabaseAdmin.from('newsletter_subscribers').upsert(
+          { email: authData.user.email, status: 'active' },
+          { onConflict: 'email' }
+        ).catch(e => console.error('Auto-enroll newsletter error:', e))
       }
     }
 

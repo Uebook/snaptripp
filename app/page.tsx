@@ -416,18 +416,22 @@ export default function Home() {
             className="slider-handle"
             style={{
               top: isUnlocked ? '90%' : '50%',
-              transition: 'top 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+              transition: 'top 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              cursor: 'pointer'
             }}
             onClick={() => setIsUnlocked(!isUnlocked)}
           >
-            ||
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="7 10 12 5 17 10"></polyline>
+              <polyline points="7 14 12 19 17 14"></polyline>
+            </svg>
           </div>
         </div>
 
         <div className="explore-right">
           {!isUnlocked ? (
             <div className="drag-unlock-text">
-              <p>Drag to</p>
+              <p>Click to</p>
               <span>Unlock Fun</span>
             </div>
           ) : (

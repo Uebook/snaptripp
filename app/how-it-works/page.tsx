@@ -241,22 +241,19 @@ export default function HowItWorks() {
       <section className={styles.tabsSection}>
         <div className={styles.tabsContainer}>
           <div className={styles.tabsHeader}>
-            <button className={`${styles.tabBtn} ${activeTab === 'itinerary' ? styles.active : ''}`} onClick={() => setActiveTab('itinerary')}>
-              <span className={styles.tabIcon}>📅</span> Itinerary
-            </button>
-            <button className={`${styles.tabBtn} ${activeTab === 'support' ? styles.activeSupport : ''}`} onClick={() => setActiveTab('support')}>
-              <span className={styles.tabIcon}>🎧</span> Support
+            <button className={`${styles.tabBtn} ${styles.active}`}>
+              <span className={styles.tabIcon}>📅</span> How to plan your itinerary
             </button>
           </div>
           <div className={styles.tabContent}>
             {activeTab === 'itinerary' && (
               <div className={styles.phasesDemo}>
 
-                {/* Phase One */}
+                {/* Step One */}
                 <div className={styles.phaseRow}>
                   <div className={styles.phaseCircle}>1</div>
                   <div className={styles.phaseContent}>
-                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>🗺️</span> PHASE ONE</div>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>🗺️</span> STEP ONE</div>
                     <h3 className={styles.phaseTitle}>Select a City: Map Discovery</h3>
                     <p className={styles.phaseDesc}>Begin your journey by exploring our global map interface. Pinpoint your next adventure using interactive markers that reveal real-time insights about cities worldwide, from bustling metropolises to hidden gems.</p>
                     <div className={styles.phaseTags}>
@@ -266,11 +263,11 @@ export default function HowItWorks() {
                   </div>
                 </div>
 
-                {/* Phase Two */}
+                {/* Step Two */}
                 <div className={styles.phaseRow}>
                   <div className={styles.phaseCircle}>2</div>
                   <div className={styles.phaseContent}>
-                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>📍</span> PHASE TWO</div>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>📍</span> STEP TWO</div>
                     <h3 className={styles.phaseTitle}>Choose Attractions: Curated Landmarks</h3>
                     <p className={styles.phaseDesc}>Dive into a selection of curated landmarks and hidden gems. Our system analyzes millions of data points to suggest attractions tailored to your personal preferences. Add world-renowned sites or local secrets to your custom bucket list with a single click.</p>
                     <div className={styles.phaseCards}>
@@ -286,114 +283,19 @@ export default function HowItWorks() {
                   </div>
                 </div>
 
-                {/* Phase Three */}
+                {/* Step Three */}
                 <div className={styles.phaseRow}>
                   <div className={styles.phaseCircle}>3</div>
                   <div className={styles.phaseContent}>
-                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>⚡</span> PHASE THREE</div>
-                    <h3 className={styles.phaseTitle}>Finalize Itinerary: Optimization Engine</h3>
-                    <p className={styles.phaseDesc}>Let our advanced optimization engine handle the logistics. The platform automatically calculates the most efficient travel routes, provides precise time-on-site estimates, and generates a comprehensive day-wise breakdown. Adjust your schedule in real-time as your travel needs evolve.</p>
-                    <div className={styles.phaseAi}>
-                      <span className={styles.phaseAiIcon}>🤖</span>
-                      <div>
-                        <strong>AI-Powered Route Optimization Active</strong>
-                        <p>Intelligent scheduling engine processing your data.</p>
-                      </div>
-                    </div>
+                    <div className={styles.phaseLabel}><span className={styles.phaseLabelIcon}>⚡</span> STEP THREE</div>
+                    <h3 className={styles.phaseTitle}>Finalize Itinerary: Save & Share</h3>
+                    <p className={styles.phaseDesc}>Finalise your perfect itinerary, save it to your wishlist to revisit later, and easily share your upcoming adventure with friends and family!</p>
                   </div>
                 </div>
 
               </div>
             )}
-            {activeTab === 'support' && (
-              <div className={styles.supportDemo}>
-                <div className={styles.supportHeader}>
-                  <div>
-                    <h3 className={styles.supportTitle}>Safety Shield</h3>
-                    <p className={styles.supportDesc}>
-                      Intelligent assistance and local resources curated based on your current geographical context for total peace of mind.
-                    </p>
-                  </div>
-                  <button className={styles.sosBtn}>
-                    <span className={styles.asterisk}>✱</span> GLOBAL SOS
-                  </button>
-                </div>
 
-                <div className={styles.zonesGrid}>
-                  {/* Primary Zone */}
-                  <div className={styles.zoneCard}>
-                    <div className={styles.zoneHeader}>
-                      <div className={styles.zoneInfo}>
-                        <h4>Primary Zone</h4>
-                        <div className={styles.zoneMeta}>
-                          <span className={styles.metaBadge}>CURRENT LOCATION</span>
-                          <span className={styles.metaTime}>14:30 | EN/HI</span>
-                        </div>
-                      </div>
-                      <div className={styles.zoneIcon}>🏢</div>
-                    </div>
-
-                    <div className={styles.emergencyNumbers}>
-                      <div className={styles.numberBox}>
-                        <span className={styles.numberLabel}>AMBULANCE</span>
-                        <span className={styles.numberValue}>911</span>
-                      </div>
-                      <div className={styles.numberBox}>
-                        <span className={styles.numberLabel}>LOCAL POLICE</span>
-                        <span className={styles.numberValue}>110</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.facilityInfo}>
-                      <div className={styles.facilityTitle}>
-                        <span className={styles.plusIcon}>🏥</span> Nearby Medical Care
-                      </div>
-                      <div className={styles.facilityDetails}>
-                        <div className={styles.statusDot}></div>
-                        <div>
-                          <strong>Central General Hospital</strong>
-                          <span>Emergency Dept | 24/7 Support</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Transit Zone */}
-                  <div className={styles.zoneCard}>
-                    <div className={styles.zoneHeader}>
-                      <div className={styles.zoneInfo}>
-                        <h4>Transit Zone</h4>
-                        <div className={styles.zoneMeta}>
-                          <span className={`${styles.metaBadge} ${styles.transit}`}>NEXT DESTINATION</span>
-                          <span className={styles.metaTime}>17:00 | EN/FR</span>
-                        </div>
-                      </div>
-                      <div className={styles.zoneIcon}>🧭</div>
-                    </div>
-
-                    <div className={styles.emergencyNumbers}>
-                      <div className={styles.numberBox}>
-                        <span className={styles.numberLabel}>EMERGENCY</span>
-                        <span className={styles.numberValue}>119</span>
-                      </div>
-                      <div className={styles.numberBox}>
-                        <span className={styles.numberLabel}>SAFETY HUB</span>
-                        <span className={styles.numberValue}>112</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.facilityInfo}>
-                      <div className={styles.facilityTitle}>
-                        <span className={styles.infoIcon}>ℹ️</span> Protocol & Guidance
-                      </div>
-                      <p className={styles.protocolText}>
-                        Keep your digital emergency vault synced. Medical facilities here require insurance validation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>

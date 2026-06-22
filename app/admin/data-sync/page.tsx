@@ -274,7 +274,7 @@ export default function AdminDataSync() {
                             <select
                                 className="admin-search"
                                 style={{ width: '100%', padding: '10px 12px', marginBottom: '8px' }}
-                                value={COUNTRY_LIST.includes(selectedCountry || '') ? selectedCountry : (selectedCountry ? 'custom' : '')}
+                                value={COUNTRY_LIST.includes(selectedCountry || '') ? (selectedCountry || '') : (selectedCountry ? 'custom' : '')}
                                 onChange={(e) => {
                                     if (e.target.value === 'custom') {
                                         handleCountrySelect(customCountry)

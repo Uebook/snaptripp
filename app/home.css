@@ -60,6 +60,14 @@
   font-weight: 600;
 }
 
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
 .header-actions {
   display: flex;
   justify-content: flex-end;
@@ -1487,6 +1495,17 @@
 }
 
 /* Mobile Responsive */
+/* Responsive adjustments for Journey Section */
+@media (max-width: 1200px) {
+  .journey-info {
+    left: 40px;
+    width: 380px;
+  }
+  .map-container {
+    right: 40px;
+  }
+}
+
 @media (max-width: 1024px) {
   .hero-text h1 {
     font-size: 3.5rem;
@@ -1518,6 +1537,145 @@
     flex-wrap: wrap;
   }
 }
+
+@media (max-width: 992px) {
+  .header-container {
+    padding: 0 20px;
+  }
+  .nav-links {
+    gap: 20px;
+  }
+  
+  .hero-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  
+  .hero-text {
+    align-items: center;
+  }
+  
+  .left-gallery {
+    margin-left: 0;
+    justify-content: center;
+  }
+  
+  .why-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .search-explore {
+    flex-direction: column;
+    padding: 40px 20px;
+  }
+  
+  .explore-card-row {
+    flex-direction: column;
+  }
+  
+  .drag-unlock {
+    padding: 40px 20px;
+  }
+
+  .journey-map {
+    padding: 60px 15px;
+  }
+  .journey-card {
+    height: auto;
+    min-height: 750px;
+    padding: 60px 20px 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .journey-info {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    margin-bottom: 40px;
+    z-index: 10;
+  }
+  .map-container {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 240px;
+    height: 680px;
+    margin: 0 auto;
+  }
+  .start-journey-btn {
+    bottom: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-links.mobile-open {
+    display: flex;
+  }
+
+  .hero-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-destinations {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    font-size: 1.2rem;
+  }
+
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .why-snaptrip h2 {
+    font-size: 2.5rem;
+  }
+
+  .journey-map h2 {
+    font-size: 34px;
+    margin-bottom: 16px;
+  }
+  .journey-desc {
+    font-size: 15px;
+  }
+  .map-container {
+    max-width: 220px;
+    height: 620px;
+  }
+  .start-journey-btn {
+    width: 85%;
+    padding: 16px 0;
+    font-size: 15px;
+  }
+  
+  .newsletter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
 /* User Profile Dropdown Styles */
 .user-profile-container {

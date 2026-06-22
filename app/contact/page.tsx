@@ -61,30 +61,22 @@ export default function ContactPage() {
                         We&apos;re Here to <span style={{ color: '#ffc107', fontStyle: 'italic' }}>Help You</span>
                     </h1>
                     <p style={{ fontSize: '1.25rem', opacity: 0.9, lineHeight: '1.6' }}>
-                        Have questions about our AI planner or need help with your itinerary? Our team is available 24/7 to assist you.
+                        Have questions about our AI planner or need help with your itinerary? Our team is ready to assist you.
                     </p>
                 </div>
             </section>
 
             {/* Contact Cards */}
             <section style={{ padding: '0 20px 60px', marginTop: '-80px', position: 'relative', zIndex: 10 }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+                <div style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
                     {[
                         { 
                             icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>, 
                             label: 'Email Us', val: 'support@snaptrip.com', color: '#a855f7', bg: '#f3e8ff' 
                         },
                         { 
-                            icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>, 
-                            label: 'Call Us', val: '+1 (555) 000-0000', color: '#ec4899', bg: '#fdf2f8' 
-                        },
-                        { 
                             icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>, 
                             label: 'Visit Us', val: 'San Francisco, CA', color: '#ef4444', bg: '#fee2e2' 
-                        },
-                        { 
-                            icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>, 
-                            label: 'Follow Us', val: '@snaptrip_ai', color: '#3b82f6', bg: '#eff6ff' 
                         }
                     ].map((item) => (
                         <div key={item.label} style={{
@@ -172,6 +164,7 @@ export default function ContactPage() {
                                     <option value="General Inquiry">General Inquiry</option>
                                     <option value="Technical Support">Technical Support</option>
                                     <option value="Feedback">Feedback</option>
+                                    <option value="Suggest Feature">Suggest Feature</option>
                                 </select>
                             </div>
                             <div>
@@ -196,7 +189,9 @@ export default function ContactPage() {
                             { q: 'How does SnapTrip generate itineraries?', a: 'Our smart AI analyzes your travel dates, budget, style, and interests to suggest the best attractions, restaurants, and hidden gems. It then organizes everything into a logical, day-by-day plan.' },
                             { q: 'Can I edit my itinerary after it\'s generated?', a: 'Yes! Your itinerary is fully customizable. You can drag and drop activities, swap locations, and tweak timings until it’s exactly what you want.' },
                             { q: 'Is SnapTrip free to use?', a: 'SnapTrip offers a free version with essential planning tools. We also provide premium features for travelers looking for advanced customization and exclusive perks.' },
-                            { q: 'Do I need to create an account to plan a trip?', a: 'While you can explore destinations without an account, signing up allows you to save your itineraries, edit them later, and access them across devices.' }
+                            { q: 'Do I need to create an account to plan a trip?', a: 'While you can explore destinations without an account, signing up allows you to save your itineraries, edit them later, and access them across devices.' },
+                            { q: 'Can I share my itinerary with friends and family?', a: 'Yes! You can easily generate a shareable link or export your itinerary as a PDF to keep your travel companions in the loop.' },
+                            { q: 'Does the map feature work offline?', a: 'You can download a summary of your itinerary and maps for offline access, ensuring you always know where to go even without an internet connection.' }
                         ].map((faq) => (
                             <div key={faq.q} style={{ padding: '24px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
                                 <h4 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#0a192f', fontWeight: '700' }}>{faq.q}</h4>

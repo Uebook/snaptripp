@@ -387,6 +387,14 @@ body {
   .admin-content {
     padding: 20px;
   }
+
+  .admin-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* CMS Sidebar Submenu Styling */

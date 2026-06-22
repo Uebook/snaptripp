@@ -23,6 +23,11 @@ export async function GET() {
       throw error
     }
 
+    if (settings && 'youtube_url' in settings) {
+      settings.linkedin_url = settings.youtube_url;
+      delete settings.youtube_url;
+    }
+
     const response = NextResponse.json({ settings })
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
     response.headers.set('Pragma', 'no-cache')
@@ -38,7 +43,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { description, phone, email, facebook_url, twitter_url, instagram_url, youtube_url } = body
+    const { description, phone, email, facebook_url, twitter_url, instagram_url, linkedin_url } = body
 
     if (!description || !phone || !email) {
       return NextResponse.json({ error: 'Description, Phone, and Email are required' }, { status: 400 })
@@ -54,13 +59,18 @@ export async function PUT(request: Request) {
         facebook_url: (facebook_url || '').trim(),
         twitter_url: (twitter_url || '').trim(),
         instagram_url: (instagram_url || '').trim(),
-        youtube_url: (youtube_url || '').trim(),
+        youtube_url: (linkedin_url || '').trim(),
         updated_at: new Date().toISOString()
       })
       .select()
       .single()
 
     if (error) throw error
+
+    if (settings && 'youtube_url' in settings) {
+      settings.linkedin_url = settings.youtube_url;
+      delete settings.youtube_url;
+    }
 
     return NextResponse.json({ success: true, settings })
   } catch (error: any) {

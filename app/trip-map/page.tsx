@@ -711,7 +711,7 @@ function TripMapContent() {
 
 
           <TripMap
-            places={places}
+            places={places.filter(p => !selectedCategory || p.categoryName === selectedCategory)}
             dayPlans={dayPlans}
             selectedCity={selectedCity}
             isSavedTripView={!!tripIdParam}

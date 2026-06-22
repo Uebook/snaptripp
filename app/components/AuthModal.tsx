@@ -268,11 +268,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo }: Au
             </div>
 
             {/* Main Content Area */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '2rem 4rem' }}>
-                <div style={{ display: 'flex', maxWidth: '1200px', width: '100%', gap: '4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '2rem 5%' }}>
+                <div style={{ display: 'flex', maxWidth: '1200px', width: '100%', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     
                     {/* LEFT PANEL */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingRight: '2rem', minWidth: '400px' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingRight: '1rem', minWidth: '280px' }}>
                         <h1 style={{ 
                             fontFamily: 'Playfair Display, serif', 
                             fontSize: '3.5rem', 
@@ -309,18 +309,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo }: Au
                     </div>
 
                     {/* RIGHT PANEL (Form) */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '280px' }}>
                         <div 
                             style={{
                                 backgroundColor: '#ffffff',
                                 color: '#1f2937',
-                                padding: '2.5rem',
+                                padding: '2rem 1.5rem',
                                 borderRadius: '16px',
                                 width: '100%',
                                 maxWidth: '440px',
                                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                                 fontFamily: 'Inter, sans-serif',
-                                margin: '2rem 0'
+                                margin: '1rem 0'
                             }}
                         >
                             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '1.5rem' }}>

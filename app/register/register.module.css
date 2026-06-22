@@ -23,7 +23,13 @@
 .leftPanel {
   flex: 1;
   padding: 20px; /* Padding inside the white card around the image */
-  display: flex;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .leftPanel {
+    display: flex;
+  }
 }
 
 .imageWrapper {
@@ -357,5 +363,25 @@
   font-size: 14px;
   font-weight: 600;
   color: #6B7280;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+  
+  .card {
+    height: auto;
+    border-radius: 16px;
+  }
+  
+  .rightPanel {
+    padding: 30px 20px;
+  }
+  
+  .welcomeTitle {
+    font-size: 26px;
+  }
 }
 

@@ -26,7 +26,7 @@ export async function GET() {
       facebook_url: '#',
       twitter_url: '#',
       instagram_url: '#',
-      youtube_url: '#'
+      linkedin_url: '#'
     }
 
     const defaultLinks = [
@@ -44,8 +44,14 @@ export async function GET() {
     const isSettingsMissing = settingsError && (settingsError.code === 'PGRST205' || settingsError.message.includes('relation "footer_settings" does not exist'))
     const isLinksMissing = linksError && (linksError.code === 'PGRST205' || linksError.message.includes('relation "footer_links" does not exist'))
 
+    let finalSettings = isSettingsMissing || !settingsData ? defaultSettings : settingsData;
+    if (finalSettings && 'youtube_url' in finalSettings) {
+      finalSettings.linkedin_url = finalSettings.youtube_url;
+      delete finalSettings.youtube_url;
+    }
+
     const response = NextResponse.json({
-      settings: isSettingsMissing || !settingsData ? defaultSettings : settingsData,
+      settings: finalSettings,
       links: isLinksMissing || !linksData ? defaultLinks : linksData
     })
 

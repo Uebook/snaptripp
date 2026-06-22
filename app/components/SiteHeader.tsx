@@ -9,9 +9,15 @@ export default function SiteHeader() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -105,8 +111,28 @@ export default function SiteHeader() {
         <Link href="/" className="logo-container">
           <img src="/images/applogo.webp" alt="SnapTrip" className="logo-img" style={{ height: '64px', width: 'auto' }} />
         </Link>
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#031B4E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isMobileMenuOpen ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </>
+            )}
+          </svg>
+        </button>
 
-        <nav className="nav-links">
+        <nav className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
           <Link href="/plan" className={getLinkClass('/plan')}>Plan Your Trip</Link>
           <Link href="/travel-map" className={getLinkClass('/travel-map')}>Travel Map</Link>
           <Link href="/explore" className={getLinkClass('/explore')}>Explore Countries</Link>

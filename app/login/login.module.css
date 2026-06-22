@@ -242,3 +242,18 @@
   font-size: 0.75rem;
   color: #999;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .rightPanel {
+    padding: 30px 20px;
+  }
+  
+  .welcomeTitle {
+    font-size: 26px;
+  }
+  
+  .logo {
+    margin-bottom: 2rem;
+  }
+}
