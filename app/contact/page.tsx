@@ -4,10 +4,15 @@ import React, { useState } from 'react';
 import SiteHeader from '@/app/components/SiteHeader';
 import SiteFooter from '@/app/components/SiteFooter';
 
+const COUNTRY_CODES = [
+  "+1", "+7", "+20", "+27", "+30", "+31", "+32", "+33", "+34", "+36", "+39", "+40", "+41", "+43", "+44", "+45", "+46", "+47", "+48", "+49", "+51", "+52", "+53", "+54", "+55", "+56", "+57", "+58", "+60", "+61", "+62", "+63", "+64", "+65", "+66", "+81", "+82", "+84", "+86", "+90", "+91", "+92", "+93", "+94", "+95", "+98", "+211", "+212", "+213", "+216", "+218", "+220", "+221", "+222", "+223", "+224", "+225", "+226", "+227", "+228", "+229", "+230", "+231", "+232", "+233", "+234", "+235", "+236", "+237", "+238", "+239", "+240", "+241", "+242", "+243", "+244", "+245", "+246", "+248", "+249", "+250", "+251", "+252", "+253", "+254", "+255", "+256", "+257", "+258", "+260", "+261", "+262", "+263", "+264", "+265", "+266", "+267", "+268", "+269", "+290", "+291", "+297", "+298", "+299", "+350", "+351", "+352", "+353", "+354", "+355", "+356", "+357", "+358", "+359", "+370", "+371", "+372", "+373", "+374", "+375", "+376", "+377", "+378", "+379", "+380", "+381", "+382", "+385", "+386", "+387", "+389", "+420", "+421", "+423", "+500", "+501", "+502", "+503", "+504", "+505", "+506", "+507", "+508", "+509", "+590", "+591", "+592", "+593", "+594", "+595", "+596", "+597", "+598", "+599", "+670", "+672", "+673", "+674", "+675", "+676", "+677", "+678", "+679", "+680", "+681", "+682", "+683", "+685", "+686", "+687", "+688", "+689", "+690", "+691", "+692", "+850", "+852", "+853", "+855", "+856", "+880", "+886", "+960", "+961", "+962", "+963", "+964", "+965", "+966", "+967", "+968", "+970", "+971", "+972", "+973", "+974", "+975", "+976", "+977", "+992", "+993", "+994", "+995", "+996", "+998"
+];
+
 export default function ContactPage() {
-    const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', phone: '', subject: 'General Inquiry', message: '' })
+    const [formData, setFormData] = useState({ first_name: '', last_name: '', email: '', countryCode: '+1', phone: '', subject: 'General Inquiry', message: '' })
     const [status, setStatus] = useState({ type: '', msg: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -15,15 +20,16 @@ export default function ContactPage() {
         setStatus({ type: '', msg: '' })
 
         try {
+            const phoneWithCode = formData.phone ? `${formData.countryCode} ${formData.phone}` : ''
             const res = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, phone: phoneWithCode })
             })
             const data = await res.json()
             if (res.ok) {
                 setStatus({ type: 'success', msg: 'Message sent successfully! We will get back to you soon.' })
-                setFormData({ first_name: '', last_name: '', email: '', phone: '', subject: 'General Inquiry', message: '' })
+                setFormData({ first_name: '', last_name: '', email: '', countryCode: '+1', phone: '', subject: 'General Inquiry', message: '' })
             } else {
                 setStatus({ type: 'danger', msg: data.error || 'Failed to send message.' })
             }
@@ -148,12 +154,35 @@ export default function ContactPage() {
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Phone Number (Optional)</label>
                                     <div style={{ display: 'flex', gap: '10px' }}>
-                                        <select style={{ padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', width: '80px', flexShrink: 0 }}>
-                                            <option>+1</option>
-                                            <option>+44</option>
-                                            <option>+91</option>
-                                        </select>
-                                        <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="(555) 000-0000" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+                                        <div style={{ position: 'relative', width: '80px', flexShrink: 0 }}>
+                                            <div 
+                                                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                                                style={{ width: '100%', padding: '12px 28px 12px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', cursor: 'pointer', color: '#0a192f', display: 'flex', alignItems: 'center' }}
+                                            >
+                                                {formData.countryCode}
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#64748b' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                            </div>
+                                            
+                                            {showCountryDropdown && (
+                                                <>
+                                                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9 }} onClick={() => setShowCountryDropdown(false)} />
+                                                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                                                        {COUNTRY_CODES.map(code => (
+                                                            <div 
+                                                                key={code} 
+                                                                onClick={() => { setFormData({...formData, countryCode: code}); setShowCountryDropdown(false); }}
+                                                                style={{ padding: '8px 12px', cursor: 'pointer', color: '#0a192f', fontSize: '0.9rem', backgroundColor: formData.countryCode === code ? '#f1f5f9' : 'transparent' }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                                                onMouseLeave={(e) => { if (formData.countryCode !== code) e.currentTarget.style.backgroundColor = 'transparent' }}
+                                                            >
+                                                                {code}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="(555) 000-0000" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', color: '#0a192f' }} />
                                     </div>
                                 </div>
                             </div>

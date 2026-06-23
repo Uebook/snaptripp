@@ -2,6 +2,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
+import 'react-quill/dist/quill.snow.css'
 
 interface PageData {
   id: string
@@ -117,13 +121,25 @@ export default function AdminCMSEdit({ params }: { params: { slug: string } }) {
             <p style={{ fontSize: '12px', color: 'var(--admin-muted)', marginTop: '-4px', marginBottom: '4px' }}>
               You can use HTML tags like &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, and &lt;li&gt; to format the content.
             </p>
-            <textarea
-              value={page?.content || ''}
-              onChange={e => setPage(p => p ? { ...p, content: e.target.value } : null)}
-              rows={15}
-              required
-              style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', resize: 'vertical', width: '100%', boxSizing: 'border-box', fontFamily: 'monospace' }}
-            />
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+              <ReactQuill
+                theme="snow"
+                value={page?.content || ''}
+                onChange={(content) => setPage(p => p ? { ...p, content } : null)}
+                style={{ height: '400px', backgroundColor: 'white' }}
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, 4, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{'list': 'ordered'}, {'list': 'bullet'}],
+                    ['link', 'image'],
+                    ['clean']
+                  ]
+                }}
+              />
+            </div>
+            {/* Adding padding to accommodate the toolbar height below */}
+            <div style={{ height: '40px' }}></div>
           </div>
 
           <button

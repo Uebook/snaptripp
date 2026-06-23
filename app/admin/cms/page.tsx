@@ -45,27 +45,7 @@ export default function AdminCMS() {
         <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>Content Management (CMS)</h1>
       </div>
 
-      <div className="admin-grid">
-        <div className="admin-card">
-          <h3>Static Pages</h3>
-          <p style={{ color: 'var(--admin-muted)', marginBottom: '12px' }}>Manage content for Privacy, Terms, etc.</p>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--admin-accent)' }}>{pages.length}</div>
-        </div>
-        <div className="admin-card">
-          <h3>Settings & Toggles</h3>
-          <div>Feature flags & app settings</div>
-          <div style={{ marginTop: '12px' }}>
-            <label><input type="checkbox" defaultChecked /> Enable Blogs</label><br />
-            <label><input type="checkbox" defaultChecked /> Enable Reviews</label><br />
-            <label><input type="checkbox" /> Beta Features</label>
-          </div>
-        </div>
-        <div className="admin-card">
-          <h3>Email Templates</h3>
-          <div>Manage system email templates</div>
-          <button className="admin-button" style={{ marginTop: '12px' }}>New Template</button>
-        </div>
-      </div>
+
 
       <div className="admin-card" style={{ marginTop: '24px' }}>
         <h3 style={{ marginBottom: '16px' }}>Static Pages Data</h3>
@@ -115,33 +95,7 @@ export default function AdminCMS() {
         )}
       </div>
 
-      <div className="admin-card" style={{ marginTop: '24px' }}>
-        <h3>Email Templates Data</h3>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Template</th>
-              <th>Trigger</th>
-              <th>Last Updated</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Welcome Email</td>
-              <td>New user signup</td>
-              <td>2026-01-05</td>
-              <td><button className="admin-button outline">Edit</button></td>
-            </tr>
-            <tr>
-              <td>Trip Reminder</td>
-              <td>48 hrs before trip</td>
-              <td>2026-01-02</td>
-              <td><button className="admin-button outline">Edit</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
     </div>
   )
 }
