@@ -29,16 +29,17 @@ export async function POST(request: NextRequest) {
             const targetRadius = isObject && cityObj.radius ? parseInt(cityObj.radius, 10) : 25;
 
             // 1. Prepare crawler input
+            const locationStr = targetCityName ? `${targetCityName}, ${country}` : country;
+            
             const input: any = {
                 searchStringsArray: searchTerms || [
-                    'tourist attractions',
-                    'must visit places',
-                    targetCityName ? `visit ${targetCityName}` : `visit ${country}`,
-                    'popular attractions',
-                    'things to do',
-                    'adventure',
-                    'activity',
-                    'fun activity'
+                    `tourist attractions in ${locationStr}`,
+                    `must visit places in ${locationStr}`,
+                    `visit ${locationStr}`,
+                    `popular attractions in ${locationStr}`,
+                    `things to do in ${locationStr}`,
+                    `adventure in ${locationStr}`,
+                    `top activities in ${locationStr}`
                 ],
                 maxCrawledPlacesPerSearch: 10,
                 language: 'en',
