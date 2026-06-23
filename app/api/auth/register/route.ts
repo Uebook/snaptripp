@@ -88,10 +88,14 @@ export async function POST(request: Request) {
 
       // Auto-enroll in newsletter
       if (authData.user.email) {
-        await supabaseAdmin.from('newsletter_subscribers').upsert(
-          { email: authData.user.email, status: 'active' },
-          { onConflict: 'email' }
-        ).catch(e => console.error('Auto-enroll newsletter error:', e))
+        try {
+          await supabaseAdmin.from('newsletter_subscribers').upsert(
+            { email: authData.user.email, status: 'active' },
+            { onConflict: 'email' }
+          )
+        } catch (e) {
+          console.error('Auto-enroll newsletter error:', e)
+        }
       }
     }
 
