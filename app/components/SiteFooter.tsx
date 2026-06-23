@@ -80,7 +80,6 @@ export default function SiteFooter() {
             {settings.description}
           </p>
           <div className="footer-contact">
-            {settings.phone && <p className="contact-item">{settings.phone}</p>}
             {settings.email && <p className="contact-item">{settings.email}</p>}
           </div>
           <div className="footer-social">
