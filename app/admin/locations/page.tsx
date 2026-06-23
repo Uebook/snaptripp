@@ -14,29 +14,17 @@ export default function AdminLocations() {
     const [editCountryId, setEditCountryId] = useState<number | null>(null)
     const [isLoadingCountries, setIsLoadingCountries] = useState(false)
 
-    // States State
-    const [states, setStates] = useState<any[]>([])
-    const [stateCount, setStateCount] = useState(0)
-    const [statePage, setStatePage] = useState(0)
-    const [stateSearch, setStateSearch] = useState('')
-    const [selectedCountryId, setSelectedCountryId] = useState<number | 'all'>('all')
-    const [stateForm, setStateForm] = useState({ name: '', country_id: '', state_code: '' })
-    const [editStateId, setEditStateId] = useState<number | null>(null)
-    const [isLoadingStates, setIsLoadingStates] = useState(false)
-
     // Cities State
     const [cities, setCities] = useState<any[]>([])
     const [cityCount, setCityCount] = useState(0)
     const [cityPage, setCityPage] = useState(0)
     const [citySearch, setCitySearch] = useState('')
-    const [selectedStateId, setSelectedStateId] = useState<number | 'all'>('all')
-    const [cityForm, setCityForm] = useState({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' })
+    const [cityForm, setCityForm] = useState({ name: '', country_id: '', latitude: '', longitude: '' })
     const [editCityId, setEditCityId] = useState<number | null>(null)
     const [isLoadingCities, setIsLoadingCities] = useState(false)
 
     // All Countries for selects
     const [allCountriesList, setAllCountriesList] = useState<any[]>([])
-    const [allStatesList, setAllStatesList] = useState<any[]>([])
 
     // Load static data for dropdowns
     useEffect(() => {
@@ -46,16 +34,6 @@ export default function AdminLocations() {
         }
         loadDropdownData()
     }, [])
-
-    useEffect(() => {
-        if (cityForm.country_id || stateForm.country_id) {
-            const cId = cityForm.country_id || stateForm.country_id
-            supabase.from('states').select('id, name').eq('country_id', cId).order('name')
-                .then(({ data }) => {
-                    if (data) setAllStatesList(data)
-                })
-        }
-    }, [cityForm.country_id, stateForm.country_id])
 
     // Fetch Countries
     const fetchCountries = useCallback(async () => {
@@ -84,47 +62,14 @@ export default function AdminLocations() {
         }
     }, [countryPage, countrySearch])
 
-    // Fetch States
-    const fetchStates = useCallback(async () => {
-        setIsLoadingStates(true)
-        try {
-            let query = supabase.from('states').select('*, countries(name)', { count: 'exact' })
-
-            if (stateSearch) {
-                query = query.ilike('name', `%${stateSearch}%`)
-            }
-            if (selectedCountryId !== 'all') {
-                query = query.eq('country_id', selectedCountryId)
-            }
-
-            const from = statePage * ITEMS_PER_PAGE
-            const to = from + ITEMS_PER_PAGE - 1
-
-            const { data, count, error } = await query
-                .order('name')
-                .range(from, to)
-
-            if (error) throw error
-            setStates(data || [])
-            setStateCount(count || 0)
-        } catch (err) {
-            console.error('Fetch states error:', err)
-        } finally {
-            setIsLoadingStates(false)
-        }
-    }, [statePage, stateSearch, selectedCountryId])
-
     // Fetch Cities
     const fetchCities = useCallback(async () => {
         setIsLoadingCities(true)
         try {
-            let query = supabase.from('cities').select('*, countries(name), states(name)', { count: 'exact' })
+            let query = supabase.from('cities').select('*, countries(name)', { count: 'exact' })
 
             if (citySearch) {
                 query = query.ilike('name', `%${citySearch}%`)
-            }
-            if (selectedStateId !== 'all') {
-                query = query.eq('state_id', selectedStateId)
             }
 
             const from = cityPage * ITEMS_PER_PAGE
@@ -142,10 +87,9 @@ export default function AdminLocations() {
         } finally {
             setIsLoadingCities(false)
         }
-    }, [cityPage, citySearch, selectedStateId])
+    }, [cityPage, citySearch])
 
     useEffect(() => { fetchCountries() }, [fetchCountries])
-    useEffect(() => { fetchStates() }, [fetchStates])
     useEffect(() => { fetchCities() }, [fetchCities])
 
     // Handlers for Countries
@@ -172,29 +116,6 @@ export default function AdminLocations() {
         else fetchCountries()
     }
 
-    // Handlers for States
-    const handleSaveState = async () => {
-        if (!stateForm.name || !stateForm.country_id) return
-        try {
-            if (editStateId !== null) {
-                const { error } = await supabase.from('states').update(stateForm).eq('id', editStateId)
-                if (error) throw error
-                setEditStateId(null)
-            } else {
-                const { error } = await supabase.from('states').insert([{ ...stateForm, id: Date.now() % 2147483647 }])
-                if (error) throw error
-            }
-            setStateForm({ name: '', country_id: '', state_code: '' })
-            fetchStates()
-        } catch (err: any) { alert(err.message) }
-    }
-
-    const handleDeleteState = async (id: number) => {
-        if (!confirm('Delete this state?')) return
-        const { error } = await supabase.from('states').delete().eq('id', id)
-        if (error) alert(error.message)
-        else fetchStates()
-    }
 
     // Handlers for Cities
     const handleSaveCity = async () => {
@@ -213,7 +134,7 @@ export default function AdminLocations() {
                 const { error } = await supabase.from('cities').insert([{ ...payload, id: Date.now() % 2147483647 }])
                 if (error) throw error
             }
-            setCityForm({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' })
+            setCityForm({ name: '', country_id: '', latitude: '', longitude: '' })
             fetchCities()
         } catch (err: any) { alert(err.message) }
     }
@@ -297,85 +218,7 @@ export default function AdminLocations() {
                     </div>
                 </div>
 
-                {/* States Card */}
-                <div className="admin-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <div>
-                            <h3>States ({stateCount})</h3>
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                                <select
-                                    className="admin-search"
-                                    style={{ width: '120px', fontSize: '12px' }}
-                                    value={selectedCountryId}
-                                    onChange={(e) => { setSelectedCountryId(e.target.value === 'all' ? 'all' : parseInt(e.target.value)); setStatePage(0); }}
-                                >
-                                    <option value="all">All Countries</option>
-                                    {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                                <input
-                                    className="admin-search"
-                                    placeholder="Search States..."
-                                    value={stateSearch}
-                                    onChange={(e) => { setStateSearch(e.target.value); setStatePage(0); }}
-                                    style={{ width: '120px', fontSize: '12px' }}
-                                />
-                            </div>
-                        </div>
-                        <button className="admin-button" onClick={handleSaveState}>
-                            {editStateId !== null ? 'Update State' : 'Add State'}
-                        </button>
-                    </div>
-                    <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
-                        <select
-                            className="admin-search"
-                            style={{ flex: 1 }}
-                            value={stateForm.country_id}
-                            onChange={(e) => setStateForm({ ...stateForm, country_id: e.target.value })}
-                        >
-                            <option value="">Country</option>
-                            {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                        <input
-                            className="admin-search"
-                            placeholder="State Name"
-                            style={{ flex: 1 }}
-                            value={stateForm.name}
-                            onChange={(e) => setStateForm({ ...stateForm, name: e.target.value })}
-                        />
-                        {editStateId !== null && (
-                            <button className="admin-button outline" onClick={() => { setEditStateId(null); setStateForm({ name: '', country_id: '', state_code: '' }); }}>Cancel</button>
-                        )}
-                    </div>
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Country</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {isLoadingStates ? <tr><td colSpan={3}>Loading...</td></tr> : states.map(s => (
-                                <tr key={s.id}>
-                                    <td style={{ fontWeight: '600' }}>{s.name}</td>
-                                    <td>{s.countries?.name}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '4px' }}>
-                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => { setEditStateId(s.id); setStateForm({ name: s.name, country_id: s.country_id, state_code: s.state_code }); }}>Edit</button>
-                                            <button className="admin-button outline" style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--admin-danger)' }} onClick={() => handleDeleteState(s.id)}>Del</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {/* Pagination */}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
-                        <button className="admin-button outline" disabled={statePage === 0} onClick={() => setStatePage(p => p - 1)}>Prev</button>
-                        <span style={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>Page {statePage + 1} of {Math.ceil(stateCount / ITEMS_PER_PAGE)}</span>
-                        <button className="admin-button outline" disabled={(statePage + 1) * ITEMS_PER_PAGE >= stateCount} onClick={() => setStatePage(p => p + 1)}>Next</button>
-                    </div>
-                </div>
+
             </div>
 
             {/* Cities Card */}
@@ -391,15 +234,6 @@ export default function AdminLocations() {
                                 onChange={(e) => { setCitySearch(e.target.value); setCityPage(0); }}
                                 style={{ width: '200px' }}
                             />
-                            <select
-                                className="admin-search"
-                                style={{ width: '180px' }}
-                                value={selectedStateId}
-                                onChange={(e) => { setSelectedStateId(e.target.value === 'all' ? 'all' : parseInt(e.target.value)); setCityPage(0); }}
-                            >
-                                <option value="all">All States</option>
-                                {allStatesList.length > 0 ? allStatesList.map(s => <option key={s.id} value={s.id}>{s.name}</option>) : <option disabled>Select State</option>}
-                            </select>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '600px' }}>
@@ -412,15 +246,6 @@ export default function AdminLocations() {
                             <option value="">Country</option>
                             {allCountriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
-                        <select
-                            className="admin-search"
-                            style={{ width: '130px' }}
-                            value={cityForm.state_id}
-                            onChange={(e) => setCityForm({ ...cityForm, state_id: e.target.value })}
-                        >
-                            <option value="">State</option>
-                            {allStatesList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
                         <input
                             className="admin-search"
                             placeholder="City Name"
@@ -432,7 +257,7 @@ export default function AdminLocations() {
                             {editCityId !== null ? 'Update City' : 'Add City'}
                         </button>
                         {editCityId !== null && (
-                            <button className="admin-button outline" onClick={() => { setEditCityId(null); setCityForm({ name: '', state_id: '', country_id: '', latitude: '', longitude: '' }); }}>Cancel</button>
+                            <button className="admin-button outline" onClick={() => { setEditCityId(null); setCityForm({ name: '', country_id: '', latitude: '', longitude: '' }); }}>Cancel</button>
                         )}
                     </div>
                 </div>
@@ -440,17 +265,15 @@ export default function AdminLocations() {
                     <thead>
                         <tr>
                             <th>City</th>
-                            <th>State</th>
                             <th>Country</th>
                             <th>Coordinates</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {isLoadingCities ? <tr><td colSpan={5}>Loading...</td></tr> : cities.map(city => (
+                        {isLoadingCities ? <tr><td colSpan={4}>Loading...</td></tr> : cities.map(city => (
                             <tr key={city.id}>
                                 <td style={{ fontWeight: '600' }}>{city.name}</td>
-                                <td>{city.states?.name}</td>
                                 <td>{city.countries?.name}</td>
                                 <td style={{ fontSize: '11px', color: '#64748b' }}>{city.latitude}, {city.longitude}</td>
                                 <td>
@@ -459,8 +282,7 @@ export default function AdminLocations() {
                                             setEditCityId(city.id);
                                             setCityForm({
                                                 name: city.name,
-                                                state_id: city.state_id.toString(),
-                                                country_id: city.country_id.toString(),
+                                                country_id: city.country_id?.toString() || '',
                                                 latitude: city.latitude?.toString() || '',
                                                 longitude: city.longitude?.toString() || ''
                                             });

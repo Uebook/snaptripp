@@ -1,39 +1,6 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-
-// Popular travel destination countries
-const COUNTRY_LIST = [
-    'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria', 'Bangladesh', 'Belgium',
-    'Brazil', 'Cambodia', 'Canada', 'Chile', 'China', 'Colombia', 'Costa Rica', 'Croatia', 'Cuba',
-    'Czech Republic', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Greece', 'Hong Kong',
-    'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
-    'Jamaica', 'Japan', 'Jordan', 'Kenya', 'South Korea', 'Laos', 'Malaysia', 'Maldives', 'Mexico',
-    'Morocco', 'Myanmar', 'Nepal', 'Netherlands', 'New Zealand', 'Norway', 'Pakistan', 'Peru',
-    'Philippines', 'Poland', 'Portugal', 'Romania', 'Russia', 'Saudi Arabia', 'Singapore', 'South Africa',
-    'Spain', 'Sri Lanka', 'Sweden', 'Switzerland', 'Taiwan', 'Tanzania', 'Thailand', 'Turkey',
-    'UAE', 'Uganda', 'Ukraine', 'United Kingdom', 'United States', 'Vietnam', 'Zimbabwe'
-];
-
-const PREDEFINED_CITIES: { [key: string]: string[] } = {
-    'Ireland': ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Kilkenny', 'Sligo', 'Killarney', 'Tralee', 'Wexford'],
-    'United Kingdom': ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow', 'Liverpool', 'Bristol', 'Oxford', 'Cambridge', 'Belfast'],
-    'USA': ['New York', 'Los Angeles', 'Chicago', 'Miami', 'San Francisco', 'Las Vegas', 'Seattle', 'Washington DC', 'Boston', 'Austin'],
-    'France': ['Paris', 'Lyon', 'Marseille', 'Nice', 'Bordeaux', 'Strasbourg', 'Lille', 'Toulouse', 'Nantes', 'Cannes'],
-    'Italy': ['Rome', 'Milan', 'Venice', 'Florence', 'Naples', 'Turin', 'Bologna', 'Verona', 'Genoa', 'Palermo'],
-    'Germany': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Dresden', 'Leipzig', 'Stuttgart', 'Nuremberg', 'Bonn'],
-    'Spain': ['Madrid', 'Barcelona', 'Seville', 'Valencia', 'Malaga', 'Bilbao', 'Palma de Mallorca', 'Granada', 'San Sebastian', 'Alicante'],
-    'Greece': ['Athens', 'Thessaloniki', 'Heraklion', 'Rhodes Town', 'Chania', 'Corfu Town', 'Santorini', 'Mykonos', 'Patras', 'Nafplio'],
-    'Portugal': ['Lisbon', 'Porto', 'Faro', 'Sintra', 'Coimbra', 'Braga', 'Evora', 'Lagos', 'Cascais', 'Aveiro'],
-    'Finland': ['Helsinki', 'Rovaniemi', 'Tampere', 'Turku', 'Oulu', 'Espoo', 'Vantaa', 'Lahti', 'Kuopio', 'Porvoo'],
-    'India': ['Mumbai', 'New Delhi', 'Bangalore', 'Goa', 'Jaipur', 'Udaipur', 'Kolkata', 'Chennai', 'Hyderabad', 'Varanasi', 'Kochi', 'Agra'],
-    'UAE': ['Dubai', 'Abu Dhabi', 'Sharjah', 'Al Ain', 'Fujairah', 'Ras Al Khaimah'],
-    'Thailand': ['Bangkok', 'Phuket', 'Chiang Mai', 'Pattaya', 'Krabi', 'Koh Samui', 'Hua Hin'],
-    'Japan': ['Tokyo', 'Kyoto', 'Osaka', 'Sapporo', 'Fukuoka', 'Nara', 'Hiroshima', 'Okinawa'],
-    'Singapore': ['Singapore'],
-    'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Cairns', 'Gold Coast', 'Canberra'],
-    'Canada': ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Quebec City', 'Victoria', 'Whistler'],
-    'Mexico': ['Mexico City', 'Cancun', 'Playa del Carmen', 'Puerto Vallarta', 'Tulum', 'Guadalajara', 'Cabo San Lucas']
-};
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function AdminDataSync() {
     // Add animation styles
@@ -61,6 +28,36 @@ export default function AdminDataSync() {
     const [selectedCities, setSelectedCities] = useState<{name: string, lat: string, lng: string, radius: string}[]>([])
     const [manualCity, setManualCity] = useState('')
     const [isLoadingCities, setIsLoadingCities] = useState(false)
+    const [dbCountries, setDbCountries] = useState<string[]>([])
+    const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false)
+    const [countrySearchTerm, setCountrySearchTerm] = useState('')
+    const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false)
+    const [citySearchTerm, setCitySearchTerm] = useState('')
+
+    const countryDropdownRef = useRef<HTMLDivElement>(null)
+    const cityDropdownRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+                setIsCountryDropdownOpen(false)
+            }
+            if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+                setIsCityDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    useEffect(() => {
+        const fetchDbCountries = async () => {
+            const { data } = await supabase.from('countries').select('name').order('name')
+            if (data) setDbCountries(data.map(c => c.name))
+        }
+        fetchDbCountries()
+    }, [])
 
 
     const loadExistingCountries = useCallback(async () => {
@@ -88,26 +85,42 @@ export default function AdminDataSync() {
         setIsLoadingCities(true)
         setSelectedCities([])
         try {
-            const res = await fetch(`/api/planner/cities?country=${encodeURIComponent(country)}`)
-            const data = await res.json()
+            let allLoadedCities: any[] = []
+            let page = 0
+            const pageSize = 1000
+            let hasMore = true
 
-            let dbCities = data.success ? data.cities : []
-            const predefined = PREDEFINED_CITIES[country] || []
+            while (hasMore) {
+                const { data, error } = await supabase
+                    .from('cities')
+                    .select('name, latitude, longitude, countries!inner(name)')
+                    .eq('countries.name', country)
+                    .order('name')
+                    .range(page * pageSize, (page + 1) * pageSize - 1)
 
-            // Merge: start with DB cities, then add predefined if they don't already exist
-            const merged = [...dbCities]
-            predefined.forEach(cityName => {
-                if (!dbCities.some((c: any) => c.name.toLowerCase() === cityName.toLowerCase())) {
-                    merged.push({ name: cityName, lat: null, lng: null })
+                if (error) throw error
+
+                if (data && data.length > 0) {
+                    const mapped = data.map(c => ({
+                        name: c.name,
+                        lat: c.latitude,
+                        lng: c.longitude
+                    }))
+                    allLoadedCities = [...allLoadedCities, ...mapped]
+                    setCities([...allLoadedCities])
+                    
+                    if (data.length < pageSize) {
+                        hasMore = false
+                    } else {
+                        page++
+                    }
+                } else {
+                    hasMore = false
                 }
-            })
-
-            setCities(merged.sort((a, b) => a.name.localeCompare(b.name)))
+            }
         } catch (err) {
-            console.error('Failed to load cities', err)
-            // Fallback to predefined only if fetch fails
-            const predefined = PREDEFINED_CITIES[country] || []
-            setCities(predefined.map(name => ({ name, lat: null, lng: null })).sort((a, b) => a.name.localeCompare(b.name)))
+            console.error('Failed to load cities from DB', err)
+            setCities([])
         } finally {
             setIsLoadingCities(false)
         }
@@ -144,11 +157,19 @@ export default function AdminDataSync() {
     }
 
     const handleCityToggle = (cityName: string) => {
-        setSelectedCities(prev =>
-            prev.some(c => c.name === cityName)
-                ? prev.filter(c => c.name !== cityName)
-                : [...prev, { name: cityName, lat: '', lng: '', radius: '25' }]
-        )
+        setSelectedCities(prev => {
+            if (prev.some(c => c.name === cityName)) {
+                return prev.filter(c => c.name !== cityName)
+            } else {
+                const cityData = cities.find(c => c.name === cityName)
+                return [...prev, { 
+                    name: cityName, 
+                    lat: cityData?.lat?.toString() || '', 
+                    lng: cityData?.lng?.toString() || '', 
+                    radius: '25' 
+                }]
+            }
+        })
     }
 
     const handleAddManualCity = () => {
@@ -271,26 +292,97 @@ export default function AdminDataSync() {
 
                         <div style={{ marginTop: '20px' }}>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'rgba(255,255,255,0.7)' }}>1. Select Country</label>
-                            <select
-                                className="admin-search"
-                                style={{ width: '100%', padding: '10px 12px', marginBottom: '8px' }}
-                                value={COUNTRY_LIST.includes(selectedCountry || '') ? (selectedCountry || '') : (selectedCountry ? 'custom' : '')}
-                                onChange={(e) => {
-                                    if (e.target.value === 'custom') {
-                                        handleCountrySelect(customCountry)
-                                    } else {
-                                        handleCountrySelect(e.target.value)
-                                        setCustomCountry('')
-                                    }
-                                }}
-                            >
-                                <option value="">Select a country...</option>
-                                {COUNTRY_LIST.map(country => (
-                                    <option key={country} value={country}>{country}</option>
-                                ))}
-                                <option value="custom">Other / Custom</option>
-                            </select>
-                            {((selectedCountry && !COUNTRY_LIST.includes(selectedCountry)) || selectedCountry === 'custom' || (!COUNTRY_LIST.includes(selectedCountry || '') && selectedCountry !== null)) ? (
+                            <div ref={countryDropdownRef} style={{ position: 'relative', width: '100%', marginBottom: '8px' }}>
+                                <div
+                                    className="admin-search"
+                                    style={{
+                                        padding: '10px 12px',
+                                        cursor: 'pointer',
+                                        background: '#fff',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                                >
+                                    {selectedCountry && selectedCountry !== 'custom' ? selectedCountry : (selectedCountry === 'custom' ? 'Other / Custom' : 'Select a country...')}
+                                    <span style={{ transform: isCountryDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', fontSize: '10px' }}>▼</span>
+                                </div>
+
+                                {isCountryDropdownOpen && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        background: '#fff',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        marginTop: '4px',
+                                        maxHeight: '300px',
+                                        overflowY: 'auto',
+                                        zIndex: 50,
+                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                                    }}>
+                                        <div style={{ padding: '8px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, background: '#fff', zIndex: 2 }}>
+                                            <input
+                                                type="text"
+                                                className="admin-search"
+                                                placeholder="Search countries..."
+                                                style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                                value={countrySearchTerm}
+                                                onChange={(e) => setCountrySearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                        {dbCountries.filter(c => c.toLowerCase().includes(countrySearchTerm.toLowerCase())).map(country => (
+                                            <div
+                                                key={country}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    background: selectedCountry === country ? '#f1f5f9' : 'transparent',
+                                                    color: '#334155'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = selectedCountry === country ? '#f1f5f9' : 'transparent'}
+                                                onClick={() => {
+                                                    handleCountrySelect(country)
+                                                    setCustomCountry('')
+                                                    setIsCountryDropdownOpen(false)
+                                                    setCountrySearchTerm('')
+                                                }}
+                                            >
+                                                {country}
+                                            </div>
+                                        ))}
+                                        {dbCountries.filter(c => c.toLowerCase().includes(countrySearchTerm.toLowerCase())).length === 0 && (
+                                            <div style={{ padding: '8px 12px', fontSize: '14px', color: '#94a3b8' }}>No matches found.</div>
+                                        )}
+                                        <div
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                fontSize: '14px',
+                                                borderTop: '1px solid #e2e8f0',
+                                                fontWeight: 600,
+                                                color: 'var(--admin-accent)',
+                                                background: selectedCountry === 'custom' ? '#f1f5f9' : 'transparent'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = selectedCountry === 'custom' ? '#f1f5f9' : 'transparent'}
+                                            onClick={() => {
+                                                handleCountrySelect('custom')
+                                                setIsCountryDropdownOpen(false)
+                                                setCountrySearchTerm('')
+                                            }}
+                                        >
+                                            Other / Custom
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {((selectedCountry && !dbCountries.includes(selectedCountry)) || selectedCountry === 'custom' || (!dbCountries.includes(selectedCountry || '') && selectedCountry !== null)) ? (
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <input
                                         className="admin-search"
@@ -311,19 +403,86 @@ export default function AdminDataSync() {
                             <div style={{ marginTop: '20px' }}>
                                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>2. Select Cities (Top 5-7 recommended)</label>
 
-                                <div style={{ marginBottom: '12px' }}>
-                                    <select
-                                        className="admin-search"
-                                        style={{ width: '100%', padding: '10px 12px' }}
-                                        value=""
-                                        onChange={(e) => e.target.value && handleCityToggle(e.target.value)}
-                                        disabled={isLoadingCities || cities.length === 0}
+                                <div ref={cityDropdownRef} style={{ position: 'relative', width: '100%', marginBottom: '12px' }}>
+                                    <div
+                                        className={`admin-search ${isLoadingCities || cities.length === 0 ? 'disabled' : ''}`}
+                                        style={{
+                                            padding: '10px 12px',
+                                            cursor: isLoadingCities || cities.length === 0 ? 'not-allowed' : 'pointer',
+                                            background: isLoadingCities || cities.length === 0 ? '#f8fafc' : '#fff',
+                                            color: isLoadingCities || cities.length === 0 ? '#94a3b8' : 'inherit',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}
+                                        onClick={() => {
+                                            if (!isLoadingCities && cities.length > 0) {
+                                                setIsCityDropdownOpen(!isCityDropdownOpen)
+                                            }
+                                        }}
                                     >
-                                        <option value="">Choose from existing cities...</option>
-                                        {cities.filter(city => !selectedCities.some(c => c.name === city.name)).map(city => (
-                                            <option key={city.name} value={city.name}>{city.name}</option>
-                                        ))}
-                                    </select>
+                                        {isLoadingCities 
+                                            ? `Loading cities... (${cities.length})`
+                                            : cities.length > 0
+                                                ? `Choose from ${cities.length} existing cities...`
+                                                : 'No cities found'}
+                                        <span style={{ transform: isCityDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', fontSize: '10px' }}>▼</span>
+                                    </div>
+
+                                    {isCityDropdownOpen && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            background: '#fff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            marginTop: '4px',
+                                            maxHeight: '300px',
+                                            overflowY: 'auto',
+                                            zIndex: 50,
+                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                                        }}>
+                                            <div style={{ padding: '8px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, background: '#fff', zIndex: 2 }}>
+                                                <input
+                                                    type="text"
+                                                    className="admin-search"
+                                                    placeholder="Search cities..."
+                                                    style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                                    value={citySearchTerm}
+                                                    onChange={(e) => setCitySearchTerm(e.target.value)}
+                                                />
+                                            </div>
+                                            {cities
+                                                .filter(city => !selectedCities.some(c => c.name === city.name))
+                                                .filter(city => city.name.toLowerCase().includes(citySearchTerm.toLowerCase()))
+                                                .slice(0, 50)
+                                                .map(city => (
+                                                <div
+                                                    key={city.name}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '14px',
+                                                        color: '#334155'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                    onClick={() => {
+                                                        handleCityToggle(city.name)
+                                                        setIsCityDropdownOpen(false)
+                                                        setCitySearchTerm('')
+                                                    }}
+                                                >
+                                                    {city.name}
+                                                </div>
+                                            ))}
+                                            {cities.filter(city => !selectedCities.some(c => c.name === city.name)).filter(city => city.name.toLowerCase().includes(citySearchTerm.toLowerCase())).length === 0 && (
+                                                <div style={{ padding: '8px 12px', fontSize: '14px', color: '#94a3b8' }}>No matches found.</div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {selectedCities.length > 0 && (
