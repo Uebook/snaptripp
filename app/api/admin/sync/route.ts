@@ -72,12 +72,14 @@ export async function POST(request: NextRequest) {
             };
 
             if (isCoordinateSearch) {
-                input.lat = targetLat;
-                input.lng = targetLng;
+                input.customGeolocation = {
+                    type: "Point",
+                    coordinates: [targetLng, targetLat], // Note: Apify expects [longitude, latitude]
+                    radiusKm: targetRadius || 25
+                };
             } else {
                 input.locationQuery = locationStr;
             }
-            input.radiusKm = targetRadius || 25;
 
             // 2. Run crawler
             const run = await client.actor('compass/crawler-google-places').call(input);
