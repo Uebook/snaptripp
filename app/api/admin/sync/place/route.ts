@@ -11,6 +11,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
+        // First delete dependent trip_items to prevent foreign key violation
+        const { error: tripItemsError } = await supabaseAdmin
+            .from('trip_items')
+            .delete()
+            .eq('place_id', id);
+
+        if (tripItemsError) throw tripItemsError;
+
         const { error } = await supabaseAdmin
             .from('places')
             .delete()

@@ -10,6 +10,35 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
+        // 1. Fetch all place IDs for this country to handle foreign key dependencies
+        const { data: places, error: fetchError } = await supabaseAdmin
+            .from('places')
+            .select('id')
+            .eq('country', country);
+
+        if (fetchError) throw fetchError;
+
+        // 2. Delete dependent trip_items in chunks to avoid URL length limits
+        if (places && places.length > 0) {
+            const chunkSize = 200;
+            for (let i = 0; i < places.length; i += chunkSize) {
+                const chunkIds = places.slice(i, i + chunkSize).map(p => p.id);
+                const { error: tripItemsError } = await supabaseAdmin
+                    .from('trip_items')
+                    .delete()
+                    .in('place_id', chunkIds);
+                    
+                if (tripItemsError) {
+                    console.error('Error deleting dependent trip items:', tripItemsError);
+                    throw tripItemsError;
+                }
+            }
+            
+            // Also attempt to delete from published_places
+            await supabaseAdmin.from('published_places').delete().eq('country', country);
+        }
+
+        // 3. Now delete the places themselves
         const { error } = await supabaseAdmin
             .from('places')
             .delete()
