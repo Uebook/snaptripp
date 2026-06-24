@@ -28,11 +28,21 @@ export async function POST(request: NextRequest) {
             const targetLng = isObject && cityObj.lng ? parseFloat(cityObj.lng) : null;
             const targetRadius = isObject && cityObj.radius ? parseInt(cityObj.radius, 10) : 25;
 
+            const isCoordinateSearch = targetLat && !isNaN(targetLat) && targetLng && !isNaN(targetLng);
+
             // 1. Prepare crawler input
             const locationStr = targetCityName ? `${targetCityName}, ${country}` : country;
             
-            const input: any = {
-                searchStringsArray: searchTerms || [
+            const defaultSearchStrings = isCoordinateSearch
+                ? [
+                    `tourist attractions`,
+                    `must visit places`,
+                    `popular attractions`,
+                    `things to do`,
+                    `adventure`,
+                    `top activities`
+                ]
+                : [
                     `tourist attractions in ${locationStr}`,
                     `must visit places in ${locationStr}`,
                     `visit ${locationStr}`,
@@ -40,7 +50,10 @@ export async function POST(request: NextRequest) {
                     `things to do in ${locationStr}`,
                     `adventure in ${locationStr}`,
                     `top activities in ${locationStr}`
-                ],
+                ];
+            
+            const input: any = {
+                searchStringsArray: searchTerms || defaultSearchStrings,
                 maxCrawledPlacesPerSearch: 10,
                 language: 'en',
                 scrapePlaceDetailPage: true,
@@ -58,11 +71,11 @@ export async function POST(request: NextRequest) {
                 ]
             };
 
-            if (targetLat && !isNaN(targetLat) && targetLng && !isNaN(targetLng)) {
+            if (isCoordinateSearch) {
                 input.lat = targetLat;
                 input.lng = targetLng;
             } else {
-                input.locationQuery = targetCityName ? `${targetCityName}, ${country}` : country;
+                input.locationQuery = locationStr;
             }
             input.radiusKm = targetRadius || 25;
 
