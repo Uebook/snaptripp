@@ -44,7 +44,7 @@ export async function GET(request: Request) {
         const fallbackJapan = {
           name: 'Japan',
           desc: 'A harmonious blend of ancient traditions and futuristic innovation. From the neon-lit streets of Tokyo to the tranquil temples of Kyoto, Japan offers a sensory journey unlike any other.',
-          heroImg: '/images/explore_japan.png',
+          heroImg: '/images/explore_japan.webp',
           stats: { capital: 'Tokyo', currency: 'Yen (¥)', language: 'Japanese', timeZone: 'GMT+9', bestTime: 'Mar - May' },
           cards: [
             { title: 'About', desc: 'An archipelago of over 6,000 islands, Japan\'s topography ranges from snow-capped peaks to tropical beaches, defined by deep spiritual roots.' },
@@ -61,11 +61,11 @@ export async function GET(request: Request) {
             { title: 'Footwear', desc: 'Take off your shoes when entering homes, ryokans, and some traditional restaurants.' },
             { title: 'Tipping', desc: 'Do not tip in restaurants or taxis; excellent service is standard.' }
           ],
-          experience: { title: 'Traditional Tea Ceremony', desc: 'Experience the mindful preparation of matcha and the profound hospitality of Japanese culture.', img: '/images/explore_japan.png' },
+          experience: { title: 'Traditional Tea Ceremony', desc: 'Experience the mindful preparation of matcha and the profound hospitality of Japanese culture.', img: '/images/explore_japan.webp' },
           cities: [
-            { name: 'Tokyo', desc: 'Vibrant metropolis blending neon lights and historic shrines.', img: '/images/hero_city.png' },
-            { name: 'Kyoto', desc: 'Cultural heart with thousands of classical Buddhist temples.', img: '/images/coastal_beach.png' },
-            { name: 'Osaka', desc: 'A dynamic port city known for modern architecture and hearty street food.', img: '/images/marrakech.png' }
+            { name: 'Tokyo', desc: 'Vibrant metropolis blending neon lights and historic shrines.', img: '/images/hero_city.webp' },
+            { name: 'Kyoto', desc: 'Cultural heart with thousands of classical Buddhist temples.', img: '/images/coastal_beach.webp' },
+            { name: 'Osaka', desc: 'A dynamic port city known for modern architecture and hearty street food.', img: '/images/marrakech.webp' }
           ]
         }
         return NextResponse.json(fallbackJapan)
@@ -75,13 +75,13 @@ export async function GET(request: Request) {
         return NextResponse.json({
           name: titleCaseName,
           desc: `Discover ${titleCaseName} - planning options coming soon.`,
-          heroImg: '/images/guide_hero.png',
+          heroImg: '/images/guide_hero.webp',
           stats: { capital: 'N/A', currency: 'N/A', language: 'N/A', timeZone: 'N/A', bestTime: 'N/A' },
           cards: [],
           emergency: { police: '112', ambulance: '112', embassy: 'Contact your local embassy.' },
           connectivity: [],
           etiquette: [],
-          experience: { title: 'Sightseeing', desc: `Experience the local culture in ${titleCaseName}`, img: '/images/guide_hero.png' },
+          experience: { title: 'Sightseeing', desc: `Experience the local culture in ${titleCaseName}`, img: '/images/guide_hero.webp' },
           cities: []
         })
       }

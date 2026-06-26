@@ -25,64 +25,64 @@ const DESTINATIONS_DATA: Record<string, any> = {
     region: 'Europe',
     desc: 'Greece is famous for its iconic blue domes, ancient history, and stunning Aegean sunsets.',
     label: 'Santorini',
-    image: '/images/hero_greece_oia.png',
-    bgImage: '/images/hero_greece_oia.png',
+    image: '/images/hero_greece_oia.webp',
+    bgImage: '/images/hero_greece_oia.webp',
     locationTag: 'Oia Village, Santorini'
   },
   Italy: {
     region: 'Europe',
     desc: 'Italy is known for its historic art, culinary masterpieces, and the dramatic Amalfi Coast.',
     label: 'Positano',
-    image: '/images/card_italy.png',
-    bgImage: '/images/card_italy.png',
+    image: '/images/card_italy.webp',
+    bgImage: '/images/card_italy.webp',
     locationTag: 'Amalfi Coast, Italy'
   },
   Spain: {
     region: 'Region',
     desc: 'Spain is famous for its islands, beach holidays, surfing, diving and yachting.',
     label: 'Madrid',
-    image: '/images/card_madrid.png',
-    bgImage: '/images/hero_seoul_night.png',
+    image: '/images/card_madrid.webp',
+    bgImage: '/images/hero_seoul_night.webp',
     locationTag: 'Plaza Mayor, Madrid'
   },
   UAE: {
     region: 'Middle East',
     desc: 'UAE offers a blend of futuristic skyscrapers, luxury shopping, and desert adventures.',
     label: 'Dubai',
-    image: '/images/card_uae.png',
-    bgImage: '/images/hero_uae_museum.png',
+    image: '/images/card_uae.webp',
+    bgImage: '/images/hero_uae_museum.webp',
     locationTag: 'Museum of the Future, Dubai'
   },
   USA: {
     region: 'North America',
     desc: 'USA features diverse landscapes from bustling New York streets to the Grand Canyon.',
     label: 'New York',
-    image: '/images/card_usa.png',
-    bgImage: '/images/card_usa.png',
+    image: '/images/card_usa.webp',
+    bgImage: '/images/card_usa.webp',
     locationTag: 'Times Square, New York'
   },
   Canada: {
     region: 'North America',
     desc: 'Canada is renowned for its vast wilderness, stunning lakes, and friendly multicultural cities.',
     label: 'Banff',
-    image: '/images/card_canada.png',
-    bgImage: '/images/card_canada.png',
+    image: '/images/card_canada.webp',
+    bgImage: '/images/card_canada.webp',
     locationTag: 'Moraine Lake, Banff'
   },
   Thailand: {
     region: 'Asia',
     desc: 'Thailand is a land of tropical beaches, ornate temples, and vibrant street life.',
     label: 'Phuket',
-    image: '/images/card_thailand.png',
-    bgImage: '/images/card_thailand.png',
+    image: '/images/card_thailand.webp',
+    bgImage: '/images/card_thailand.webp',
     locationTag: 'Maya Bay, Phi Phi Islands'
   },
   Ireland: {
     region: 'Europe',
     desc: 'Ireland is known for its lush green landscapes, historic castles, and vibrant culture.',
     label: 'Cliffs of Moher',
-    image: '/images/why_mountains.png',
-    bgImage: '/images/why_mountains.png',
+    image: '/images/why_mountains.webp',
+    bgImage: '/images/why_mountains.webp',
     locationTag: 'Cliffs of Moher, County Clare'
   }
 };
@@ -400,7 +400,7 @@ export default function Home() {
             <div 
               className="v-card-img" 
               style={{ 
-                backgroundImage: `url(${destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.image || '/images/explore_japan.png'})` 
+                backgroundImage: `url(${destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.image || '/images/explore_japan.webp'})` 
               }}
             ></div>
             <div className="v-card-overlay">
@@ -529,10 +529,10 @@ export default function Home() {
 
           {/* 4 Overlapping Circles */}
           <div className="journey-circles">
-            <div className="journey-circle circle-1" style={{ backgroundImage: 'url(/images/how_tokyo.png)', left: '100px', top: '0', zIndex: 2 }}></div>
-            <div className="journey-circle circle-2" style={{ backgroundImage: 'url(/images/hero_greece_oia.png)', left: '-30px', top: '140px', zIndex: 1 }}></div>
-            <div className="journey-circle circle-3" style={{ backgroundImage: 'url(/images/alpine_mountains.png)', left: '200px', top: '160px', zIndex: 3 }}></div>
-            <div className="journey-circle circle-4" style={{ backgroundImage: 'url(/images/how_positano.png)', left: '80px', top: '300px', zIndex: 4 }}></div>
+            <div className="journey-circle circle-1" style={{ backgroundImage: 'url(/images/how_tokyo.webp)', left: '100px', top: '0', zIndex: 2 }}></div>
+            <div className="journey-circle circle-2" style={{ backgroundImage: 'url(/images/hero_greece_oia.webp)', left: '-30px', top: '140px', zIndex: 1 }}></div>
+            <div className="journey-circle circle-3" style={{ backgroundImage: 'url(/images/alpine_mountains.webp)', left: '200px', top: '160px', zIndex: 3 }}></div>
+            <div className="journey-circle circle-4" style={{ backgroundImage: 'url(/images/how_positano.webp)', left: '80px', top: '300px', zIndex: 4 }}></div>
           </div>
 
           <button className={`start-journey-btn ${inter.className}`} onClick={() => router.push(`/plan?country=${encodeURIComponent(activeDest)}`)}>
@@ -561,7 +561,7 @@ export default function Home() {
         </div>
 
         <div className="quote-section">
-          <div className="quote-img" style={{ backgroundImage: 'url(/images/why_mountains.png)' }}></div>
+          <div className="quote-img" style={{ backgroundImage: 'url(/images/why_mountains.webp)' }}></div>
           <div className="quote-content">
             <blockquote>
               "Travel is not about the destination, but the identity we find when we leave the home behind."
@@ -597,8 +597,8 @@ export default function Home() {
               quote: "Planning my trip was super easy and smooth. Loved the experience.",
               name: "Riya Sharma",
               location: "Dubai",
-              avatar_url: "/images/testimonial.png",
-              image_url: "/images/testimonial.png"
+              avatar_url: "/images/testimonial.webp",
+              image_url: "/images/testimonial.webp"
             };
             return (
               <>
@@ -632,16 +632,16 @@ export default function Home() {
         <div className="stories-grid">
           {(() => {
             const mainStory = blogsData.length > 0 ? blogsData[0] : {
-              image_url: '/images/marrakech.png',
+              image_url: '/images/marrakech.webp',
               category: 'MARRAKECH',
               title: 'Marrakech Magic: The Secret Heart of the Red City',
               excerpt: 'Explore the hidden corners of Marrakech, from the bustling souks to the serene courtyards of riads.',
               slug: '#'
             };
             const sideStories = blogsData.length > 1 ? blogsData.slice(1) : [
-              { image_url: '/images/why_mountains.png', title: 'Atlas Adventures: Beyond Berber Hospitality', category: 'MOROCCO', created_at: '2026-02-10T00:00:00Z', slug: '#' },
-              { image_url: '/images/hero_city.png', title: 'A Taste of Morocco: A Spice Trail Odyssey', category: 'MOROCCO', created_at: '2026-02-08T00:00:00Z', slug: '#' },
-              { image_url: '/images/marrakech.png', title: 'Chasing Dreams: Moroccan landscapes', category: 'MOROCCO', created_at: '2026-02-05T00:00:00Z', slug: '#' }
+              { image_url: '/images/why_mountains.webp', title: 'Atlas Adventures: Beyond Berber Hospitality', category: 'MOROCCO', created_at: '2026-02-10T00:00:00Z', slug: '#' },
+              { image_url: '/images/hero_city.webp', title: 'A Taste of Morocco: A Spice Trail Odyssey', category: 'MOROCCO', created_at: '2026-02-08T00:00:00Z', slug: '#' },
+              { image_url: '/images/marrakech.webp', title: 'Chasing Dreams: Moroccan landscapes', category: 'MOROCCO', created_at: '2026-02-05T00:00:00Z', slug: '#' }
             ];
 
             return (

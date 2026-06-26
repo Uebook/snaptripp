@@ -99,7 +99,7 @@ export default function Dashboard() {
       category: 'Beach',
       description: 'Starting from $3,400 per person',
       price: '$3,400',
-      imageUrl: '/images/card_italy.png'
+      imageUrl: '/images/card_italy.webp'
     },
     {
       id: '2',
@@ -108,7 +108,7 @@ export default function Dashboard() {
       category: 'Mountain',
       description: 'Immaculate peaks and world-class luxury skiing retreats.',
       price: '$2,800',
-      imageUrl: '/images/alpine_mountains.png'
+      imageUrl: '/images/alpine_mountains.webp'
     },
     {
       id: '3',
@@ -117,7 +117,7 @@ export default function Dashboard() {
       category: 'City Escape',
       description: "The Pink City's rich heritage and vibrant artisanal markets.",
       price: '$1,950',
-      imageUrl: '/images/card_barcelona.png'
+      imageUrl: '/images/card_barcelona.webp'
     },
     {
       id: '4',
@@ -126,7 +126,7 @@ export default function Dashboard() {
       category: 'City Escape',
       description: 'Ultra-modern luxury and desert-oasis experiences.',
       price: '$4,100',
-      imageUrl: '/images/card_uae.png'
+      imageUrl: '/images/card_uae.webp'
     },
     {
       id: '5',
@@ -135,7 +135,7 @@ export default function Dashboard() {
       category: 'Retreat',
       description: 'Spiritual sanctuaries and infinity pools amidst terraced jungles.',
       price: '$1,450',
-      imageUrl: '/images/coastal_beach.png'
+      imageUrl: '/images/coastal_beach.webp'
     }
   ])
   const [heartedPlaces, setHeartedPlaces] = useState<string[]>(['1', '2', '3', '4', '5'])
@@ -151,7 +151,7 @@ export default function Dashboard() {
       duration: '7 Days',
       airline: 'ITA Airways',
       country: 'Italy',
-      imageUrl: '/images/how_positano.png',
+      imageUrl: '/images/how_positano.webp',
       price: 3400,
       taxes: 280,
       fee: 120
@@ -165,7 +165,7 @@ export default function Dashboard() {
       duration: '12 Days',
       airline: 'Japan Airlines',
       country: 'Japan',
-      imageUrl: '/images/explore_japan.png',
+      imageUrl: '/images/explore_japan.webp',
       price: 4900,
       taxes: 420,
       fee: 180
@@ -179,7 +179,7 @@ export default function Dashboard() {
       duration: '5 Days',
       airline: 'Swiss International Air Lines',
       country: 'Switzerland',
-      imageUrl: '/images/alpine_mountains.png',
+      imageUrl: '/images/alpine_mountains.webp',
       price: 2800,
       taxes: 210,
       fee: 90

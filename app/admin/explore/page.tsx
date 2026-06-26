@@ -63,7 +63,7 @@ export default function AdminExplorePage() {
     name: '',
     desc: '',
     tag: 'Culture',
-    hero_img: '/images/guide_hero.png',
+    hero_img: '/images/guide_hero.webp',
     is_featured: false,
     capital: '',
     currency: '',
@@ -75,7 +75,7 @@ export default function AdminExplorePage() {
     emergency_embassy: '',
     experience_title: '',
     experience_desc: '',
-    experience_img: '/images/guide_hero.png'
+    experience_img: '/images/guide_hero.webp'
   })
   const [generalModalError, setGeneralModalError] = useState('')
   const [isSavingGeneral, setIsSavingGeneral] = useState(false)
@@ -167,7 +167,7 @@ export default function AdminExplorePage() {
             <div className="image-upload-options">
               <input
                 type="text"
-                placeholder="Paste image URL (e.g. /images/guide_france.png)"
+                placeholder="Paste image URL (e.g. /images/guide_france.webp)"
                 className="image-upload-input"
                 value={value}
                 onChange={e => onUrlChange(e.target.value)}
@@ -259,7 +259,7 @@ export default function AdminExplorePage() {
       name: '',
       desc: '',
       tag: 'Culture',
-      hero_img: '/images/guide_hero.png',
+      hero_img: '/images/guide_hero.webp',
       is_featured: false,
       capital: '',
       currency: '',
@@ -271,7 +271,7 @@ export default function AdminExplorePage() {
       emergency_embassy: 'Contact your local embassy.',
       experience_title: 'Sightseeing Tour',
       experience_desc: 'Discover local highlights with a guided exploration.',
-      experience_img: '/images/guide_hero.png'
+      experience_img: '/images/guide_hero.webp'
     })
     setIsEditMode(false)
     setGeneralModalError('')
@@ -426,7 +426,7 @@ export default function AdminExplorePage() {
 
   const addCity = () => {
     const updated = [...details.cities]
-    updated.push({ name: '', desc: '', img_url: '/images/hero_city.png' })
+    updated.push({ name: '', desc: '', img_url: '/images/hero_city.webp' })
     setDetails({ ...details, cities: updated })
   }
 
@@ -527,7 +527,7 @@ export default function AdminExplorePage() {
                   type="text"
                   value={settings.hero_bg_image || ''}
                   onChange={e => setSettings({ ...settings, hero_bg_image: e.target.value })}
-                  placeholder="e.g. /images/guide_hero.png"
+                  placeholder="e.g. /images/guide_hero.webp"
                   style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', flexGrow: 1, boxSizing: 'border-box' }}
                 />
                 <div style={{ position: 'relative' }}>

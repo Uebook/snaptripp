@@ -23,14 +23,14 @@ export async function GET() {
       hero_title: 'Where will your curiosity lead you next?',
       quote_text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.',
       quote_author: 'MARCEL PROUST',
-      hero_bg_image: '/images/guide_hero.png'
+      hero_bg_image: '/images/guide_hero.webp'
     }
 
     const defaultGuides = [
-      { id: 'japan', name: 'Japan', desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.', tag: 'Culture', hero_img: '/images/guide_japan.png', is_featured: true },
-      { id: 'italy', name: 'Italy', desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.', tag: 'Editorial', hero_img: '/images/guide_italy.png', is_featured: true },
-      { id: 'morocco', name: 'Morocco', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', tag: 'Lifestyle', hero_img: '/images/guide_morocco.png', is_featured: true },
-      { id: 'france', name: 'France', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', tag: 'Vintage', hero_img: '/images/guide_france.png', is_featured: true }
+      { id: 'japan', name: 'Japan', desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.', tag: 'Culture', hero_img: '/images/guide_japan.webp', is_featured: true },
+      { id: 'italy', name: 'Italy', desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.', tag: 'Editorial', hero_img: '/images/guide_italy.webp', is_featured: true },
+      { id: 'morocco', name: 'Morocco', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', tag: 'Lifestyle', hero_img: '/images/guide_morocco.webp', is_featured: true },
+      { id: 'france', name: 'France', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', tag: 'Vintage', hero_img: '/images/guide_france.webp', is_featured: true }
     ]
 
     const isSettingsMissing = settingsError && (settingsError.code === 'PGRST205' || settingsError.message.includes('relation "explore_settings" does not exist'))

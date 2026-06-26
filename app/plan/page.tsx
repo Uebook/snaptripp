@@ -7,14 +7,14 @@ import SiteFooter from '../components/SiteFooter'
 import styles from './planner.module.css'
 
 const DESTINATIONS_DATA: Record<string, any> = {
-  Greece: { region: 'Europe', desc: 'Greece is famous for its iconic blue domes, ancient history, and stunning Aegean sunsets.', label: 'Santorini', image: '/images/hero_greece_oia.png', bgImage: '/images/hero_greece_oia.png', locationTag: 'Oia Village, Santorini' },
-  Italy: { region: 'Europe', desc: 'Italy is known for its historic art, culinary masterpieces, and the dramatic Amalfi Coast.', label: 'Positano', image: '/images/card_italy.png', bgImage: '/images/card_italy.png', locationTag: 'Amalfi Coast, Italy' },
-  Spain: { region: 'Region', desc: 'Spain is famous for its islands, beach holidays, surfing, diving and yachting.', label: 'Madrid', image: '/images/card_madrid.png', bgImage: '/images/hero_seoul_night.png', locationTag: 'Plaza Mayor, Madrid' },
-  UAE: { region: 'Middle East', desc: 'UAE offers a blend of futuristic skyscrapers, luxury shopping, and desert adventures.', label: 'Dubai', image: '/images/card_uae.png', bgImage: '/images/hero_uae_museum.png', locationTag: 'Museum of the Future, Dubai' },
-  USA: { region: 'North America', desc: 'USA features diverse landscapes from bustling New York streets to the Grand Canyon.', label: 'New York', image: '/images/card_usa.png', bgImage: '/images/card_usa.png', locationTag: 'Times Square, New York' },
-  Canada: { region: 'North America', desc: 'Canada is renowned for its vast wilderness, stunning lakes, and friendly multicultural cities.', label: 'Banff', image: '/images/card_canada.png', bgImage: '/images/card_canada.png', locationTag: 'Moraine Lake, Banff' },
-  Thailand: { region: 'Asia', desc: 'Thailand is a land of tropical beaches, ornate temples, and vibrant street life.', label: 'Phuket', image: '/images/card_thailand.png', bgImage: '/images/card_thailand.png', locationTag: 'Maya Bay, Phi Phi Islands' },
-  Ireland: { region: 'Europe', desc: 'Ireland is known for its lush green landscapes, historic castles, and vibrant culture.', label: 'Cliffs of Moher', image: '/images/why_mountains.png', bgImage: '/images/why_mountains.png', locationTag: 'Cliffs of Moher, County Clare' }
+  Greece: { region: 'Europe', desc: 'Greece is famous for its iconic blue domes, ancient history, and stunning Aegean sunsets.', label: 'Santorini', image: '/images/hero_greece_oia.webp', bgImage: '/images/hero_greece_oia.webp', locationTag: 'Oia Village, Santorini' },
+  Italy: { region: 'Europe', desc: 'Italy is known for its historic art, culinary masterpieces, and the dramatic Amalfi Coast.', label: 'Positano', image: '/images/card_italy.webp', bgImage: '/images/card_italy.webp', locationTag: 'Amalfi Coast, Italy' },
+  Spain: { region: 'Region', desc: 'Spain is famous for its islands, beach holidays, surfing, diving and yachting.', label: 'Madrid', image: '/images/card_madrid.webp', bgImage: '/images/hero_seoul_night.webp', locationTag: 'Plaza Mayor, Madrid' },
+  UAE: { region: 'Middle East', desc: 'UAE offers a blend of futuristic skyscrapers, luxury shopping, and desert adventures.', label: 'Dubai', image: '/images/card_uae.webp', bgImage: '/images/hero_uae_museum.webp', locationTag: 'Museum of the Future, Dubai' },
+  USA: { region: 'North America', desc: 'USA features diverse landscapes from bustling New York streets to the Grand Canyon.', label: 'New York', image: '/images/card_usa.webp', bgImage: '/images/card_usa.webp', locationTag: 'Times Square, New York' },
+  Canada: { region: 'North America', desc: 'Canada is renowned for its vast wilderness, stunning lakes, and friendly multicultural cities.', label: 'Banff', image: '/images/card_canada.webp', bgImage: '/images/card_canada.webp', locationTag: 'Moraine Lake, Banff' },
+  Thailand: { region: 'Asia', desc: 'Thailand is a land of tropical beaches, ornate temples, and vibrant street life.', label: 'Phuket', image: '/images/card_thailand.webp', bgImage: '/images/card_thailand.webp', locationTag: 'Maya Bay, Phi Phi Islands' },
+  Ireland: { region: 'Europe', desc: 'Ireland is known for its lush green landscapes, historic castles, and vibrant culture.', label: 'Cliffs of Moher', image: '/images/why_mountains.webp', bgImage: '/images/why_mountains.webp', locationTag: 'Cliffs of Moher, County Clare' }
 };
 
 function PlanTripContent() {
@@ -218,7 +218,7 @@ function PlanTripContent() {
               <div 
                 className="v-card-img" 
                 style={{ 
-                  backgroundImage: `url(${destinationsData[selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan']?.image || '/images/explore_japan.png'})` 
+                  backgroundImage: `url(${destinationsData[selectedCountry && selectedCountry.trim() !== '' ? selectedCountry : 'Japan']?.image || '/images/explore_japan.webp'})` 
                 }}
               ></div>
               <div className="v-card-overlay">

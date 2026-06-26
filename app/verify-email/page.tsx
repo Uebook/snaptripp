@@ -28,7 +28,7 @@ export default function VerifyEmailPage() {
             <div className={styles.imageCard}>
               <div 
                 className={styles.image} 
-                style={{ backgroundImage: 'url("/images/testimonial.png")' }} /* Using testimonial placeholder */
+                style={{ backgroundImage: 'url("/images/testimonial.webp")' }} /* Using testimonial placeholder */
               />
             </div>
           </div>

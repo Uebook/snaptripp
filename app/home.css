@@ -578,7 +578,7 @@
   height: 100%;
   z-index: 1;
   opacity: 1; /* Fully visible */
-  background-image: url('/images/bgwhy.png');
+  background-image: url('/images/bgwhy.webp');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;

@@ -160,7 +160,7 @@ export default function LoginPage() {
         {/* Left Panel: Narrative Landscape */}
         <div 
           className={styles.leftPanel} 
-          style={{ backgroundImage: 'url("/login-bg.png")' }}
+          style={{ backgroundImage: 'url("/login-bg.webp")' }}
         >
           <div className={styles.overlay} />
           <div className={styles.leftContent}>

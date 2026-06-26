@@ -47,7 +47,7 @@ export default function HowItWorks() {
     hero_badge: '',
     hero_title: 'Crafting Your<br/><span style="font-style: italic; font-family: var(--font-inria)">Next Odyssey</span>',
     hero_description: 'A fusion of high-end editorial curation and artificial intelligence. SnapTrip transforms wandering into precision exploration.',
-    hero_bg_image: '/images/Container.png',
+    hero_bg_image: '/images/Container.webp',
     planning_title: 'The Art of Seamless Planning',
     how_works_title: 'How It Works',
     how_works_desc: 'Snaptrip guides you through every step of your travel planning — from discovering destinations to creating a personalized itinerary. With simple tools and smart suggestions, you can plan your perfect trip quickly and without stress.',
@@ -102,7 +102,7 @@ export default function HowItWorks() {
     <div className={styles.container}>
       <SiteHeader />
 
-      <section className={styles.hero} style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/how_hero.png'}")` }}>
+      <section className={styles.hero} style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/how_hero.webp'}")` }}>
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
 
@@ -138,17 +138,17 @@ export default function HowItWorks() {
           </div>
           <div className={styles.planningCollage}>
             <div className={styles.collageGrid}>
-              <img src="/images/how_tokyo.png" alt="Tokyo" className={styles.collageImg} />
-              <img src="/images/guide_japan.png" alt="Kyoto" className={styles.collageImg} />
-              <img src="/images/how_london.png" alt="London" className={styles.collageImg} />
-              <img src="/images/how_positano.png" alt="Positano" className={styles.collageImg} />
+              <img src="/images/how_tokyo.webp" alt="Tokyo" className={styles.collageImg} />
+              <img src="/images/guide_japan.webp" alt="Kyoto" className={styles.collageImg} />
+              <img src="/images/how_london.webp" alt="London" className={styles.collageImg} />
+              <img src="/images/how_positano.webp" alt="Positano" className={styles.collageImg} />
             </div>
           </div>
         </div>
       </section>
 
       <section className={styles.howSection}>
-        <div className={styles.howBg} style={{ backgroundImage: 'url("/images/image11.png")' }} />
+        <div className={styles.howBg} style={{ backgroundImage: 'url("/images/image11.webp")' }} />
         <div className={styles.howHeader}>
           <h2 className={styles.howTitle}>{settings.how_works_title}</h2>
           <p className={styles.howDesc}>

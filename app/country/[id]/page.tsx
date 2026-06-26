@@ -66,14 +66,14 @@ const FALLBACK: Record<string, CountryData> = {
   japan: {
     name: 'Japan',
     desc: 'A harmonious blend of ancient traditions and futuristic innovation. From the neon-lit streets of Tokyo to the tranquil temples of Kyoto, Japan offers a sensory journey unlike any other.',
-    heroImg: '/images/explore_japan.png',
+    heroImg: '/images/explore_japan.webp',
     stats: { capital: 'Tokyo', currency: 'Yen (¥)', language: 'Japanese', timeZone: 'GMT+9', bestTime: 'Mar – May' },
     countryIntro: 'An archipelago of over 6,000 islands stretching from subarctic Hokkaido to subtropical Okinawa, Japan is defined by volcanic mountains, hot springs, and millennia of rich cultural heritage.',
     bestTimeDesc: 'Spring (March–May) for cherry blossoms and autumn (Sept–Nov) for vibrant foliage are peak seasons. Winter brings world-class skiing in Hokkaido; summer offers lively matsuri festivals.',
     publicHolidays: 'Japan observes 16 public holidays including Golden Week (late April–early May) and Obon (mid-August). Many businesses close and transport fills up quickly — plan ahead.',
     bucketList: ['See cherry blossoms in Ueno Park', 'Climb Mt. Fuji at sunrise', 'Stay in a traditional ryokan', 'Attend a sumo tournament', 'Experience teamLab digital art'],
     uniqueAccommodation: 'Sleep in a capsule hotel in Akihabara, a historic machiya townhouse in Kyoto, or an onsen ryokan in Hakone for an authentic Japanese hospitality experience.',
-    overviewImg: '/images/explore_japan.png',
+    overviewImg: '/images/explore_japan.webp',
     visaEntry: 'Citizens of 68 countries can enter Japan visa-free for 15–90 days. Others must apply for a tourist visa through a Japanese consulate.',
     passportDocs: 'Passport must be valid for the duration of your stay. Border control may request proof of onward travel and sufficient funds (approx ¥100,000–¥200,000).',
     customs: 'Duty-free allowance: 3 bottles of alcohol (760ml each), 400 cigarettes, and ¥200,000 in goods. Some medications and items are strictly prohibited.',
@@ -86,7 +86,7 @@ const FALLBACK: Record<string, CountryData> = {
     naturalHazards: 'Japan sits on the Ring of Fire. Earthquakes are frequent — know your hotel\'s evacuation procedure. Typhoon season runs June–October.',
     lgbtqSafety: 'Generally safe for LGBTQ+ travellers. Same-sex relationships are legal. Tokyo and Osaka are particularly welcoming with vibrant LGBTQ+ communities.',
     soloTips: 'Excellent for solo travellers, especially women. Public transport is safe 24/7. Avoid excessive eye contact in crowded trains. Trust your instincts.',
-    safetyImg: '/images/hero_city.png',
+    safetyImg: '/images/hero_city.webp',
     localEtiquette: [
       { title: 'Greetings', desc: 'Bow when greeting — a slight bow for casual meetings, a deeper one for formal situations. Handshakes are acceptable with foreigners.' },
       { title: 'Footwear', desc: 'Remove shoes when entering homes, ryokans, many traditional restaurants, and some historic temples.' },
@@ -99,7 +99,7 @@ const FALLBACK: Record<string, CountryData> = {
     languageBasics: 'Konnichiwa (Hello), Arigatou (Thank you), Sumimasen (Excuse me), Eigo hanasemasu ka? (Do you speak English?)',
     socialNorms: 'Eating while walking is frowned upon. Tattoos may restrict access to some onsen. Masks are commonly worn in public.',
     festivals: 'Hanami (March–April), Gion Matsuri in Kyoto (July), Awa Odori dance festival (August), Sapporo Snow Festival (February).',
-    cultureImg: '/images/coastal_beach.png',
+    cultureImg: '/images/coastal_beach.webp',
     currencyPayments: 'Japan is still largely cash-based. Carry yen — many smaller restaurants, vending machines, and shrines don\'t accept cards. 7-Eleven ATMs accept foreign cards.',
     localTransport: 'Shinkansen bullet trains connect major cities. IC cards (Suica, ICOCA) work on most local trains and buses. Use Google Maps for navigation.',
     drivingRules: 'Drive on the left. Foreign licences need official Japanese translation from your Automobile Association. IDP alone is not valid.',
@@ -114,27 +114,27 @@ const FALLBACK: Record<string, CountryData> = {
     souvenirs: 'Matcha treats, wagashi, lacquerware, kokeshi dolls, tenugui towels, sake. Do NOT export antiques without a cultural property certificate.',
     environmental: 'Strict recycling rules — separate rubbish into burnable, non-burnable, and recyclable. Plastic bag charges apply at most shops.',
     localLaws: 'Drugs: Zero tolerance. Even small amounts of cannabis can result in detention and deportation. Some prescription medicines legal abroad may be illegal in Japan.',
-    experiencesImg: '/images/marrakech.png',
+    experiencesImg: '/images/marrakech.webp',
     experienceTitle: 'Traditional Tea Ceremony',
     experienceDesc: 'Experience the mindful preparation of matcha and the profound hospitality of Japanese culture. Participate in a centuries-old ritual that emphasises harmony, respect, purity, and tranquility.',
-    experienceImg: '/images/explore_japan.png',
+    experienceImg: '/images/explore_japan.webp',
     cities: [
-      { name: 'Tokyo', desc: 'Vibrant metropolis blending neon lights, historic shrines, and world-class cuisine.', img: '/images/hero_city.png' },
-      { name: 'Kyoto', desc: 'Cultural heart of Japan with thousands of classical Buddhist temples and tea houses.', img: '/images/coastal_beach.png' },
-      { name: 'Osaka', desc: 'Dynamic port city known for bold architecture, nightlife, and legendary street food.', img: '/images/marrakech.png' },
+      { name: 'Tokyo', desc: 'Vibrant metropolis blending neon lights, historic shrines, and world-class cuisine.', img: '/images/hero_city.webp' },
+      { name: 'Kyoto', desc: 'Cultural heart of Japan with thousands of classical Buddhist temples and tea houses.', img: '/images/coastal_beach.webp' },
+      { name: 'Osaka', desc: 'Dynamic port city known for bold architecture, nightlife, and legendary street food.', img: '/images/marrakech.webp' },
     ]
   },
   italy: {
     name: 'Italy',
     desc: 'The ultimate guide to rolling hills, hidden vineyards, and the slow life of the Italian countryside.',
-    heroImg: '/images/guide_italy.png',
+    heroImg: '/images/guide_italy.webp',
     stats: { capital: 'Rome', currency: 'Euro (€)', language: 'Italian', timeZone: 'GMT+1', bestTime: 'Apr – Jun' },
     countryIntro: 'A boot-shaped peninsula in southern Europe, Italy is a cradle of Western civilisation — home to the Roman Empire, the Renaissance, and unmatched art, food, and fashion.',
     bestTimeDesc: 'Spring (April–June) and autumn (September–October) offer the best weather and smaller crowds. July–August is peak season. Winter is ideal for city breaks and Alps skiing.',
     publicHolidays: 'Italy observes 12 national public holidays including Ferragosto (August 15) when much of the country shuts down.',
     bucketList: ['See the Colosseum at sunrise', 'Cruise the Amalfi Coast', 'Attend opera at La Scala', 'Truffle hunting in Umbria', 'Carnival in Venice'],
     uniqueAccommodation: 'Stay in an agriturismo (farm stay), a restored masseria in Puglia, a cave hotel in Matera, or a villa in Tuscany.',
-    overviewImg: '/images/guide_italy.png',
+    overviewImg: '/images/guide_italy.webp',
     visaEntry: 'EU citizens can enter freely. Non-EU travellers from US, UK, Canada, Australia can stay up to 90 days without a visa (Schengen area).',
     passportDocs: 'Passport must be valid for at least 3 months beyond your intended stay. Carry a physical copy when sightseeing.',
     customs: 'Duty-free: 200 cigarettes, 1 litre spirits, 4 litres wine, €430 in goods. Some food items restricted from non-EU countries.',
@@ -159,7 +159,7 @@ const FALLBACK: Record<string, CountryData> = {
     languageBasics: 'Grazie (Thank you), Per favore (Please), Dov\'è...? (Where is...?), Quanto costa? (How much?), Parla inglese? (Do you speak English?)',
     socialNorms: 'Never place your bag on the floor at restaurants — considered bad luck. Sunday is family day; many shops close.',
     festivals: 'Venice Carnival (February), Palio di Siena (July & August), Roma Natale di Roma (April), Alba Truffle Fair (October).',
-    cultureImg: '/images/guide_italy.png',
+    cultureImg: '/images/guide_italy.webp',
     currencyPayments: 'Euro. Cards widely accepted in cities; carry cash for small towns and markets. Airport exchange rates are poor — use ATMs in the city.',
     localTransport: 'Trenitalia and Italo high-speed trains connect major cities. Taxis must be officially licensed (white cars). Avoid unlicensed "abusivi" drivers.',
     drivingRules: 'Drive on the right. IDP recommended for non-EU licence holders. ZTL zones in historic city centres — check before driving; fines are automatic.',
@@ -174,14 +174,14 @@ const FALLBACK: Record<string, CountryData> = {
     souvenirs: 'Limoncello, Murano glass, Florentine leather, hand-painted ceramics, truffle products, local wine and olive oil.',
     environmental: 'Italy is EU-compliant on environmental regulations. Plastic bags charged at shops. Recycling is colour-coded by municipality.',
     localLaws: 'Fines for eating/drinking near monuments. No sitting on church steps in Florence. Cannabis: decriminalised for personal use but technically illegal.',
-    experiencesImg: '/images/guide_italy.png',
+    experiencesImg: '/images/guide_italy.webp',
     experienceTitle: 'Tuscan Wine Tasting',
     experienceDesc: 'Indulge in an authentic winemaking tour through rolling Chianti hills and medieval cellars. Discover Brunello, Barolo, and Super Tuscans directly from the estates.',
-    experienceImg: '/images/guide_italy.png',
+    experienceImg: '/images/guide_italy.webp',
     cities: [
-      { name: 'Rome', desc: 'Eternal city of ancient ruins, baroque fountains, Vatican art, and world-class pizza al taglio.', img: '/images/guide_italy.png' },
-      { name: 'Florence', desc: 'Birthplace of the Renaissance — home to Michelangelo\'s David, the Uffizi, and world-class Florentine cuisine.', img: '/images/how_london.png' },
-      { name: 'Venice', desc: 'Built on 118 islands — a labyrinth of canals, gondolas, and palatial architecture unlike anywhere on earth.', img: '/images/coastal_beach.png' },
+      { name: 'Rome', desc: 'Eternal city of ancient ruins, baroque fountains, Vatican art, and world-class pizza al taglio.', img: '/images/guide_italy.webp' },
+      { name: 'Florence', desc: 'Birthplace of the Renaissance — home to Michelangelo\'s David, the Uffizi, and world-class Florentine cuisine.', img: '/images/how_london.webp' },
+      { name: 'Venice', desc: 'Built on 118 islands — a labyrinth of canals, gondolas, and palatial architecture unlike anywhere on earth.', img: '/images/coastal_beach.webp' },
     ]
   }
 }
@@ -227,7 +227,7 @@ export default function CountryPage() {
   const initial = FALLBACK[countryId] || {
     ...FALLBACK.japan,
     name: id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Destination',
-    heroImg: '/images/guide_hero.png',
+    heroImg: '/images/guide_hero.webp',
     desc: `Discover travel tips, culture, safety, and logistics for ${id || 'this destination'}.`,
     stats: { capital: '—', currency: '—', language: '—', timeZone: '—', bestTime: '—' }
   }
@@ -490,7 +490,7 @@ export default function CountryPage() {
           {/* ── 06 HEALTH & WELL-BEING ── */}
           <div style={{ padding: '0 64px 60px' }}>
             <div style={{ background: '#EAE9E4', borderRadius: '4px', padding: '60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-              <div style={{ backgroundImage: `url(${data.experiencesImg || '/images/explore_japan.png'})`, backgroundSize: 'cover', backgroundPosition: 'center', height: '300px', borderRadius: '4px' }} />
+              <div style={{ backgroundImage: `url(${data.experiencesImg || '/images/explore_japan.webp'})`, backgroundSize: 'cover', backgroundPosition: 'center', height: '300px', borderRadius: '4px' }} />
               <div>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '30px', color: '#111' }}>Health & Well-being</h3>
                 

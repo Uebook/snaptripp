@@ -53,14 +53,14 @@ export default function CountryGuide() {
     hero_title: 'Where will your curiosity lead you next?',
     quote_text: 'The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.',
     quote_author: 'MARCEL PROUST',
-    hero_bg_image: '/images/guide_hero.png'
+    hero_bg_image: '/images/guide_hero.webp'
   })
 
   const [featuredGuides, setFeaturedGuides] = useState<GuideItem[]>([
-    { id: 'japan', title: 'Japan: The Art of Zen & Modernity', desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.', image: '/images/guide_japan.png', tag: 'Culture' },
-    { id: 'italy', title: 'Italy: A Summer in Tuscany', desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.', image: '/images/guide_italy.png', tag: 'Editorial' },
-    { id: 'morocco', title: 'Morocco: Colors of the Maghreb', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', image: '/images/guide_morocco.png', tag: 'Lifestyle' },
-    { id: 'france', title: 'France: Beyond the City of Light', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', image: '/images/guide_france.png', tag: 'Vintage' }
+    { id: 'japan', title: 'Japan: The Art of Zen & Modernity', desc: 'From the neon lifelines of Shinjuku to the silent moss gardens of Kyoto, discover the duality of the rising sun.', image: '/images/guide_japan.webp', tag: 'Culture' },
+    { id: 'italy', title: 'Italy: A Summer in Tuscany', desc: 'The ultimate guide to the rolling hills, hidden vineyards, and the slow life of the Italian countryside.', image: '/images/guide_italy.webp', tag: 'Editorial' },
+    { id: 'morocco', title: 'Morocco: Colors of the Maghreb', desc: 'Exploring the vibrant souks of Marrakesh and the blue-washed walls of Chefchaouen.', image: '/images/guide_morocco.webp', tag: 'Lifestyle' },
+    { id: 'france', title: 'France: Beyond the City of Light', desc: 'Journeying through the lavender fields of Provence and the rugged coastline of Brittany.', image: '/images/guide_france.webp', tag: 'Vintage' }
   ])
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function CountryGuide() {
       {/* Hero Section */}
       <section 
         className={styles.hero} 
-        style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/guide_hero.png'}")` }}
+        style={{ backgroundImage: `url("${settings.hero_bg_image || '/images/guide_hero.webp'}")` }}
       >
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
