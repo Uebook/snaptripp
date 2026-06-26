@@ -284,7 +284,7 @@ export default function AdminDataSync() {
 
     return (
         <div className="admin-dashboard">
-            <div className="admin-card" style={{ marginBottom: '32px' }}>
+            <div className="admin-card" style={{ marginBottom: '32px', overflow: 'visible', zIndex: 10, position: 'relative' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', marginBottom: '24px' }}>
                     <div style={{ flex: '1', minWidth: '300px' }}>
                         <h3 style={{ marginBottom: '8px' }}>Refined Data Sync</h3>

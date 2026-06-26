@@ -82,6 +82,13 @@ export default function SiteFooter() {
             <p className="footer-desc">
               {settings.description}
             </p>
+            {settings.email && (
+              <p style={{ marginTop: '16px', marginBottom: 0 }}>
+                <a href={`mailto:${settings.email}`} style={{ color: '#002B5B', fontWeight: 600, textDecoration: 'underline', fontSize: '0.95rem' }}>
+                  {settings.email}
+                </a>
+              </p>
+            )}
             <div className="follow-us">
               <h4>Follow Us</h4>
               <div className="footer-social">

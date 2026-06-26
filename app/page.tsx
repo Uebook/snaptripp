@@ -127,6 +127,7 @@ export default function Home() {
     }
   }
   const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
+  const [isHeroLoading, setIsHeroLoading] = useState(true)
   const [whyData, setWhyData] = useState<any[]>([])
   const [testimData, setTestimData] = useState<any[]>([])
   const [blogsData, setBlogsData] = useState<any[]>([])
@@ -166,6 +167,8 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Failed to fetch home carousel from database, using static fallback:', err)
+      } finally {
+        setIsHeroLoading(false)
       }
     }
     fetchHeroCarousel()
@@ -244,7 +247,7 @@ export default function Home() {
       <SiteHeader />
 
       {/* 1. Hero Section */}
-      <section className="hero-redesign">
+      <section className="hero-redesign" style={{ opacity: isHeroLoading ? 0 : 1, transition: 'opacity 0.3s ease-in-out' }}>
         <div className="hero-content">
           <div className="hero-text">
             <p className="hero-subtitle">Handpicked. Trusted. Yours.</p>

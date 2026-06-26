@@ -1,16 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
 :root {
-  --foreground-rgb: 33, 37, 41;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 248, 249, 250;
+  /* Primary Gold */
+  --gold-light: #F6D978;
+  --gold-mid: #E6C35C;
+  --gold-deep: #C79F2D;
   
-  --primary: #FFB800; /* Gold/Yellow from Figma */
-  --primary-hover: #E6A600;
-  --dark: #0F172A;
-  --gray-light: #F1F5F9;
-  --gray-medium: #64748B;
+  /* Backgrounds */
+  --cream: #FAF7F2;
+  --white: #FFFFFF;
+  --warm-surface: #F5F1EA;
+  
+  /* Text & Borders */
+  --ink: #1A1A1A;
+  --slate: #5E5E5E;
+  --mist: #8C8C8C;
+  --border: #EAEAEA;
+  --divider: #DDD7CF;
+
+  --foreground-rgb: 26, 26, 26; /* Ink #1A1A1A */
+  --background-start-rgb: 250, 247, 242; /* Cream #FAF7F2 */
+  --background-end-rgb: 245, 241, 234; /* Warm Surface #F5F1EA */
+  
+  --primary: var(--gold-mid);
+  --primary-hover: var(--gold-deep);
+  --dark: var(--ink);
+  --gray-light: var(--border);
+  --gray-medium: var(--slate);
   --white: #FFFFFF;
   
-  --font-serif: 'Playfair Display', serif;
+  --font-serif: 'Inria Serif', serif;
   --font-sans: 'Inter', sans-serif;
 }
 

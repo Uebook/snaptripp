@@ -14,21 +14,40 @@ export async function generateMetadata() {
   }
 }
 
+function decodeHTMLEntities(text: string) {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function getFormattedContent(content: string) {
+  if (!content) return '';
+  if (content.includes('&lt;') || content.includes('&gt;')) {
+    let cleaned = content
+      .replace(/<p>\s*<br\s*\/?>\s*<\/p>/gi, '')
+      .replace(/<p>\s*&nbsp;\s*<\/p>/gi, '')
+      .replace(/<p>\s*<\/p>/gi, '');
+    cleaned = cleaned.replace(/<p>/gi, '').replace(/<\/p>/gi, '');
+    return decodeHTMLEntities(cleaned);
+  }
+  return content;
+}
+
 export default async function PrivacyPolicyPage() {
   const { data: page } = await supabaseAdmin.from('pages').select('title, content').eq('slug', 'privacy').single()
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#FAFAFA' }}>
       <SiteHeader />
-      <main style={{ flex: 1, padding: '80px 20px', maxWidth: '800px', margin: '0 auto', color: '#1E293B', lineHeight: '1.8', width: '100%' }}>
+      <main style={{ flex: 1, padding: '40px 20px', maxWidth: '800px', margin: '0 auto', color: '#1E293B', lineHeight: '1.8', width: '100%' }}>
         {page ? (
           <>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '24px', color: '#0F172A', fontFamily: 'var(--font-playfair)' }}>
-              {page.title}
-            </h1>
             <div 
               className="cms-content" 
-              dangerouslySetInnerHTML={{ __html: page.content || '' }} 
+              dangerouslySetInnerHTML={{ __html: getFormattedContent(page.content || '') }} 
             />
           </>
         ) : (
