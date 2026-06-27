@@ -263,39 +263,78 @@ export function CountryRatingModal({
   onClose: () => void,
   onSave: () => void
 }) {
-  const allCitiesData = (worldCitiesData as Record<string, string[]>)[country] || ['General City 1', 'General City 2'];
-  
+  const [dbCities, setDbCities] = useState<{ name: string; img_url?: string; desc?: string }[]>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
+
+  useEffect(() => {
+    async function fetchCities() {
+      setLoadingCities(true);
+      try {
+        // 1. Try country_guide_cities
+        const { data: guideCities, error: guideErr } = await supabase
+          .from('country_guide_cities')
+          .select('name, img_url, desc')
+          .ilike('country_id', country);
+
+        if (!guideErr && guideCities && guideCities.length > 0) {
+          setDbCities(guideCities.map(c => ({
+            name: c.name,
+            img_url: c.img_url || '/images/hero_city.png',
+            desc: c.desc || ''
+          })));
+          setLoadingCities(false);
+          return;
+        }
+
+        // 2. Try countries + cities table
+        const { data: countryRow } = await supabase
+          .from('countries')
+          .select('id')
+          .ilike('name', country)
+          .maybeSingle();
+
+        if (countryRow) {
+          const { data: citiesList } = await supabase
+            .from('cities')
+            .select('name, latitude, longitude')
+            .eq('country_id', countryRow.id)
+            .order('name', { ascending: true })
+            .limit(150);
+
+          if (citiesList && citiesList.length > 0) {
+            setDbCities(citiesList.map(c => ({
+              name: c.name,
+              img_url: '/images/hero_city.png',
+              desc: `Lat: ${c.latitude.toFixed(2)}, Lng: ${c.longitude.toFixed(2)}`
+            })));
+            setLoadingCities(false);
+            return;
+          }
+        }
+
+        // 3. Fallback
+        const staticCities = (worldCitiesData as Record<string, string[]>)[country] || [];
+        setDbCities(staticCities.map(c => ({ name: c, img_url: '/images/hero_city.png' })));
+      } catch (e) {
+        console.error("Error loading cities from DB:", e);
+        const staticCities = (worldCitiesData as Record<string, string[]>)[country] || [];
+        setDbCities(staticCities.map(c => ({ name: c, img_url: '/images/hero_city.png' })));
+      } finally {
+        setLoadingCities(false);
+      }
+    }
+    fetchCities();
+  }, [country]);
+
   // State for search query
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-
-  const COUNTRY_COORDS: Record<string, [number, number]> = {
-    "India": [20.5937, 78.9629],
-    "Brazil": [-14.235, -51.9253],
-    "Algeria": [28.0339, 1.6596],
-    "Egypt": [26.8206, 30.8025],
-    "Libya": [26.3351, 17.2283],
-    "Morocco": [31.7917, -7.0926],
-    "South Africa": [-30.5595, 22.9375],
-    "France": [46.2276, 2.2137],
-    "Italy": [41.8719, 12.5674],
-    "Spain": [40.4637, -3.7492],
-    "Germany": [51.1657, 10.4515],
-    "United Kingdom": [55.3781, -3.436],
-    "United States": [37.0902, -95.7129],
-    "Canada": [56.1304, -106.3468],
-    "Australia": [-25.2744, 133.7751]
-  };
-
-  const centerCoord = COUNTRY_COORDS[country] || [20, 0];
 
   // State for selected cities
   const existingCities = userCityLogs.filter(c => c.country === country).map(c => c.city);
   const [selectedCities, setSelectedCities] = useState<string[]>(existingCities);
 
-  const toggleCity = (city: string) => {
-    setSelectedCities(prev => prev.includes(city) ? prev.filter(c => c !== city) : [...prev, city]);
+  const toggleCity = (cityName: string) => {
+    setSelectedCities(prev => prev.includes(cityName) ? prev.filter(c => c !== cityName) : [...prev, cityName]);
   };
 
   // State for ratings
@@ -465,45 +504,63 @@ export function CountryRatingModal({
             />
           </div>
 
-          <div style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 700, margin: '12px 0' }}>
-            {selectedCities.length} of {allCitiesData.length} selected
-          </div>
+          {loadingCities ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: '0.9rem' }}>
+              <span style={{ fontWeight: 600 }}>Loading cities from database...</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 700, margin: '12px 0' }}>
+                {selectedCities.length} of {dbCities.length} selected
+              </div>
 
-          <div className="city-scroll-container" style={{ 
-            flex: 1, 
-            overflowY: 'auto', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '10px',
-            paddingRight: '6px'
-          }}>
-            {filteredCities.map((city, idx) => {
-              const isSelected = selectedCities.includes(city);
-              return (
-                <div 
-                  key={idx} 
-                  onClick={() => toggleCity(city)}
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    background: '#FFF', 
-                    border: isSelected ? '1px solid #EBA424' : '1px solid #FFEED6', 
-                    borderRadius: '12px', 
-                    padding: '14px 20px', 
-                    cursor: 'pointer', 
-                    transition: 'all 0.2s', 
-                    fontWeight: 600, 
-                    color: isSelected ? '#855F1B' : '#374151', 
-                    fontSize: '0.95rem',
-                    boxShadow: isSelected ? '0 2px 8px rgba(235,164,36,0.1)' : 'none'
-                  }}
-                >
-                  <span>{city}</span>
-                </div>
-              );
-            })}
-          </div>
+              <div className="city-scroll-container" style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '10px',
+                paddingRight: '6px'
+              }}>
+                {dbCities
+                  .filter(city => city.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((city, idx) => {
+                    const isSelected = selectedCities.includes(city.name);
+                    return (
+                      <div 
+                        key={idx} 
+                        onClick={() => toggleCity(city.name)}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '12px', 
+                          background: '#FFF', 
+                          border: isSelected ? '1px solid #EBA424' : '1px solid #FFEED6', 
+                          borderRadius: '12px', 
+                          padding: '10px 14px', 
+                          cursor: 'pointer', 
+                          transition: 'all 0.2s', 
+                          fontWeight: 600, 
+                          color: isSelected ? '#855F1B' : '#374151', 
+                          fontSize: '0.95rem',
+                          boxShadow: isSelected ? '0 2px 8px rgba(235,164,36,0.1)' : 'none'
+                        }}
+                      >
+                        <img 
+                          src={city.img_url || '/images/hero_city.png'} 
+                          alt={city.name}
+                          style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                          <span style={{ fontWeight: 700 }}>{city.name}</span>
+                          {city.desc && <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{city.desc}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Pane - Country Rating */}
