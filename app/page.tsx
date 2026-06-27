@@ -92,7 +92,8 @@ export default function Home() {
   const [activeDest, setActiveDest] = useState('Spain')
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
-  const [reelOffset, setReelOffset] = useState(32.5) // Landing on INDIA (212.5 - 2*90)
+  const [showExploreBtn, setShowExploreBtn] = useState(false)
+  const [reelOffset, setReelOffset] = useState(15) // Landing on INDIA (175 - 2*80)
   const [landingIndex, setLandingIndex] = useState(2) // Default to India
   const [countries, setCountries] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -136,7 +137,7 @@ export default function Home() {
   const REEL_COUNTRIES = countries.length > 0 
     ? countries.map(c => c.toUpperCase()) 
     : ['JAPAN', 'GREECE', 'INDIA', 'GERMANY', 'BRAZIL', 'ITALY', 'SPAIN', 'UAE', 'USA', 'CANADA', 'THAILAND', 'IRELAND'];
-  const ITEM_HEIGHT = 90; // 55px height + 35px gap
+  const ITEM_HEIGHT = 80; // 50px height + 30px gap
   const destKeys = Object.keys(destinationsData)
   const currentIndex = destKeys.indexOf(activeDest)
   const currentData = destinationsData[activeDest] || destinationsData[destKeys[0]] || DESTINATIONS_DATA['Spain']
@@ -180,7 +181,7 @@ export default function Home() {
       try {
         const res = await fetch('/api/admin/sync/countries')
         const data = await res.json()
-        if (data.success) {
+        if (data.success && data.countries) {
           setCountries(data.countries)
         }
       } catch (err) {
@@ -409,33 +410,40 @@ export default function Home() {
                 {destinationsData[searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan']?.desc || 
                   `Discover the beauty of ${searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan'}, from its vibrant city life to its serene landscapes.`}
               </p>
-              <button className="explore-now-btn" onClick={() => router.push(`/plan?country=${encodeURIComponent(searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan')}`)}>Explore Now</button>
             </div>
           </div>
+
+          {/* Explore Now Button Centered Below the Card */}
+          <button 
+            className="explore-now-btn-below" 
+            onClick={() => router.push(`/plan?country=${encodeURIComponent(searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan')}`)}
+          >
+            Explore Now
+          </button>
         </div>
 
-        <div className="vertical-slider-track">
-          <div
-            className="slider-handle"
-            style={{
-              top: isUnlocked ? '90%' : '50%',
-              transition: 'top 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-              cursor: 'pointer'
-            }}
-            onClick={() => setIsUnlocked(!isUnlocked)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="7 10 12 5 17 10"></polyline>
-              <polyline points="7 14 12 19 17 14"></polyline>
-            </svg>
-          </div>
-        </div>
+        {/* Vertical Divider Line */}
+        <div className="vertical-divider" />
 
         <div className="explore-right">
           {!isUnlocked ? (
-            <div className="drag-unlock-text">
-              <p>Click to</p>
-              <span>Unlock Fun</span>
+            <div className="explore-right-locked">
+              <div className="sparkles-icon">✨✨</div>
+              <p className="ready-text">Ready to Explore?</p>
+              <h2 className="unlock-title">Unlock the<br />Fun</h2>
+              <p className="unlock-desc">Click below to start your next adventure.</p>
+              
+              <button className="unlock-now-btn" onClick={() => setIsUnlocked(true)}>
+                ✨ Unlock Now
+              </button>
+
+              <div className="arrow-container">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="arrow-svg">
+                  <path d="M18 6 C13 14 8 16 6 20" />
+                  <polyline points="10 20 6 20 6 16" />
+                </svg>
+                <span className="arrow-text">Click to unlock amazing experiences!</span>
+              </div>
             </div>
           ) : (
             <>
@@ -443,6 +451,7 @@ export default function Home() {
               <div className="spin-wheel-outer">
                 <div className="spin-indicator"></div>
                 <div className="spin-wheel-container">
+                  <div className="spin-wheel-inner-ring"></div>
                   <div
                     className="spin-destinations-reel"
                     style={{
@@ -465,17 +474,17 @@ export default function Home() {
                   className="spin-action-btn"
                   onClick={() => {
                     setIsSpinning(true);
+                    setShowExploreBtn(false);
                     const totalItems = REEL_COUNTRIES.length;
                     const randomLanding = Math.floor(Math.random() * totalItems);
                     const spinRounds = 3; // Spin 3 times before landing
                     const finalIndex = (spinRounds * totalItems) + randomLanding;
 
-                    // We want the finalIndex item to be centered. 
-                    // The center of the 480px wheel is 240px.
-                    // Each item is 80px high (50px + 30px gap).
-                    // The center of an item is at (i * 80) + 25px.
-                    // So we need: 240 - ((finalIndex * 80) + 25)
-                    const offset = 212.5 - (finalIndex * ITEM_HEIGHT);
+                    // Centering calculation for 400px wheel (center is 200px).
+                    // Item height is 50px (span) + 30px (gap) = 80px.
+                    // Center of item is at (i * 80) + 25px.
+                    // Offset needed: 200 - ((finalIndex * 80) + 25) = 175 - (finalIndex * 80)
+                    const offset = 175 - (finalIndex * ITEM_HEIGHT);
 
                     setReelOffset(offset);
                     setTimeout(() => {
@@ -484,17 +493,28 @@ export default function Home() {
                       
                       // Also update the left card content to the landed country
                       const landedCountry = REEL_COUNTRIES[randomLanding];
-                      const formattedCountry = landedCountry === 'UAE' || landedCountry === 'USA' 
-                        ? landedCountry 
-                        : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase();
+                      const originalCountry = countries.find(c => c.toUpperCase() === landedCountry.toUpperCase()) || 
+                        (landedCountry === 'UAE' || landedCountry === 'USA' 
+                          ? landedCountry 
+                          : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase());
                       
-                      setSearchQuery(formattedCountry);
+                      setSearchQuery(originalCountry);
+                      setShowExploreBtn(true);
                     }, 3000);
                   }}
                   disabled={isSpinning}
                 >
                   {isSpinning ? 'Spinning...' : 'Spin the Compass'}
                 </button>
+                {showExploreBtn && (
+                  <button
+                    className="explore-now-btn-below"
+                    style={{ marginTop: '15px' }}
+                    onClick={() => router.push(`/plan?country=${encodeURIComponent(searchQuery && searchQuery.trim() !== '' ? searchQuery : 'Japan')}`)}
+                  >
+                    Explore Now
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -626,32 +646,61 @@ export default function Home() {
 
       {/* 6. Curated Stories */}
       <section className="curated-stories">
-        <p className="section-label">ADVENTURE - TRAVEL - STORIES</p>
-        <h2>Curated <span>Stories</span> & Perspectives</h2>
+        <p className="section-label">PREMIUM TRAVEL JOURNAL</p>
+        <div className="curated-header-row">
+          <h2>Curated <span>Stories</span> &<br />Perspectives</h2>
+          <p className="curated-subtitle">
+            Expert insights from our globetrotting community to help you plan your next escape.
+          </p>
+        </div>
 
         <div className="stories-grid">
           {(() => {
             const mainStory = blogsData.length > 0 ? blogsData[0] : {
               image_url: '/images/marrakech.webp',
-              category: 'MARRAKECH',
+              category: 'FEATURED ENTRY',
+              created_at: '2023-10-12T00:00:00Z',
               title: 'Marrakech Magic: The Secret Heart of the Red City',
-              excerpt: 'Explore the hidden corners of Marrakech, from the bustling souks to the serene courtyards of riads.',
+              excerpt: 'Discover the hidden riads and vibrant markets of the Red City. From tea ceremonies to secret garden retreats, immerse yourself in...',
               slug: '#'
             };
             const sideStories = blogsData.length > 1 ? blogsData.slice(1) : [
-              { image_url: '/images/why_mountains.webp', title: 'Atlas Adventures: Beyond Berber Hospitality', category: 'MOROCCO', created_at: '2026-02-10T00:00:00Z', slug: '#' },
-              { image_url: '/images/hero_city.webp', title: 'A Taste of Morocco: A Spice Trail Odyssey', category: 'MOROCCO', created_at: '2026-02-08T00:00:00Z', slug: '#' },
-              { image_url: '/images/marrakech.webp', title: 'Chasing Dreams: Moroccan landscapes', category: 'MOROCCO', created_at: '2026-02-05T00:00:00Z', slug: '#' }
+              { 
+                image_url: '/images/why_mountains.webp', 
+                title: 'Atlas Adventures: Remote Berber Hospitality', 
+                category: 'ADVENTURE', 
+                created_at: '2023-11-05T00:00:00Z', 
+                excerpt: 'Experience the majestic peaks and warm mountain welcomes of the Berber people.',
+                slug: '#' 
+              },
+              { 
+                image_url: '/images/hero_city.webp', 
+                title: 'A Taste of Morocco: A Spice Trail Odyssey', 
+                category: 'CULINARY', 
+                created_at: '2024-01-20T00:00:00Z', 
+                excerpt: 'A journey through aromatic spices and traditional tagine secrets of Marrakech.',
+                slug: '#' 
+              },
+              { 
+                image_url: '/images/marrakech.webp', 
+                title: 'Château Charms: Romantic Loire Landscapes', 
+                category: 'CULTURE', 
+                created_at: '2024-02-14T00:00:00Z', 
+                excerpt: "Fairy-tale castles and world-class vineyards in the heart of France's Loire valley.",
+                slug: '#' 
+              }
             ];
 
             return (
               <>
                 <div className="main-story-card" style={{ backgroundImage: `url(${mainStory.image_url})` }}>
                   <div className="story-overlay">
-                    <span className="story-category">{mainStory.category}</span>
+                    <span className="story-category">
+                      {mainStory.category} • {mainStory.created_at ? new Date(mainStory.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}
+                    </span>
                     <h3>{mainStory.title}</h3>
                     <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{mainStory.excerpt}</p>
-                    <button className="read-story-btn" onClick={() => router.push(mainStory.slug !== '#' ? `/blog/${mainStory.slug}` : '#')}>Read More →</button>
+                    <button className="read-story-btn" onClick={() => router.push(mainStory.slug !== '#' ? `/blog/${mainStory.slug}` : '#')}>Read Full Journal ➔</button>
                   </div>
                 </div>
                 <div className="side-stories">
@@ -659,9 +708,14 @@ export default function Home() {
                     <div className="side-story-card" key={i}>
                       <div className="side-story-img" style={{ backgroundImage: `url(${story.image_url})` }}></div>
                       <div className="side-story-info">
-                        <span className="side-category">{story.category} • {story.created_at ? new Date(story.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : ''}</span>
+                        <span className="side-category">
+                          {story.category} • {story.created_at ? new Date(story.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase() : ''}
+                        </span>
                         <h4 style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{story.title}</h4>
-                        <button className="read-link" onClick={() => router.push(story.slug !== '#' ? `/blog/${story.slug}` : '#')}>Read More →</button>
+                        <p className="side-story-excerpt" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {story.excerpt || 'Read the full stories from our curated collection.'}
+                        </p>
+                        <button className="read-link" onClick={() => router.push(story.slug !== '#' ? `/blog/${story.slug}` : '#')}>Explore Entry ➔</button>
                       </div>
                     </div>
                   ))}

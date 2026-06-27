@@ -29,9 +29,10 @@ function PlanTripContent() {
   const [searchQuery, setSearchQuery] = useState(initialCountry || '')
   const [showDropdown, setShowDropdown] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
-  const [reelOffset, setReelOffset] = useState(32.5) 
+  const [reelOffset, setReelOffset] = useState(15) 
   const [landingIndex, setLandingIndex] = useState(2) 
-  const ITEM_HEIGHT = 90
+  const [showExploreBtn, setShowExploreBtn] = useState(false) 
+  const ITEM_HEIGHT = 80
   const [isFetchingCountries, setIsFetchingCountries] = useState(true)
   const [tripStyle, setTripStyle] = useState<'Intense' | 'Relaxed' | null>(null)
   const [tripDuration, setTripDuration] = useState<'Weekend' | 'Mini' | 'Full' | null>(null)
@@ -77,9 +78,9 @@ function PlanTripContent() {
       try {
         const res = await fetch('/api/admin/sync/countries')
         const data = await res.json()
-        if (data.success && data.countries.length > 0) {
+        if (data.success && data.countries) {
           setCountries(data.countries)
-          if (!selectedCountry || !data.countries.includes(selectedCountry)) {
+          if (data.countries.length > 0 && (!selectedCountry || !data.countries.includes(selectedCountry))) {
             setSelectedCountry(data.countries[0])
             setSearchQuery(data.countries[0])
           }
@@ -229,29 +230,38 @@ function PlanTripContent() {
                 </p>
               </div>
             </div>
+
+            {/* Explore Now Button Centered Below the Card */}
+            <button 
+              className="explore-now-btn-below" 
+              onClick={() => setHasUserSelectedCountry(true)}
+            >
+              Explore Now
+            </button>
           </div>
 
-          <div className="vertical-slider-track">
-            <div
-              className="slider-handle"
-              style={{
-                top: isUnlocked ? '90%' : '50%',
-                transition: 'top 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-              onClick={() => setIsUnlocked(!isUnlocked)}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="7 10 12 5 17 10"></polyline>
-                <polyline points="7 14 12 19 17 14"></polyline>
-              </svg>
-            </div>
-          </div>
+          {/* Vertical Divider Line */}
+          <div className="vertical-divider" />
 
           <div className="explore-right">
             {!isUnlocked ? (
-              <div className="drag-unlock-text">
-                <p>Drag to</p>
-                <span>Unlock Fun</span>
+              <div className="explore-right-locked">
+                <div className="sparkles-icon">✨✨</div>
+                <p className="ready-text">Ready to Explore?</p>
+                <h2 className="unlock-title">Unlock the<br />Fun</h2>
+                <p className="unlock-desc">Click below to start your next adventure.</p>
+                
+                <button className="unlock-now-btn" onClick={() => setIsUnlocked(true)}>
+                  ✨ Unlock Now
+                </button>
+
+                <div className="arrow-container">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D32F2F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="arrow-svg">
+                    <path d="M18 6 C13 14 8 16 6 20" />
+                    <polyline points="10 20 6 20 6 16" />
+                  </svg>
+                  <span className="arrow-text">Click to unlock amazing experiences!</span>
+                </div>
               </div>
             ) : (
               <>
@@ -259,6 +269,7 @@ function PlanTripContent() {
                 <div className="spin-wheel-outer">
                   <div className="spin-indicator"></div>
                   <div className="spin-wheel-container">
+                    <div className="spin-wheel-inner-ring"></div>
                     <div
                       className="spin-destinations-reel"
                       style={{
@@ -280,11 +291,17 @@ function PlanTripContent() {
                     className="spin-action-btn"
                     onClick={() => {
                       setIsSpinning(true);
+                      setShowExploreBtn(false);
                       const totalItems = REEL_COUNTRIES.length;
                       const randomLanding = Math.floor(Math.random() * totalItems);
                       const spinRounds = 3;
                       const finalIndex = (spinRounds * totalItems) + randomLanding;
-                      const offset = 212.5 - (finalIndex * ITEM_HEIGHT);
+                      
+                      // Centering calculation for 400px wheel (center is 200px).
+                      // Item height is 50px (span) + 30px (gap) = 80px.
+                      // Center of item is at (i * 80) + 25px.
+                      // Offset needed: 200 - ((finalIndex * 80) + 25) = 175 - (finalIndex * 80)
+                      const offset = 175 - (finalIndex * ITEM_HEIGHT);
 
                       setReelOffset(offset);
                       setTimeout(() => {
@@ -292,12 +309,14 @@ function PlanTripContent() {
                         setLandingIndex(finalIndex);
                         
                         const landedCountry = REEL_COUNTRIES[randomLanding];
-                        const formattedCountry = landedCountry === 'UAE' || landedCountry === 'USA' 
-                          ? landedCountry 
-                          : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase();
+                        const originalCountry = countries.find(c => c.toUpperCase() === landedCountry.toUpperCase()) || 
+                          (landedCountry === 'UAE' || landedCountry === 'USA' 
+                            ? landedCountry 
+                            : landedCountry.charAt(0) + landedCountry.slice(1).toLowerCase());
                         
-                        setSearchQuery(formattedCountry);
-                        setSelectedCountry(formattedCountry);
+                        setSearchQuery(originalCountry);
+                        setSelectedCountry(originalCountry);
+                        setShowExploreBtn(true);
                         setTimeout(() => setHasUserSelectedCountry(true), 1500);
                       }, 3000);
                     }}
@@ -305,6 +324,15 @@ function PlanTripContent() {
                   >
                     {isSpinning ? 'Spinning...' : 'Spin the Compass'}
                   </button>
+                  {showExploreBtn && (
+                    <button
+                      className="explore-now-btn-below"
+                      style={{ marginTop: '15px' }}
+                      onClick={() => setHasUserSelectedCountry(true)}
+                    >
+                      Explore Now
+                    </button>
+                  )}
                 </div>
               </>
             )}
