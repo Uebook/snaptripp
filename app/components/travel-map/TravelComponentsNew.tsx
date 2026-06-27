@@ -424,7 +424,7 @@ export function CountryRatingModal({
           ✕
         </button>
 
-        {/* Left Pane - City Checklist / Map view */}
+        {/* Left Pane - City Checklist */}
         <div style={leftPaneStyle}>
           <h2 style={{ 
             color: '#EBA424', 
@@ -438,116 +438,72 @@ export function CountryRatingModal({
           <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '0 0 20px' }}>
             Track cities and attractions you've explored
           </p>
-
-          {/* Toggle buttons */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <button 
-              onClick={() => setViewMode('list')}
-              style={{ 
-                padding: '8px 16px', 
-                background: viewMode === 'list' ? '#EBA424' : '#FFF', 
-                color: viewMode === 'list' ? '#FFF' : '#374151', 
-                border: '1px solid #E5E7EB', 
-                borderRadius: '8px', 
-                fontSize: '13px', 
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              List
-            </button>
-            <button 
-              onClick={() => setViewMode('map')}
-              style={{ 
-                padding: '8px 16px', 
-                background: viewMode === 'map' ? '#EBA424' : '#FFF', 
-                color: viewMode === 'map' ? '#FFF' : '#374151', 
-                border: '1px solid #E5E7EB', 
-                borderRadius: '8px', 
-                fontSize: '13px', 
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              On map
-            </button>
-          </div>
           
-          {viewMode === 'list' ? (
-            <>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                border: '1px solid #E5E7EB', 
-                borderRadius: '12px', 
-                padding: '10px 16px', 
-                background: '#FFF', 
-                marginBottom: '12px' 
-              }}>
-                <span style={{ color: '#9CA3AF', fontSize: '0.95rem' }}>🔍</span>
-                <input 
-                  type="text" 
-                  placeholder="Search cities or attractions..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            border: '1px solid #E5E7EB', 
+            borderRadius: '12px', 
+            padding: '10px 16px', 
+            background: '#FFF', 
+            marginBottom: '12px' 
+          }}>
+            <span style={{ color: '#9CA3AF', fontSize: '0.95rem' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search cities or attractions..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ 
+                border: 'none', 
+                outline: 'none', 
+                width: '100%', 
+                fontSize: '0.9rem', 
+                marginLeft: '8px', 
+                color: '#1E293B' 
+              }}
+            />
+          </div>
+
+          <div style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 700, margin: '12px 0' }}>
+            {selectedCities.length} of {allCitiesData.length} selected
+          </div>
+
+          <div className="city-scroll-container" style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '10px',
+            paddingRight: '6px'
+          }}>
+            {filteredCities.map((city, idx) => {
+              const isSelected = selectedCities.includes(city);
+              return (
+                <div 
+                  key={idx} 
+                  onClick={() => toggleCity(city)}
                   style={{ 
-                    border: 'none', 
-                    outline: 'none', 
-                    width: '100%', 
-                    fontSize: '0.9rem', 
-                    marginLeft: '8px', 
-                    color: '#1E293B' 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    background: '#FFF', 
+                    border: isSelected ? '1px solid #EBA424' : '1px solid #FFEED6', 
+                    borderRadius: '12px', 
+                    padding: '14px 20px', 
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s', 
+                    fontWeight: 600, 
+                    color: isSelected ? '#855F1B' : '#374151', 
+                    fontSize: '0.95rem',
+                    boxShadow: isSelected ? '0 2px 8px rgba(235,164,36,0.1)' : 'none'
                   }}
-                />
-              </div>
-
-              <div style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 700, margin: '12px 0' }}>
-                {selectedCities.length} of {allCitiesData.length} selected
-              </div>
-
-              <div className="city-scroll-container" style={{ 
-                flex: 1, 
-                overflowY: 'auto', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '10px',
-                paddingRight: '6px'
-              }}>
-                {filteredCities.map((city, idx) => {
-                  const isSelected = selectedCities.includes(city);
-                  return (
-                    <div 
-                      key={idx} 
-                      onClick={() => toggleCity(city)}
-                      style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        background: '#FFF', 
-                        border: isSelected ? '1px solid #EBA424' : '1px solid #FFEED6', 
-                        borderRadius: '12px', 
-                        padding: '14px 20px', 
-                        cursor: 'pointer', 
-                        transition: 'all 0.2s', 
-                        fontWeight: 600, 
-                        color: isSelected ? '#855F1B' : '#374151', 
-                        fontSize: '0.95rem',
-                        boxShadow: isSelected ? '0 2px 8px rgba(235,164,36,0.1)' : 'none'
-                      }}
-                    >
-                      <span>{city}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <MiniCountryMap country={country} center={centerCoord} />
-            </div>
-          )}
+                >
+                  <span>{city}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right Pane - Country Rating */}
