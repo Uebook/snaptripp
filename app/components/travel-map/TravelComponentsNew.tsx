@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { toPng } from 'html-to-image';
 import { supabase } from '@/lib/supabase';
 import { MiniWorldMap } from './InteractiveWorldMap';
 import worldCitiesData from '@/app/utils/world_cities.json';
 import './travel-map.css';
+
+const MiniCountryMap = dynamic(() => import('./MiniCountryMap'), { ssr: false });
 
 // Continents Categories as requested
 export const CONTINENTS_CATEGORIES = [
@@ -11,23 +14,63 @@ export const CONTINENTS_CATEGORIES = [
   "North and Central America", "South America", "Special Regions"
 ];
 
-// Provide a basic mapping (this would ideally be comprehensive)
+// Provide a comprehensive mapping of countries to continents
 export const COUNTRY_TO_CONTINENT: Record<string, string> = {
   // Africa
-  "Algeria": "Africa", "Egypt": "Africa", "Morocco": "Africa", "South Africa": "Africa", "Libya": "Africa",
-  // Asia
-  "China": "Asia", "India": "Asia", "Japan": "Asia", "Thailand": "Asia", "Vietnam": "Asia", "Indonesia": "Asia",
-  // Australia and Oceania
-  "Australia": "Australia and Oceania", "New Zealand": "Australia and Oceania", "Fiji": "Australia and Oceania",
-  // Europe
-  "France": "Europe", "Germany": "Europe", "Italy": "Europe", "Spain": "Europe", "United Kingdom": "Europe",
-  // North and Central America
-  "Canada": "North and Central America", "Mexico": "North and Central America", "United States of America": "North and Central America", "Costa Rica": "North and Central America",
+  "Algeria": "Africa", "Angola": "Africa", "Benin": "Africa", "Botswana": "Africa", "Burkina Faso": "Africa",
+  "Burundi": "Africa", "Cabo Verde": "Africa", "Cameroon": "Africa", "Central African Republic": "Africa", "Chad": "Africa",
+  "Comoros": "Africa", "Congo": "Africa", "Cote d'Ivoire": "Africa", "DR Congo": "Africa", "Djibouti": "Africa",
+  "Egypt": "Africa", "Equatorial Guinea": "Africa", "Eritrea": "Africa", "Eswatini": "Africa", "Ethiopia": "Africa",
+  "Gabon": "Africa", "Gambia": "Africa", "Ghana": "Africa", "Guinea": "Africa", "Guinea-Bissau": "Africa",
+  "Kenya": "Africa", "Lesotho": "Africa", "Liberia": "Africa", "Libya": "Africa", "Madagascar": "Africa",
+  "Malawi": "Africa", "Mali": "Africa", "Mauritania": "Africa", "Mauritius": "Africa", "Morocco": "Africa",
+  "Mozambique": "Africa", "Namibia": "Africa", "Niger": "Africa", "Nigeria": "Africa", "Rwanda": "Africa",
+  "Sao Tome and Principe": "Africa", "Senegal": "Africa", "Seychelles": "Africa", "Sierra Leone": "Africa", "Somalia": "Africa",
+  "South Africa": "Africa", "Sudan": "Africa", "Tanzania": "Africa", "Togo": "Africa", "Tunisia": "Africa",
+  "Uganda": "Africa", "Zambia": "Africa", "Zimbabwe": "Africa",
+
   // South America
-  "Argentina": "South America", "Brazil": "South America", "Chile": "South America", "Colombia": "South America", "Peru": "South America",
-  // Special Regions
+  "Argentina": "South America", "Bolivia": "South America", "Brazil": "South America", "Chile": "South America", "Colombia": "South America",
+  "Ecuador": "South America", "Guyana": "South America", "Paraguay": "South America", "Peru": "South America", "Suriname": "South America",
+  "Uruguay": "South America", "Venezuela": "South America",
+
+  // North and Central America
+  "United States of America": "North and Central America", "United States": "North and Central America", "Canada": "North and Central America",
+  "Mexico": "North and Central America", "Costa Rica": "North and Central America", "Cuba": "North and Central America", "Dominican Republic": "North and Central America",
+  "El Salvador": "North and Central America", "Guatemala": "North and Central America", "Haiti": "North and Central America", "Honduras": "North and Central America",
+  "Jamaica": "North and Central America", "Nicaragua": "North and Central America", "Panama": "North and Central America", "Bahamas": "North and Central America",
+  "Barbados": "North and Central America",
+
+  // Asia
+  "Afghanistan": "Asia", "Armenia": "Asia", "Azerbaijan": "Asia", "Bahrain": "Asia", "Bangladesh": "Asia",
+  "Bhutan": "Asia", "Brunei": "Asia", "Cambodia": "Asia", "China": "Asia", "Cyprus": "Asia",
+  "Georgia": "Asia", "India": "Asia", "Indonesia": "Asia", "Iran": "Asia", "Iraq": "Asia",
+  "Israel": "Asia", "Japan": "Asia", "Jordan": "Asia", "Kazakhstan": "Asia", "Kuwait": "Asia",
+  "Kyrgyzstan": "Asia", "Laos": "Asia", "Lebanon": "Asia", "Malaysia": "Asia", "Maldives": "Asia",
+  "Mongolia": "Asia", "Myanmar": "Asia", "Nepal": "Asia", "North Korea": "Asia", "Oman": "Asia",
+  "Pakistan": "Asia", "Palestine": "Asia", "Philippines": "Asia", "Qatar": "Asia", "Saudi Arabia": "Asia",
+  "Singapore": "Asia", "South Korea": "Asia", "Sri Lanka": "Asia", "Syria": "Asia", "Taiwan": "Asia",
+  "Tajikistan": "Asia", "Thailand": "Asia", "Timor-Leste": "Asia", "Turkey": "Asia", "Turkmenistan": "Asia",
+  "United Arab Emirates": "Asia", "Uzbekistan": "Asia", "Vietnam": "Asia", "Yemen": "Asia",
+
+  // Europe
+  "Albania": "Europe", "Andorra": "Europe", "Austria": "Europe", "Belarus": "Europe", "Belgium": "Europe",
+  "Bosnia and Herzegovina": "Europe", "Bulgaria": "Europe", "Croatia": "Europe", "Czech Republic": "Europe",
+  "Denmark": "Europe", "Estonia": "Europe", "Finland": "Europe", "France": "Europe", "Germany": "Europe",
+  "Greece": "Europe", "Hungary": "Europe", "Iceland": "Europe", "Ireland": "Europe", "Italy": "Europe",
+  "Latvia": "Europe", "Liechtenstein": "Europe", "Lithuania": "Europe", "Luxembourg": "Europe", "Malta": "Europe",
+  "Moldova": "Europe", "Monaco": "Europe", "Montenegro": "Europe", "Netherlands": "Europe", "North Macedonia": "Europe",
+  "Norway": "Europe", "Poland": "Europe", "Portugal": "Europe", "Romania": "Europe", "Russia": "Europe",
+  "San Marino": "Europe", "Serbia": "Europe", "Slovakia": "Europe", "Slovenia": "Europe", "Spain": "Europe",
+  "Sweden": "Europe", "Switzerland": "Europe", "Ukraine": "Europe", "United Kingdom": "Europe", "Vatican City": "Europe",
+
+  // Australia and Oceania
+  "Australia": "Australia and Oceania", "Fiji": "Australia and Oceania", "Kiribati": "Australia and Oceania", "Marshall Islands": "Australia and Oceania", "Micronesia": "Australia and Oceania",
+  "Nauru": "Australia and Oceania", "New Zealand": "Australia and Oceania", "Palau": "Australia and Oceania", "Papua New Guinea": "Australia and Oceania", "Samoa": "Australia and Oceania",
+  "Solomon Islands": "Australia and Oceania", "Tonga": "Australia and Oceania", "Tuvalu": "Australia and Oceania", "Vanuatu": "Australia and Oceania",
+
+  // Special Regions / Others
   "Antarctica": "Special Regions", "Greenland": "Special Regions"
-  // Note: Unmapped countries will default to "Special Regions" or "Unknown" based on logic
 };
 
 export function getContinentForCountry(country: string) {
@@ -222,15 +265,30 @@ export function CountryRatingModal({
 }) {
   const allCitiesData = (worldCitiesData as Record<string, string[]>)[country] || ['General City 1', 'General City 2'];
   
-  // Group cities alphabetically
-  const groupedCities = allCitiesData.reduce((acc, city) => {
-    const letter = city.charAt(0).toUpperCase();
-    if (!acc[letter]) acc[letter] = [];
-    acc[letter].push(city);
-    return acc;
-  }, {} as Record<string, string[]>);
-  
-  const sortedLetters = Object.keys(groupedCities).sort();
+  // State for search query
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+
+  const COUNTRY_COORDS: Record<string, [number, number]> = {
+    "India": [20.5937, 78.9629],
+    "Brazil": [-14.235, -51.9253],
+    "Algeria": [28.0339, 1.6596],
+    "Egypt": [26.8206, 30.8025],
+    "Libya": [26.3351, 17.2283],
+    "Morocco": [31.7917, -7.0926],
+    "South Africa": [-30.5595, 22.9375],
+    "France": [46.2276, 2.2137],
+    "Italy": [41.8719, 12.5674],
+    "Spain": [40.4637, -3.7492],
+    "Germany": [51.1657, 10.4515],
+    "United Kingdom": [55.3781, -3.436],
+    "United States": [37.0902, -95.7129],
+    "Canada": [56.1304, -106.3468],
+    "Australia": [-25.2744, 133.7751]
+  };
+
+  const centerCoord = COUNTRY_COORDS[country] || [20, 0];
 
   // State for selected cities
   const existingCities = userCityLogs.filter(c => c.country === country).map(c => c.city);
@@ -253,11 +311,9 @@ export function CountryRatingModal({
   const handleSave = async () => {
     if (!userId) return;
     try {
-      // Calculate avg
       const vals = Object.values(ratings);
       const avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
       
-      // Upsert country log
       const { error: err1 } = await supabase.from('user_country_logs').upsert({
         user_id: userId,
         country: country,
@@ -266,11 +322,8 @@ export function CountryRatingModal({
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id,country' });
 
-      // Handle cities (delete removed, insert new)
-      // Delete old ones
       await supabase.from('user_city_logs').delete().eq('user_id', userId).eq('country', country);
       
-      // Insert new ones
       if (selectedCities.length > 0) {
         const cityInserts = selectedCities.map(c => ({ user_id: userId, country: country, city: c }));
         await supabase.from('user_city_logs').insert(cityInserts);
@@ -284,109 +337,313 @@ export function CountryRatingModal({
     }
   };
 
+  const filteredCities = allCitiesData.filter(city => city.toLowerCase().includes(searchQuery.toLowerCase()));
+  const continent = COUNTRY_TO_CONTINENT[country] || 'Explore';
+
+  // Calculate average score dynamically scaled by 2 (e.g. 3.65 stars * 2 = 7.3 rate)
+  const ratingsArray = Object.values(ratings);
+  const calculatedAvg = ratingsArray.reduce((a, b) => a + b, 0) / (ratingsArray.length || 1);
+  const averageRateDisplay = (calculatedAvg * 2).toFixed(1);
+
+  const overlayStyle = {
+    position: 'fixed' as const,
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '40px'
+  };
+
+  const modalContentStyle = {
+    background: '#fff',
+    borderRadius: '24px',
+    maxWidth: '900px',
+    width: '100%',
+    display: 'flex',
+    overflow: 'hidden',
+    height: '620px',
+    boxShadow: '0 24px 60px rgba(0,0,0,0.15)',
+    color: '#1E293B',
+    fontFamily: "'Inter', sans-serif",
+    position: 'relative' as const,
+    margin: 'auto'
+  };
+
+  const closeBtnStyle = {
+    position: 'absolute' as const,
+    top: '20px',
+    right: '20px',
+    border: 'none',
+    background: '#FAF8F5',
+    borderRadius: '50%',
+    width: '36px',
+    height: '36px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    color: '#6B7280',
+    transition: 'all 0.2s',
+    zIndex: 10
+  };
+
+  const leftPaneStyle = {
+    width: '45%',
+    background: '#FAF8F5',
+    padding: '40px',
+    borderRight: '1px solid #E5E7EB',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    minHeight: 0
+  };
+
+  const rightPaneStyle = {
+    width: '55%',
+    background: '#FFF',
+    padding: '40px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    overflowY: 'auto' as const
+  };
+
   return (
-    <div className="share-modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
+    <div style={overlayStyle} onClick={onClose}>
       <div 
         className="animate-pop" 
         onClick={e => e.stopPropagation()} 
-        style={{ 
-          background: '#fff', borderRadius: '16px', maxWidth: '1000px', width: '100%', 
-          display: 'flex', overflow: 'hidden', height: '80vh' 
-        }}
+        style={modalContentStyle}
       >
-        {/* Left Pane - City Checklist */}
-        <div style={{ flex: '0 0 350px', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column', background: '#F8FAFC', minHeight: 0 }}>
-          <div style={{ padding: '24px', borderBottom: '1px solid #E5E7EB', background: '#FFF' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 8px', color: '#031B4E' }}>
-              🌍 {country}
-            </h2>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button style={{ padding: '6px 12px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>List</button>
-              <button style={{ padding: '6px 12px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>On map</button>
-            </div>
+        <button 
+          onClick={onClose} 
+          style={closeBtnStyle}
+        >
+          ✕
+        </button>
+
+        {/* Left Pane - City Checklist / Map view */}
+        <div style={leftPaneStyle}>
+          <h2 style={{ 
+            color: '#EBA424', 
+            fontSize: '1.8rem', 
+            fontWeight: 800, 
+            margin: '0 0 6px',
+            fontFamily: "'Playfair Display', serif"
+          }}>
+            Wandered Places
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: '0 0 20px' }}>
+            Track cities and attractions you've explored
+          </p>
+
+          {/* Toggle buttons */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+            <button 
+              onClick={() => setViewMode('list')}
+              style={{ 
+                padding: '8px 16px', 
+                background: viewMode === 'list' ? '#EBA424' : '#FFF', 
+                color: viewMode === 'list' ? '#FFF' : '#374151', 
+                border: '1px solid #E5E7EB', 
+                borderRadius: '8px', 
+                fontSize: '13px', 
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              List
+            </button>
+            <button 
+              onClick={() => setViewMode('map')}
+              style={{ 
+                padding: '8px 16px', 
+                background: viewMode === 'map' ? '#EBA424' : '#FFF', 
+                color: viewMode === 'map' ? '#FFF' : '#374151', 
+                border: '1px solid #E5E7EB', 
+                borderRadius: '8px', 
+                fontSize: '13px', 
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              On map
+            </button>
           </div>
           
+          {viewMode === 'list' ? (
+            <>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                border: '1px solid #E5E7EB', 
+                borderRadius: '12px', 
+                padding: '10px 16px', 
+                background: '#FFF', 
+                marginBottom: '12px' 
+              }}>
+                <span style={{ color: '#9CA3AF', fontSize: '0.95rem' }}>🔍</span>
+                <input 
+                  type="text" 
+                  placeholder="Search cities or attractions..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ 
+                    border: 'none', 
+                    outline: 'none', 
+                    width: '100%', 
+                    fontSize: '0.9rem', 
+                    marginLeft: '8px', 
+                    color: '#1E293B' 
+                  }}
+                />
+              </div>
 
+              <div style={{ fontSize: '0.85rem', color: '#6B7280', fontWeight: 700, margin: '12px 0' }}>
+                {selectedCities.length} of {allCitiesData.length} selected
+              </div>
 
-          <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
-            <h4 style={{ margin: '0 0 16px', color: '#374151', fontSize: '13px', textTransform: 'uppercase' }}>Main places</h4>
-            
-            {sortedLetters.map(letter => (
-              <div key={letter} style={{ marginBottom: '16px' }}>
-                <div style={{ fontWeight: 800, color: '#9CA3AF', marginBottom: '8px', paddingLeft: '8px' }}>{letter}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {groupedCities[letter].map(city => (
-                    <label key={city} style={{ 
-                      display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', 
-                      background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', cursor: 'pointer' 
-                    }}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedCities.includes(city)} 
-                        onChange={() => toggleCity(city)} 
-                        style={{ width: '18px', height: '18px', accentColor: '#3B82F6' }}
-                      />
-                      <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>{city}</span>
-                    </label>
-                  ))}
+              <div className="city-scroll-container" style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '10px',
+                paddingRight: '6px'
+              }}>
+                {filteredCities.map((city, idx) => {
+                  const isSelected = selectedCities.includes(city);
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => toggleCity(city)}
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        background: '#FFF', 
+                        border: isSelected ? '1px solid #EBA424' : '1px solid #FFEED6', 
+                        borderRadius: '12px', 
+                        padding: '14px 20px', 
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s', 
+                        fontWeight: 600, 
+                        color: isSelected ? '#855F1B' : '#374151', 
+                        fontSize: '0.95rem',
+                        boxShadow: isSelected ? '0 2px 8px rgba(235,164,36,0.1)' : 'none'
+                      }}
+                    >
+                      <span>{city}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <MiniCountryMap country={country} center={centerCoord} />
+            </div>
+          )}
+        </div>
+
+        {/* Right Pane - Country Rating */}
+        <div style={rightPaneStyle}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            marginBottom: '24px' 
+          }}>
+            <div>
+              <h2 style={{ 
+                fontSize: '2.2rem', 
+                fontWeight: 800, 
+                color: '#1E293B', 
+                margin: '0 0 4px',
+                fontFamily: "'Playfair Display', serif"
+              }}>
+                Rate {country}
+              </h2>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#EBA424', letterSpacing: '0.05em' }}>
+                📍 {continent.toUpperCase()}
+              </span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '2.8rem', fontWeight: 800, color: '#EBA424', lineHeight: 1 }}>
+                {averageRateDisplay}
+              </div>
+              <div style={{ fontSize: '0.65rem', color: '#9CA3AF', fontWeight: 800, marginTop: '4px' }}>
+                AVERAGE COUNTRY RATE
+              </div>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '0.9rem', color: '#6B7280', margin: '0 0 16px' }}>Rate your experience</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+            {Object.entries(ratings).map(([label, stars]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#4B5563' }}>{label}</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[1, 2, 3, 4, 5].map(star => {
+                    const isFilled = star <= stars;
+                    return (
+                      <span 
+                        key={star} 
+                        onClick={() => handleStarClick(label, star)}
+                        style={{ 
+                          fontSize: '1.6rem', 
+                          cursor: 'pointer', 
+                          color: isFilled ? '#EBA424' : '#D1D5DB',
+                          transition: 'transform 0.1s, color 0.2s',
+                          transform: 'scale(1)',
+                          display: 'inline-block'
+                        }}
+                      >
+                        ★
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ padding: '16px', background: '#FFF', borderTop: '1px solid #E5E7EB' }}>
-            <button onClick={handleSave} style={{ width: '100%', padding: '12px', background: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
+
+          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <button 
+              onClick={onClose} 
+              style={{ 
+                background: '#FAF8F5', 
+                border: '1px solid #E5E7EB', 
+                padding: '12px 24px', 
+                borderRadius: '30px', 
+                fontWeight: 600, 
+                color: '#4B5563', 
+                cursor: 'pointer', 
+                transition: 'all 0.2s' 
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSave} 
+              style={{ 
+                background: '#EBA424', 
+                border: 'none', 
+                padding: '12px 24px', 
+                borderRadius: '30px', 
+                fontWeight: 600, 
+                color: '#FFF', 
+                cursor: 'pointer', 
+                transition: 'all 0.2s' 
+              }}
+            >
               Save
             </button>
-          </div>
-        </div>
-
-        {/* Right Pane - Country Rating */}
-        <div style={{ flex: 1, padding: '40px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', color: '#374151', margin: 0 }}>Country</h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#9CA3AF' }}>✕</button>
-          </div>
-
-          <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center', border: '1px dashed #CBD5E1' }}>
-            <p style={{ color: '#64748B', fontSize: '13px', marginBottom: '16px' }}>Add your photo from this country as a cover to make the country card look attractive.</p>
-            <button style={{ padding: '10px 24px', background: '#3B82F6', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
-              📸 Add country photo
-            </button>
-          </div>
-
-          <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 24px', background: '#E0F2FE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600, color: '#0369A1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ background: '#FFF', padding: '4px 12px', borderRadius: '12px' }}>0</span> Country rate
-              </div>
-              <span>^</span>
-            </div>
-            
-            <div style={{ padding: '32px 40px', background: '#FFF' }}>
-              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                <div style={{ color: '#64748B', fontSize: '14px' }}>Average country rate: 7.8</div>
-                <h4 style={{ margin: '8px 0 0', fontSize: '16px', color: '#111827' }}>And how will you rate it?</h4>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {Object.entries(ratings).map(([label, stars]) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ color: '#4B5563', fontSize: '14px', width: '120px' }}>{label}</div>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      {[1,2,3,4,5].map(star => (
-                        <span 
-                          key={star} 
-                          onClick={() => handleStarClick(label, star)}
-                          style={{ color: star <= stars ? '#94A3B8' : '#F1F5F9', cursor: 'pointer', fontSize: '24px' }} // 3pulse uses gray stars
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>

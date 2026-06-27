@@ -24,6 +24,7 @@ export default function TravelMapPage() {
   const [userCityLogs, setUserCityLogs] = useState<any[]>([]);
   
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [mainViewMode, setMainViewMode] = useState<'map' | 'list'>('map');
 
   const fetchUserData = async (userId: string) => {
     // We swallow errors because if tables don't exist yet, we still want the UI to render empty
@@ -49,6 +50,28 @@ export default function TravelMapPage() {
 
   const handleCountryClick = (country: string) => {
     setSelectedCountry(country);
+  };
+
+  const handleToggleCountry = async (country: string) => {
+    if (!user) return;
+    const isVisited = userCountryLogs.some(log => log.country === country);
+    try {
+      if (isVisited) {
+        await supabase.from('user_country_logs').delete().eq('user_id', user.id).eq('country', country);
+        await supabase.from('user_city_logs').delete().eq('user_id', user.id).eq('country', country);
+      } else {
+        await supabase.from('user_country_logs').upsert({
+          user_id: user.id,
+          country: country,
+          ratings: { Sightseeing: 0, 'Local people': 0, 'Service quality': 0, Safety: 0, 'Price/quality': 0, 'Local cuisine': 0 },
+          average_score: 0,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,country' });
+      }
+      fetchUserData(user.id);
+    } catch (e) {
+      console.error("Error toggling country:", e);
+    }
   };
 
   // Auth Card State
@@ -341,6 +364,8 @@ export default function TravelMapPage() {
     )
   }
 
+
+
   return (
     <div className="travel-map-page" style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '60px' }}>
       <SiteHeader />
@@ -362,22 +387,90 @@ export default function TravelMapPage() {
           </button>
         </div>
 
-
-
-        <div style={{ display: 'flex', gap: '24px', marginTop: '40px' }}>
-          <div style={{ flex: '1', height: '600px', background: '#FFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
-            <InteractiveWorldMap 
-              countryData={countryData} 
-              selectedCountry={selectedCountry}
-              onCountryClick={handleCountryClick}
-            />
-          </div>
+        {/* View Mode Toggle Option */}
+        <div style={{ 
+          display: 'flex', 
+          background: '#FFF', 
+          padding: '6px', 
+          borderRadius: '30px', 
+          width: 'fit-content', 
+          marginBottom: '32px',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+          position: 'relative'
+        }}>
+          <button 
+            onClick={() => setMainViewMode('map')}
+            style={{
+              padding: '10px 24px',
+              border: 'none',
+              borderRadius: '24px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: mainViewMode === 'map' ? '#F6B800' : 'transparent',
+              color: mainViewMode === 'map' ? '#031B4E' : '#64748B',
+              boxShadow: mainViewMode === 'map' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+              <line x1="9" y1="3" x2="9" y2="18" />
+              <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            Map
+          </button>
+          <button 
+            onClick={() => setMainViewMode('list')}
+            style={{
+              padding: '10px 24px',
+              border: 'none',
+              borderRadius: '24px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: mainViewMode === 'list' ? '#F6B800' : 'transparent',
+              color: mainViewMode === 'list' ? '#031B4E' : '#64748B',
+              boxShadow: mainViewMode === 'list' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            List
+          </button>
         </div>
 
-        <AccordionCountrySelector 
-          userCountryLogs={userCountryLogs} 
-          onCountrySelect={handleCountryClick} 
-        />
+        {mainViewMode === 'map' ? (
+          <div style={{ display: 'flex', gap: '24px', marginTop: '20px' }}>
+            <div style={{ flex: '1', height: '600px', background: '#FFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
+              <InteractiveWorldMap 
+                countryData={countryData} 
+                selectedCountry={selectedCountry}
+                onCountryClick={handleCountryClick}
+              />
+            </div>
+          </div>
+        ) : (
+          <AccordionCountrySelector 
+            userCountryLogs={userCountryLogs} 
+            onCountrySelect={handleCountryClick} 
+            onToggleCountry={handleToggleCountry}
+          />
+        )}
 
 
 

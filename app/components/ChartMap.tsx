@@ -6,6 +6,26 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { supabase } from '@/lib/supabase'
 
+function getContinentForCountry(country: string): string {
+    const continents: Record<string, string> = {
+        'India': 'South Asia',
+        'Italy': 'Southern Europe',
+        'France': 'Western Europe',
+        'Spain': 'Southern Europe',
+        'Germany': 'Western Europe',
+        'United Kingdom': 'Northern Europe',
+        'United States': 'North America',
+        'Canada': 'North America',
+        'Japan': 'East Asia',
+        'Australia': 'Oceania',
+        'Brazil': 'South America',
+        'South Africa': 'Africa',
+        'China': 'East Asia',
+        'Egypt': 'North Africa',
+    };
+    return continents[country] || 'Explore';
+}
+
 // Fix for default marker icon in Next.js
 if (typeof window !== 'undefined') {
     delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -85,7 +105,8 @@ export default function ChartMap() {
         localPeople: 0,
         serviceQuality: 0,
         safety: 0,
-        price: 0
+        price: 0,
+        localCuisine: 0
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [countryPlaces, setCountryPlaces] = useState<any[]>([])
@@ -101,7 +122,7 @@ export default function ChartMap() {
             setCustomCityInput('');
             setIsCityDropdownOpen(false);
             setReviewText('');
-            setRatings({ sightseeing: 0, localPeople: 0, serviceQuality: 0, safety: 0, price: 0 });
+            setRatings({ sightseeing: 0, localPeople: 0, serviceQuality: 0, safety: 0, price: 0, localCuisine: 0 });
 
             fetch(`/api/planner/places?country=${encodeURIComponent(selectedCountry.name)}`)
                 .then(res => res.json())
@@ -331,183 +352,118 @@ export default function ChartMap() {
                 </button>
             </div>
 
-            {/* Detail Modal Overlay - Glassmorphism */}
+            {/* Detail Modal Overlay - Custom Split Layout */}
             {selectedCountry && (
                 <div className="modal-overlay" onClick={() => setSelectedCountry(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <button className="close-btn" onClick={() => setSelectedCountry(null)}>✕</button>
 
-                        <div className="modal-header">
-                            <div className="country-flag">
-                                {selectedCountry.code ? (
-                                    <img src={`https://flagcdn.com/w160/${selectedCountry.code.toLowerCase()}.png`} alt="" />
-                                ) : (
-                                    <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏳️</div>
-                                )}
-                            </div>
-                            <div className="country-info">
-                                <h2 style={{ color: 'white' }}>{selectedCountry.name}</h2>
-                                <div className="rating-summary">
-                                    Global average rating:
-                                    <span>
-                                        {' ★'.repeat(Math.round(
-                                            (selectedCountry.sightseeing +
-                                                selectedCountry.localPeople +
-                                                selectedCountry.serviceQuality +
-                                                selectedCountry.safety +
-                                                selectedCountry.price) / 5 || 0
-                                        ))}
-                                        {((selectedCountry.sightseeing +
-                                            selectedCountry.localPeople +
-                                            selectedCountry.serviceQuality +
-                                            selectedCountry.safety +
-                                            selectedCountry.price) / 5 || 0).toFixed(1)}
-                                    </span>
+                        <div className="split-modal-body">
+                            {/* Left Panel - Wandered Places */}
+                            <div className="left-panel">
+                                <h2 className="wandered-title">Wandered Places</h2>
+                                <p className="wandered-subtitle">Track cities and attractions you've explored</p>
+                                
+                                <div className="search-bar-wrapper">
+                                    <span className="search-icon">🔍</span>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search cities or attractions..." 
+                                        value={customCityInput}
+                                        onChange={(e) => setCustomCityInput(e.target.value)}
+                                        className="search-cities-input"
+                                    />
+                                </div>
+
+                                <div className="selected-counter">
+                                    {selectedCities.length} of {countryPlaces.length || 120} selected
+                                </div>
+
+                                <div className="city-cards-list">
+                                    {(countryPlaces.length > 0 ? countryPlaces : [
+                                        { city: 'Agra' }, { city: 'Ahmedabad' }, { city: 'Ajanta' },
+                                        { city: 'Amritsar' }, { city: 'Bangalore' }, { city: 'Chennai' }
+                                    ])
+                                    .filter(p => p.city && p.city.toLowerCase().includes(customCityInput.toLowerCase()))
+                                    .map((p, idx) => {
+                                        const isSelected = selectedCities.includes(p.city);
+                                        return (
+                                            <div 
+                                                key={idx} 
+                                                className={`city-card ${isSelected ? 'city-card-selected' : ''}`}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelectedCities(prev => prev.filter(c => c !== p.city));
+                                                    } else {
+                                                        setSelectedCities(prev => [...prev, p.city]);
+                                                    }
+                                                }}
+                                            >
+                                                <span>{p.city}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="modal-body">
-                            <div className="ratings-section">
-                                <h3 style={{ color: '#ffc107', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Category Ratings</h3>
-                                <div className="ratings-list">
-                                    {[
-                                        { label: 'Sightseeing', val: selectedCountry.sightseeing, icon: '🏛️' },
-                                        { label: 'Local People', val: selectedCountry.localPeople, icon: '👥' },
-                                        { label: 'Service Quality', val: selectedCountry.serviceQuality, icon: '🧼' },
-                                        { label: 'Safety', val: selectedCountry.safety, icon: '🛡️' },
-                                        { label: 'Price', val: selectedCountry.price, icon: '💰' },
-                                    ].map(stat => (
-                                        <div key={stat.label} className="rating-row">
-                                            <span className="rating-icon">{stat.icon}</span>
-                                            <span className="rating-label">{stat.label}</span>
-                                            <div className="rating-bar-bg">
-                                                <div className="rating-bar-fill" style={{ width: `${(stat.val / 5) * 100}%` }} />
-                                            </div>
-                                            <span className="rating-val">{stat.val || '-'}</span>
+                            {/* Right Panel - Rating Panel */}
+                            <div className="right-panel">
+                                <div className="right-panel-header">
+                                    <div className="header-info">
+                                        <h2 className="rate-country-title">Rate {selectedCountry.name}</h2>
+                                        <span className="region-tag">📍 {getContinentForCountry(selectedCountry.name).toUpperCase()}</span>
+                                    </div>
+                                    <div className="header-score-wrapper">
+                                        <div className="score-val">
+                                            {(((selectedCountry.sightseeing + selectedCountry.localPeople + selectedCountry.serviceQuality + selectedCountry.safety + selectedCountry.price) / 5 || 0) * 2).toFixed(1)}
                                         </div>
-                                    ))}
+                                        <div className="score-label">AVERAGE COUNTRY RATE</div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="reviews-section">
-                                <h3 style={{ color: '#ffc107', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Traveler Reviews ({selectedCountry.reviews.length})</h3>
-                                <div className="reviews-list">
-                                    {selectedCountry.reviews.length > 0 ? (
-                                        selectedCountry.reviews.map((rev, i) => (
-                                            <div key={i} className="review-card">
-                                                <img src={rev.avatar} alt="" className="user-avatar" />
-                                                <div className="review-content">
-                                                    <div className="review-header">
-                                                        <span className="user-name">{rev.user}</span>
-                                                        <div className="stars">{'★'.repeat(rev.rating)}</div>
-                                                    </div>
-                                                    <div className="review-date">{rev.date}</div>
-                                                    <p className="review-text">{rev.text}</p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p style={{ opacity: 0.5, fontSize: '14px', fontStyle: 'italic' }}>No reviews yet. Be the first to share your experience!</p>
-                                    )}
-                                </div>
-                            </div>
+                                <p className="rate-intro-text">Rate your experience</p>
 
-                            <div className="share-form">
-                                <h3 style={{ color: '#ffc107', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Share Your Experience</h3>
-
-                                <div className="rating-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '15px', marginBottom: '25px' }}>
+                                <div className="rating-categories-list">
                                     {[
                                         { key: 'sightseeing', label: 'Sightseeing' },
-                                        { key: 'localPeople', label: 'Local People' },
-                                        { key: 'serviceQuality', label: 'Service Quality' },
+                                        { key: 'localPeople', label: 'Local people' },
+                                        { key: 'serviceQuality', label: 'Service quality' },
                                         { key: 'safety', label: 'Safety' },
-                                        { key: 'price', label: 'Price' }
-                                    ].map((cat) => (
-                                        <div key={cat.key} className="rating-slider-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                                <span style={{ color: 'rgba(255,255,255,0.8)' }}>{cat.label}</span>
-                                                <span style={{ color: '#ffc107', fontWeight: 'bold' }}>{(ratings as any)[cat.key] || '-'} / 5</span>
+                                        { key: 'price', label: 'Price/quality' },
+                                        { key: 'localCuisine', label: 'Local cuisine' }
+                                    ].map(cat => (
+                                        <div key={cat.key} className="rating-category-row">
+                                            <span className="category-label">{cat.label}</span>
+                                            <div className="interactive-stars">
+                                                {[1, 2, 3, 4, 5].map(star => {
+                                                    const isFilled = star <= (ratings as any)[cat.key];
+                                                    return (
+                                                        <span 
+                                                            key={star} 
+                                                            onClick={() => handleRatingChange(cat.key, star)}
+                                                            className="star-icon"
+                                                            style={{ color: isFilled ? '#EBA424' : '#D1D5DB' }}
+                                                        >
+                                                            ★
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
-                                            <input
-                                                type="range"
-                                                min="0" max="5"
-                                                value={(ratings as any)[cat.key]}
-                                                onChange={(e) => handleRatingChange(cat.key, parseInt(e.target.value))}
-                                                className="modern-range-slider"
-                                            />
                                         </div>
                                     ))}
                                 </div>
-                                <div className="manual-city-input-wrapper">
-                                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', marginBottom: '10px' }}>What cities did you visit?</p>
-
-                                    <div className="city-input-group" style={{ display: 'flex', gap: '10px', marginBottom: '15px', position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            value={customCityInput}
-                                            onChange={(e) => {
-                                                setCustomCityInput(e.target.value)
-                                                setIsCityDropdownOpen(true)
-                                            }}
-                                            onFocus={() => setIsCityDropdownOpen(true)}
-                                            onBlur={() => setTimeout(() => setIsCityDropdownOpen(false), 200)}
-                                            placeholder={`Search cities in ${selectedCountry.name}...`}
-                                            className="custom-city-input"
-                                        />
-
-                                        {/* Dropdown Menu */}
-                                        {isCityDropdownOpen && (
-                                            <div className="city-dropdown-menu">
-                                                {Array.from(new Set(countryPlaces.map(p => p.city)))
-                                                    .filter(city => city && city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city))
-                                                    .map(city => (
-                                                        <div
-                                                            key={city}
-                                                            className="city-dropdown-item"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedCities(prev => [...prev, city]);
-                                                                setCustomCityInput('');
-                                                                setIsCityDropdownOpen(false);
-                                                            }}
-                                                        >
-                                                            {city}
-                                                        </div>
-                                                    ))
-                                                }
-                                                {Array.from(new Set(countryPlaces.map(p => p.city))).filter(city => city && city.toLowerCase().includes(customCityInput.toLowerCase()) && !selectedCities.includes(city)).length === 0 && (
-                                                    <div className="city-dropdown-empty">
-                                                        {customCityInput.trim() ? "No cities found" : "Type to search cities..."}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {selectedCities.length > 0 && (
-                                        <div className="selected-cities-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-                                            {selectedCities.map(city => (
-                                                <div key={city} className="city-tag">
-                                                    {city}
-                                                    <button onClick={() => handleCityToggle(city)} className="btn-remove-tag">×</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
 
                                 <textarea
                                     value={reviewText}
                                     onChange={(e) => setReviewText(e.target.value)}
                                     placeholder={`Write your review about ${selectedCountry.name}...`}
-                                    className="review-input"
+                                    className="review-input-modern"
                                 />
-                                <div className="form-actions">
-                                    <button className="btn-cancel" onClick={() => setSelectedCountry(null)}>Cancel</button>
+
+                                <div className="form-actions-modern">
+                                    <button className="btn-cancel-modern" onClick={() => setSelectedCountry(null)}>Cancel</button>
                                     <button
-                                        className="btn-post"
+                                        className="btn-post-modern"
                                         onClick={handlePostReview}
                                         disabled={isSubmitting}
                                     >
@@ -596,373 +552,265 @@ export default function ChartMap() {
                     box-shadow: 0 8px 20px rgba(255,193,7,0.3);
                     cursor: pointer;
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                .flaunt-btn:hover {
+.flaunt-btn:hover {
                     transform: translateY(-2px) scale(1.02);
                     box-shadow: 0 12px 25px rgba(255,193,7,0.4);
                 }
-                
-                .modal-overlay {
+                 .modal-overlay {
                     position: absolute;
                     inset: 0;
                     z-index: 1001;
-                    background: rgba(0,0,0,0.6);
-                    backdrop-filter: blur(8px);
+                    background: rgba(0,0,0,0.4);
+                    backdrop-filter: blur(4px);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     padding: 40px;
                 }
                 .modal-content {
-                    background: rgba(10, 25, 47, 0.9);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: #FFF;
                     width: 100%;
-                    max-width: 750px;
-                    max-height: 90vh;
-                    border-radius: 32px;
-                    overflow-y: auto;
+                    max-width: 900px;
+                    border-radius: 24px;
+                    overflow: hidden;
                     position: relative;
-                    padding: 45px;
-                    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-                    color: white;
+                    box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+                    color: #1E293B;
+                    font-family: 'Inter', sans-serif;
                 }
-                .modal-content::-webkit-scrollbar { width: 6px; }
-                .modal-content::-webkit-scrollbar-track { background: transparent; }
-                .modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-
                 .close-btn {
                     position: absolute;
-                    top: 25px;
-                    right: 25px;
+                    top: 20px;
+                    right: 20px;
                     border: none;
-                    background: rgba(255,255,255,0.05);
+                    background: #FAF8F5;
                     border-radius: 50%;
-                    width: 40px;
-                    height: 40px;
+                    width: 36px;
+                    height: 36px;
                     cursor: pointer;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-size: 14px;
-                    color: white;
+                    color: #6B7280;
                     transition: all 0.2s;
+                    z-index: 10;
                 }
-                .close-btn:hover { background: rgba(255,255,255,0.1); }
+                .close-btn:hover { background: #E5E7EB; color: #1E293B; }
 
-                .modal-header {
+                .split-modal-body {
                     display: flex;
-                    gap: 30px;
-                    margin-bottom: 45px;
-                    align-items: flex-start;
+                    height: 640px;
                 }
-                .country-flag {
-                    width: 120px;
-                    height: 80px;
-                    border-radius: 16px;
-                    overflow: hidden;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-                    flex-shrink: 0;
-                    border: 1px solid rgba(255,255,255,0.1);
-                }
-                .country-flag img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-                .country-info h2 {
-                    margin: 0 0 8px 0;
-                    font-size: 2.4rem;
-                    font-weight: 800;
-                    letter-spacing: -1px;
-                }
-                .rating-summary {
-                    color: rgba(255,255,255,0.5);
-                    font-size: 15px;
-                }
-                .rating-summary span {
-                    color: #ffc107;
-                    font-weight: 800;
-                    margin-left: 5px;
-                }
-                
-                .ratings-list {
+                .left-panel {
+                    width: 45%;
+                    background: #FAF8F5;
+                    padding: 40px;
+                    border-right: 1px solid #E5E7EB;
                     display: flex;
                     flex-direction: column;
-                    gap: 20px;
-                    margin: 20px 0 50px 0;
                 }
-                .rating-row {
+                .right-panel {
+                    width: 55%;
+                    background: #FFF;
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    overflow-y: auto;
+                }
+                .right-panel::-webkit-scrollbar { width: 6px; }
+                .right-panel::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 3px; }
+
+                .wandered-title {
+                    color: #EBA424;
+                    font-size: 1.8rem;
+                    font-weight: 800;
+                    margin: 0 0 6px;
+                    font-family: 'Playfair Display', serif;
+                }
+                .wandered-subtitle {
+                    color: #6B7280;
+                    font-size: 0.9rem;
+                    margin: 0 0 20px;
+                }
+                .search-bar-wrapper {
                     display: flex;
                     align-items: center;
-                    gap: 20px;
+                    border: 1px solid #E5E7EB;
+                    border-radius: 12px;
+                    padding: 10px 16px;
+                    background: #FFF;
+                    margin-bottom: 12px;
                 }
-                .rating-icon {
-                    font-size: 22px;
-                    width: 30px;
-                    text-align: center;
+                .search-icon {
+                    color: #9CA3AF;
+                    font-size: 0.95rem;
                 }
-                .rating-label {
-                    font-size: 14px;
-                    width: 100px;
-                    color: rgba(255,255,255,0.8);
+                .search-cities-input {
+                    border: none;
+                    outline: none;
+                    width: 100%;
+                    font-size: 0.9rem;
+                    margin-left: 8px;
+                    color: #1E293B;
                 }
-                .rating-bar-bg {
+                .selected-counter {
+                    font-size: 0.85rem;
+                    color: #6B7280;
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                }
+                .city-cards-list {
                     flex: 1;
-                    height: 10px;
-                    background: rgba(255,255,255,0.05);
-                    border-radius: 5px;
-                    position: relative;
-                    overflow: hidden;
-                }
-                .rating-bar-fill {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    bottom: 0;
-                    background: linear-gradient(90deg, #ffc107, #ffa500);
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(255,193,7,0.3);
-                }
-                .rating-val {
-                    font-size: 14px;
-                    font-weight: 800;
-                    width: 35px;
-                    text-align: right;
-                    color: #ffc107;
-                }
-                
-                .reviews-list {
+                    overflow-y: auto;
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
-                    margin: 20px 0 50px 0;
+                    gap: 10px;
+                    padding-right: 6px;
                 }
-                .review-card {
-                    display: flex;
-                    gap: 24px;
-                    padding: 28px;
-                    border-radius: 24px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-                .user-avatar {
-                    width: 54px;
-                    height: 54px;
-                    border-radius: 50%;
-                    flex-shrink: 0;
-                    border: 2px solid rgba(255,255,255,0.1);
-                }
-                .review-header {
+                .city-cards-list::-webkit-scrollbar { width: 6px; }
+                .city-cards-list::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 3px; }
+
+                .city-card {
                     display: flex;
                     justify-content: space-between;
-                    margin-bottom: 5px;
-                }
-                .user-name {
-                    font-weight: 800;
-                    font-size: 16px;
-                }
-                .stars {
-                    color: #ffc107;
-                    font-size: 14px;
-                }
-                .review-date {
-                    font-size: 12px;
-                    color: rgba(255,255,255,0.4);
-                    margin-bottom: 15px;
-                }
-                .review-text {
-                    margin: 0;
-                    font-size: 14px;
-                    line-height: 1.8;
-                    color: rgba(255,255,255,0.8);
-                }
-                
-                .share-form {
-                    padding: 35px;
-                    border-radius: 28px;
-                    background: rgba(255, 255, 255, 0.02);
-                    border: 1px solid rgba(255, 255, 255, 0.04);
-                }
-
-                .custom-city-input {
-                    flex: 1;
-                    padding: 12px 18px;
+                    align-items: center;
+                    background: #FFF;
+                    border: 1px solid #FFEED6;
                     border-radius: 12px;
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: white;
-                    font-size: 14px;
-                    outline: none;
-                    transition: border-color 0.2s;
-                }
-                .custom-city-input:focus { border-color: #ffc107; }
-                
-                .btn-add-city {
-                    padding: 0 24px;
-                    border-radius: 12px;
-                    border: none;
-                    background: #ffc107;
-                    color: black;
-                    font-weight: 800;
+                    padding: 14px 20px;
                     cursor: pointer;
                     transition: all 0.2s;
-                }
-                .btn-add-city:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,193,7,0.3); }
-                .btn-add-city:disabled { opacity: 0.5; cursor: not-allowed; }
-
-                .city-dropdown-menu {
-                    position: absolute;
-                    top: calc(100% + 5px);
-                    left: 0;
-                    right: 80px; /* Leave space for Add button */
-                    background: #112240;
-                    border: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 12px;
-                    max-height: 200px;
-                    overflow-y: auto;
-                    z-index: 1000;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                }
-                .city-dropdown-menu::-webkit-scrollbar { width: 6px; }
-                .city-dropdown-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-                
-                .city-dropdown-item {
-                    padding: 12px 18px;
-                    color: white;
-                    font-size: 14px;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                    border-bottom: 1px solid rgba(255,255,255,0.05);
-                }
-                .city-dropdown-item:last-child { border-bottom: none; }
-                .city-dropdown-item:hover { background: rgba(255,255,255,0.08); }
-                .city-dropdown-item.custom-add { color: #ffc107; font-style: italic; }
-                .city-dropdown-empty { padding: 12px 18px; color: rgba(255,255,255,0.5); font-size: 13px; font-style: italic; }
-
-                .city-tag {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    background: rgba(255,255,255,0.1);
-                    padding: 6px 14px;
-                    border-radius: 30px;
-                    font-size: 13px;
-                    color: white;
-                    border: 1px solid rgba(255,255,255,0.2);
-                }
-                .btn-remove-tag {
-                    background: none;
-                    border: none;
-                    color: rgba(255,255,255,0.6);
-                    cursor: pointer;
-                    font-size: 16px;
-                    line-height: 1;
-                    padding: 0 0 2px 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 50%;
-                }
-                .btn-remove-tag:hover { color: #ffc107; }
-
-                .star-rating {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 25px;
-                    margin-top: 15px;
-                }
-                .empty-star {
-                    font-size: 32px;
-                    color: rgba(255,255,255,0.1);
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .empty-star:hover { color: #ffc107; transform: scale(1.1); }
-
-                .review-input {
-                    width: 100%;
-                    height: 140px;
-                    padding: 20px;
-                    border-radius: 16px;
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: white;
-                    margin-bottom: 25px;
-                    font-size: 15px;
-                    resize: none;
-                    outline: none;
-                    font-family: inherit;
-                    transition: border-color 0.2s;
-                }
-                .review-input:focus { border-color: #ffc107; }
-
-                .form-actions {
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 20px;
-                }
-                .btn-cancel {
-                    padding: 14px 28px;
-                    border-radius: 12px;
-                    border: none;
-                    background: rgba(255,255,255,0.05);
-                    color: white;
                     font-weight: 600;
-                    cursor: pointer;
-                    transition: background 0.2s;
+                    color: #374151;
+                    font-size: 0.95rem;
                 }
-                .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+                .city-card:hover, .city-card-selected {
+                    background: #FFF8EE;
+                    border-color: #EBA424;
+                    color: #855F1B;
+                }
+                .chevron-icon {
+                    font-size: 0.75rem;
+                    color: #9CA3AF;
+                }
 
-                .btn-post {
-                    padding: 14px 28px;
-                    border-radius: 12px;
-                    border: none;
-                    background: #ffc107;
-                    color: black;
+                .right-panel-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 24px;
+                }
+                .rate-country-title {
+                    font-size: 2.2rem;
                     font-weight: 800;
-                    cursor: pointer;
-                    box-shadow: 0 8px 20px rgba(255,193,7,0.2);
-                    transition: all 0.2s;
+                    color: #1E293B;
+                    margin: 0 0 4px;
+                    font-family: 'Playfair Display', serif;
                 }
-                .btn-post:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255,193,7,0.3); }
+                .region-tag {
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                    color: #EBA424;
+                    letter-spacing: 0.05em;
+                }
+                .header-score-wrapper {
+                    text-align: right;
+                }
+                .score-val {
+                    font-size: 2.8rem;
+                    font-weight: 800;
+                    color: #EBA424;
+                    line-height: 1;
+                }
+                .score-label {
+                    font-size: 0.65rem;
+                    color: #9CA3AF;
+                    font-weight: 800;
+                    margin-top: 4px;
+                }
 
-                @media (max-width: 600px) {
-                    .top-action { top: 15px; right: 15px; left: 15px; }
-                    .flaunt-btn { width: 100%; }
-                    .legend-box { bottom: 15px; left: 15px; right: 15px; min-width: 0; }
-                    .modal-overlay { padding: 15px; }
-                    .modal-content { padding: 30px 20px; border-radius: 24px; }
-                    .modal-header { flex-direction: column; gap: 20px; margin-bottom: 30px; }
-                    .country-flag { width: 100%; height: 160px; }
-                    .country-info h2 { font-size: 1.8rem; }
-                    .rating-label { width: 80px; }
-                    .review-card { padding: 20px; flex-direction: column; gap: 15px; }
-                    .share-form { padding: 25px; }
+                .rate-intro-text {
+                    font-size: 0.9rem;
+                    color: #6B7280;
+                    margin: 0 0 16px;
                 }
-
-                /* Modern Range Slider */
-                .modern-range-slider {
-                    -webkit-appearance: none;
-                    width: 100%;
-                    height: 6px;
-                    border-radius: 3px;
-                    background: rgba(255,255,255,0.1);
-                    outline: none;
+                .rating-categories-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-bottom: 24px;
                 }
-                .modern-range-slider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    appearance: none;
-                    width: 18px;
-                    height: 18px;
-                    border-radius: 50%;
-                    background: #ffc107;
+                .rating-category-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .category-label {
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: #4B5563;
+                }
+                .interactive-stars {
+                    display: flex;
+                    gap: 6px;
+                }
+                .star-icon {
+                    font-size: 1.6rem;
                     cursor: pointer;
-                    box-shadow: 0 0 10px rgba(255,193,7,0.5);
                     transition: transform 0.1s;
                 }
-                .modern-range-slider::-webkit-slider-thumb:hover {
+                .star-icon:hover {
                     transform: scale(1.2);
+                }
+
+                .review-input-modern {
+                    width: 100%;
+                    border: 1px solid #E5E7EB;
+                    border-radius: 16px;
+                    padding: 16px;
+                    min-height: 90px;
+                    resize: none;
+                    font-size: 0.95rem;
+                    outline: none;
+                    margin-bottom: 20px;
+                    color: #1E293B;
+                    font-family: inherit;
+                }
+                .review-input-modern:focus { border-color: #EBA424; }
+
+                .form-actions-modern {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                .btn-cancel-modern {
+                    background: #FAF8F5;
+                    border: 1px solid #E5E7EB;
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-weight: 600;
+                    color: #4B5563;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-cancel-modern:hover { background: #E5E7EB; color: #1E293B; }
+                .btn-post-modern {
+                    background: #EBA424;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-weight: 600;
+                    color: #FFF;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-post-modern:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(235,164,36,0.25); }
+
+                @media (max-width: 768px) {
+                    .split-modal-body { flex-direction: column; height: auto; max-height: 85vh; }
+                    .left-panel { width: 100%; border-right: none; border-bottom: 1px solid #E5E7EB; padding: 24px; }
+                    .right-panel { width: 100%; padding: 24px; }
                 }
             `}</style>
         </div>
