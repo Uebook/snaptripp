@@ -29,19 +29,20 @@ export default function TravelMapPage() {
   const fetchUserData = async (userId: string) => {
     // We swallow errors because if tables don't exist yet, we still want the UI to render empty
     try {
-      const { data: countries, error: countriesError } = await supabase.from('user_country_logs').select('*').eq('user_id', userId);
-      const { data: cities, error: citiesError } = await supabase.from('user_city_logs').select('*').eq('user_id', userId);
+      const { data: logs, error: logsError } = await supabase.from('user_city_ratings').select('*').eq('user_id', userId);
       
-      if (countries && !countriesError) {
+      if (logs && !logsError) {
+        const countries = logs.filter(l => l.city.startsWith('--COUNTRY_LOG--'));
+        const cities = logs.filter(l => !l.city.startsWith('--COUNTRY_LOG--'));
+        
         setUserCountryLogs(countries);
+        setUserCityLogs(cities);
+        
         const countryAvgs: Record<string, { rating: number }> = {};
         countries.forEach(item => {
           countryAvgs[item.country] = { rating: Math.max(1, Math.round(item.average_score || 1)) };
         });
         setCountryData(countryAvgs);
-      }
-      if (cities && !citiesError) {
-        setUserCityLogs(cities);
       }
     } catch (error) {
       console.warn("Failed to fetch user data:", error);
@@ -57,16 +58,16 @@ export default function TravelMapPage() {
     const isVisited = userCountryLogs.some(log => log.country === country);
     try {
       if (isVisited) {
-        await supabase.from('user_country_logs').delete().eq('user_id', user.id).eq('country', country);
-        await supabase.from('user_city_logs').delete().eq('user_id', user.id).eq('country', country);
+        await supabase.from('user_city_ratings').delete().eq('user_id', user.id).eq('country', country);
       } else {
-        await supabase.from('user_country_logs').upsert({
+        await supabase.from('user_city_ratings').upsert({
           user_id: user.id,
           country: country,
+          city: `--COUNTRY_LOG--${country}`,
           ratings: { Sightseeing: 0, 'Local people': 0, 'Service quality': 0, Safety: 0, 'Price/quality': 0, 'Local cuisine': 0 },
           average_score: 0,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,country' });
+        }, { onConflict: 'user_id,city' });
       }
       fetchUserData(user.id);
     } catch (e) {

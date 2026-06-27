@@ -270,11 +270,33 @@ export function CountryRatingModal({
     async function fetchCities() {
       setLoadingCities(true);
       try {
+        // 1. Map mismatched map names to DB names
+        const dbCountryName = {
+          'Dem. Rep. Congo': 'Democratic Republic of the Congo',
+          'United States of America': 'United States',
+          'Bahamas': 'The Bahamas',
+          'Czechia': 'Czech Republic',
+          "Côte d'Ivoire": "Ivory Coast",
+          'Timor-Leste': 'East Timor',
+          'Palestine': 'Palestinian Territory',
+          'Gambia': 'The Gambia',
+          'Dominican Rep.': 'Dominican Republic',
+          'Central African Rep.': 'Central African Republic',
+          'Eq. Guinea': 'Equatorial Guinea',
+          'eSwatini': 'Swaziland',
+          'W. Sahara': 'Western Sahara',
+          'Falkland Is.': 'Falkland Islands (Islas Malvinas)',
+          'Greenland': 'Greenland', // Usually fine but just in case
+          'Solomon Is.': 'Solomon Islands',
+          'Papua New Guinea': 'Papua New Guinea',
+          'New Caledonia': 'New Caledonia',
+        }[country] || country;
+
         // 1. Try country_guide_cities
         const { data: guideCities, error: guideErr } = await supabase
           .from('country_guide_cities')
           .select('name, img_url, desc')
-          .ilike('country_id', country);
+          .ilike('country_id', dbCountryName);
 
         if (!guideErr && guideCities && guideCities.length > 0) {
           setDbCities(guideCities.map(c => ({
@@ -290,7 +312,7 @@ export function CountryRatingModal({
         const { data: countryRow } = await supabase
           .from('countries')
           .select('id')
-          .ilike('name', country)
+          .ilike('name', dbCountryName)
           .maybeSingle();
 
         if (countryRow) {
@@ -353,19 +375,20 @@ export function CountryRatingModal({
       const vals = Object.values(ratings);
       const avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
       
-      const { error: err1 } = await supabase.from('user_country_logs').upsert({
+      const { error: err1 } = await supabase.from('user_city_ratings').upsert({
         user_id: userId,
         country: country,
+        city: `--COUNTRY_LOG--${country}`,
         ratings: ratings,
         average_score: avg,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id,country' });
+      }, { onConflict: 'user_id,city' });
 
-      await supabase.from('user_city_logs').delete().eq('user_id', userId).eq('country', country);
+      await supabase.from('user_city_ratings').delete().eq('user_id', userId).eq('country', country).neq('city', `--COUNTRY_LOG--${country}`);
       
       if (selectedCities.length > 0) {
         const cityInserts = selectedCities.map(c => ({ user_id: userId, country: country, city: c }));
-        await supabase.from('user_city_logs').insert(cityInserts);
+        await supabase.from('user_city_ratings').upsert(cityInserts, { onConflict: 'user_id,city' });
       }
 
       onSave();
