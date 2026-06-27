@@ -376,7 +376,6 @@ export function CountryRatingModal({
     }
   };
 
-  const filteredCities = allCitiesData.filter(city => city.toLowerCase().includes(searchQuery.toLowerCase()));
   const continent = COUNTRY_TO_CONTINENT[country] || 'Explore';
 
   // Calculate average score dynamically scaled by 2 (e.g. 3.65 stars * 2 = 7.3 rate)
@@ -735,87 +734,109 @@ export function ShareJourneyModal({
   const keyPlacesCount = Math.min(6, totalCities || 1);
 
   return (
-    <div className="share-modal-overlay" onClick={onClose} style={{ zIndex: 10000, display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '24px' }}>
-      <div className="share-modal-content animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '100%', margin: '0 auto', padding: 0, overflow: 'hidden', background: '#FFF', borderRadius: '24px', position: 'relative' }}>
-        <button className="share-modal-close" onClick={onClose} style={{ zIndex: 50, color: '#9CA3AF', position: 'absolute', top: '24px', right: '24px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+    <div className="share-modal-overlay" onClick={onClose} style={{ zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(5px)' }}>
+      <div className="share-modal-content animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', width: '100%', margin: '0 auto', padding: '32px', background: '#FFF', borderRadius: '16px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+        <button className="share-modal-close" onClick={onClose} style={{ zIndex: 50, color: '#9CA3AF', position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.2s' }}>✕</button>
         
-        <div style={{ padding: '40px 32px 24px' }}>
-          <div className="share-modal-header" style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#6B7280', margin: '0' }}>Share map</h2>
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: '32px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 300, color: '#111827', lineHeight: 1 }}>{totalCountries}</div>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.5px', marginTop: '4px', textTransform: 'uppercase' }}>COUNTRIES / {percentWorld}%</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 300, color: '#111827', lineHeight: 1 }}>{totalCities}</div>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.5px', marginTop: '4px', textTransform: 'uppercase' }}>CITIES</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '36px', fontWeight: 300, color: '#111827', lineHeight: 1 }}>{keyPlacesCount}</div>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.5px', marginTop: '4px', textTransform: 'uppercase' }}>PLACES</div>
-            </div>
-          </div>
-          
-          <div className="shareable-card" ref={cardRef} style={{ 
-            background: '#242D3C', 
-            borderRadius: '16px',
-            overflow: 'hidden',
-            position: 'relative',
-            color: '#FFFFFF',
-            height: '300px'
-          }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, opacity: 0.8 }}>
-               <MiniWorldMap countryData={countryData} />
-            </div>
+        <div className="share-modal-header" style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0' }}>Share your journey</h2>
+          <p style={{ fontSize: '14px', color: '#6B7280', margin: '4px 0 0' }}>Show the world where you've been</p>
+        </div>
+        
+        {/* Divider with text */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0' }}>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }}></div>
+          <div style={{ padding: '0 12px', fontSize: '10px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '1px' }}>PREVIEW OF YOUR SHAREABLE POST</div>
+          <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }}></div>
+        </div>
+        
+        <div className="shareable-card" ref={cardRef} style={{ 
+          background: '#DFD6C9',
+          borderRadius: '16px',
+          padding: '40px',
+          display: 'flex',
+          gap: '24px',
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: '380px'
+        }}>
+          {/* Left Column (Text & Stats) */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 10 }}>
+             <div>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#000', fontWeight: 800, fontSize: '18px' }}>
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                 SnapTrip
+               </div>
+               <h1 style={{ fontSize: '56px', fontWeight: 900, color: '#000', marginTop: '24px', marginBottom: '16px', lineHeight: 1, letterSpacing: '-1px' }}>{username}</h1>
+               <p style={{ fontSize: '18px', color: '#111', fontWeight: 500, maxWidth: '240px', lineHeight: 1.4 }}>Exploring the world, one city at a time.</p>
+             </div>
 
-            <div style={{ position: 'relative', zIndex: 10, padding: '24px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <div style={{ background: '#FFF', color: '#111827', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '14px' }}>☑</span> SnapTrip.com
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#F6B800', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                       <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ fontSize: '14px', fontWeight: 700 }}>{username}</div>
-                 </div>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px', width: '120px' }}>
+             <div style={{ display: 'flex', gap: '32px', marginTop: '40px' }}>
                 <div>
-                  <div style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1 }}>{totalCountries}</div>
-                  <div style={{ fontSize: '9px', fontWeight: 600, color: '#9CA3AF', letterSpacing: '1px', marginTop: '4px' }}>COUNTRIES / {percentWorld}%</div>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 19.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.22.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                  <div style={{ fontSize: '42px', fontWeight: 800, color: '#000', lineHeight: 1, marginTop: '12px' }}>{totalCountries}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#000', letterSpacing: '1px', marginTop: '8px' }}>COUNTRIES<br/>VISITED</div>
                 </div>
+                <div style={{ width: '1px', backgroundColor: '#000', opacity: 0.2 }}></div>
                 <div>
-                  <div style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1 }}>{totalCities}</div>
-                  <div style={{ fontSize: '9px', fontWeight: 600, color: '#9CA3AF', letterSpacing: '1px', marginTop: '4px' }}>CITIES</div>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="#F59E0B"><path d="M15 11V5l-3-3-3 3v2H3v14h18V11h-6zm-8 8H5v-2h2v2zm0-4H5v-2h2v2zm0-4H5V9h2v2zm6 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm6 12h-2v-2h2v2zm0-4h-2v-2h2v2z"/></svg>
+                  <div style={{ fontSize: '42px', fontWeight: 800, color: '#000', lineHeight: 1, marginTop: '12px' }}>{totalCities}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#000', letterSpacing: '1px', marginTop: '8px' }}>CITIES<br/>VISITED</div>
                 </div>
-                <div>
-                  <div style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1 }}>{keyPlacesCount}</div>
-                  <div style={{ fontSize: '9px', fontWeight: 600, color: '#9CA3AF', letterSpacing: '1px', marginTop: '4px' }}>PLACES</div>
-                </div>
-              </div>
-            </div>
+             </div>
+          </div>
+          
+          {/* Right Column (Map) */}
+          <div style={{ flex: 1.4, position: 'relative' }}>
+             <div style={{ position: 'absolute', top: '-15%', right: '-15%', bottom: '-15%', left: '-15%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <div style={{ width: '130%', height: '130%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <MiniWorldMap countryData={countryData} baseColor="#4B5563" highlightColor="#F59E0B" strokeColor="transparent" />
+               </div>
+             </div>
           </div>
         </div>
 
-        <div style={{ padding: '0 32px 32px', textAlign: 'center' }}>
-          <h3 style={{ fontSize: '16px', color: '#111827', margin: '0 0 16px', fontWeight: 700 }}>Share your map with your friends!</h3>
-          <button className="btn-copy-link" style={{ width: '100%', padding: '14px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }} onClick={() => handleShare('clipboard')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            Share on Facebook
-          </button>
-          <div style={{ display: 'flex', gap: '12px' }}>
-             <button style={{ flex: 1, padding: '10px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#6B7280', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
-                🔗 Copy link
-             </button>
-             <button style={{ width: '50px', padding: '10px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#6B7280', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                •••
-             </button>
+        <div style={{ textAlign: 'center', marginTop: '32px' }}>
+          <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '16px' }}>Share on</div>
+          
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '24px' }}>
+            <button style={{ padding: '10px 20px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'border-color 0.2s' }} onClick={() => handleShare('clipboard')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: 'url(#ig-grad)' }}>
+                <defs>
+                  <linearGradient id="ig-grad" x1="2" y1="2" x2="22" y2="22">
+                    <stop offset="0%" stopColor="#f09433"/>
+                    <stop offset="25%" stopColor="#e6683c"/>
+                    <stop offset="50%" stopColor="#dc2743"/>
+                    <stop offset="75%" stopColor="#cc2366"/>
+                    <stop offset="100%" stopColor="#bc1888"/>
+                  </linearGradient>
+                </defs>
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+              Instagram
+            </button>
+            <button style={{ padding: '10px 20px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'border-color 0.2s' }} onClick={() => handleShare('clipboard')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              Facebook
+            </button>
+            <button style={{ padding: '10px 20px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'border-color 0.2s' }} onClick={() => handleShare('clipboard')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              X (Twitter)
+            </button>
+            <button style={{ padding: '10px 20px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'border-color 0.2s' }} onClick={() => handleShare('clipboard')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              LinkedIn
+            </button>
+            <button style={{ padding: '10px 20px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'border-color 0.2s' }} onClick={() => handleShare('clipboard')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+              WhatsApp
+            </button>
           </div>
+          
+          <button style={{ padding: '12px 24px', background: '#FFF', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => handleShare('clipboard')}>
+             {isDownloading ? <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>↻</span> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>}
+             Copy shareable link
+          </button>
         </div>
       </div>
     </div>

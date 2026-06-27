@@ -84,7 +84,17 @@ const InteractiveWorldMap = ({ onCountryClick, selectedCountry, countryData }: I
   );
 };
 
-export const MiniWorldMap = ({ countryData }: { countryData: Record<string, { rating: number }> }) => {
+export const MiniWorldMap = ({ 
+  countryData,
+  baseColor = '#E5E7EB',
+  highlightColor,
+  strokeColor = '#FFFFFF'
+}: { 
+  countryData: Record<string, { rating: number }>;
+  baseColor?: string;
+  highlightColor?: string;
+  strokeColor?: string;
+}) => {
   return (
     <div style={{ width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <ComposableMap projectionConfig={{ scale: 145 }} width={800} height={400} style={{ width: '100%', height: '100%' }}>
@@ -94,19 +104,21 @@ export const MiniWorldMap = ({ countryData }: { countryData: Record<string, { ra
               const countryName = geo.properties.name;
               const data = countryData[countryName];
               
+              const fill = data?.rating ? (highlightColor || getColor(data.rating)) : baseColor;
+
               return (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
                   style={{
                     default: {
-                      fill: getColor(data?.rating),
+                      fill: fill,
                       outline: 'none',
-                      stroke: '#FFFFFF',
+                      stroke: strokeColor,
                       strokeWidth: 0.5,
                     },
-                    hover: { fill: getColor(data?.rating), outline: 'none' },
-                    pressed: { fill: getColor(data?.rating), outline: 'none' },
+                    hover: { fill: fill, outline: 'none' },
+                    pressed: { fill: fill, outline: 'none' },
                   }}
                 />
               );
