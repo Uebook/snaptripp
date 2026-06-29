@@ -128,7 +128,7 @@ export default function Home() {
     }
   }
   const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
-  const [isHeroLoading, setIsHeroLoading] = useState(true)
+  const [isHeroLoading, setIsHeroLoading] = useState(false)
   const [whyData, setWhyData] = useState<any[]>([])
   const [testimData, setTestimData] = useState<any[]>([])
   const [blogsData, setBlogsData] = useState<any[]>([])
