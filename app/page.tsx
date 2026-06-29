@@ -128,7 +128,7 @@ export default function Home() {
     }
   }
   const [destinationsData, setDestinationsData] = useState<Record<string, any>>(DESTINATIONS_DATA)
-  const [isHeroLoading, setIsHeroLoading] = useState(false)
+  const [isHeroLoading, setIsHeroLoading] = useState(true)
   const [whyData, setWhyData] = useState<any[]>([])
   const [testimData, setTestimData] = useState<any[]>([])
   const [blogsData, setBlogsData] = useState<any[]>([])
@@ -146,7 +146,7 @@ export default function Home() {
   useEffect(() => {
     const fetchHeroCarousel = async () => {
       try {
-        const res = await fetch('/api/admin/carousel')
+        const res = await fetch(`/api/admin/carousel?t=${Date.now()}`, { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           if (data.items && data.items.length > 0) {
@@ -179,7 +179,7 @@ export default function Home() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch('/api/admin/sync/countries')
+        const res = await fetch(`/api/admin/sync/countries?t=${Date.now()}`, { cache: 'no-store' })
         const data = await res.json()
         if (data.success && data.countries) {
           setCountries(data.countries)
@@ -197,7 +197,7 @@ export default function Home() {
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const res = await fetch('/api/homepage-data')
+        const res = await fetch(`/api/homepage-data?t=${Date.now()}`, { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           if (data.whySnaptrip) setWhyData(data.whySnaptrip)
@@ -248,119 +248,216 @@ export default function Home() {
       <SiteHeader />
 
       {/* 1. Hero Section */}
-      <section className="hero-redesign" style={{ opacity: isHeroLoading ? 0 : 1, transition: 'opacity 0.3s ease-in-out' }}>
-        <div className="hero-content">
-          <div className="hero-text">
-            <p className="hero-subtitle">Handpicked. Trusted. Yours.</p>
-            <h1>
-              Travel further,<br />
-              feel more.
-            </h1>
-            <div className="hero-nav-btns">
-              <button
-                className="nav-arrow left"
-                onClick={() => setActiveDest(destKeys[(currentIndex - 1 + destKeys.length) % destKeys.length])}
-              >←</button>
-              <button
-                className="nav-arrow right"
-                onClick={() => setActiveDest(destKeys[(currentIndex + 1) % destKeys.length])}
-              >→</button>
+      {isHeroLoading ? (
+        <div className="hero-skeleton-container animate-pulse-luxe">
+          <div className="skeleton-content">
+            <div className="skeleton-text">
+              <div className="skeleton-line short" />
+              <div className="skeleton-title" />
+              <div className="skeleton-title-second" />
+              <div className="skeleton-nav" />
+              <div className="skeleton-gallery">
+                <div className="skeleton-thumb" />
+                <div className="skeleton-thumb" />
+              </div>
             </div>
-
-            <div className="left-gallery">
-              <div
-                className="gallery-img"
-                style={{ 
-                  backgroundImage: `url(${destinationsData[nextDest1]?.image || ''})`,
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  position: 'relative'
-                }}
-                onClick={() => setActiveDest(nextDest1)}
-              >
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0, left: 0, right: 0, height: '80px',
-                  background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
-                  borderRadius: '0 0 25px 25px',
-                  zIndex: 1
-                }}></div>
-                <span style={{ 
-                  color: '#fff', 
-                  fontSize: '14px', 
-                  fontWeight: '700', 
-                  position: 'relative', 
-                  zIndex: 2,
-                  letterSpacing: '0.5px'
-                }}>{nextDest1}</span>
-              </div>
-              <div
-                className="gallery-img"
-                style={{ 
-                  backgroundImage: `url(${destinationsData[nextDest2]?.image || ''})`,
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  position: 'relative'
-                }}
-                onClick={() => setActiveDest(nextDest2)}
-              >
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0, left: 0, right: 0, height: '80px',
-                  background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
-                  borderRadius: '0 0 25px 25px',
-                  zIndex: 1
-                }}></div>
-                <span style={{ 
-                  color: '#fff', 
-                  fontSize: '14px', 
-                  fontWeight: '700', 
-                  position: 'relative', 
-                  zIndex: 2,
-                  letterSpacing: '0.5px'
-                }}>{nextDest2}</span>
-              </div>
+            <div className="skeleton-visual">
+              <div className="skeleton-card" />
             </div>
           </div>
+          <style jsx>{`
+            .hero-skeleton-container {
+              max-width: 1400px;
+              margin: 0 auto;
+              padding: 120px 80px 80px;
+              height: 70vh;
+              min-height: 600px;
+              display: flex;
+              align-items: center;
+            }
+            .skeleton-content {
+              display: flex;
+              width: 100%;
+              gap: 80px;
+            }
+            .skeleton-text {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+            .skeleton-line {
+              height: 16px;
+              background: #F1F5F9;
+              border-radius: 8px;
+              width: 120px;
+            }
+            .skeleton-title {
+              height: 56px;
+              background: #F1F5F9;
+              border-radius: 12px;
+              width: 80%;
+            }
+            .skeleton-title-second {
+              height: 56px;
+              background: #F1F5F9;
+              border-radius: 12px;
+              width: 60%;
+              margin-bottom: 40px;
+            }
+            .skeleton-nav {
+              height: 48px;
+              background: #F1F5F9;
+              border-radius: 24px;
+              width: 110px;
+              margin-bottom: 40px;
+            }
+            .skeleton-gallery {
+              display: flex;
+              gap: 20px;
+            }
+            .skeleton-thumb {
+              height: 120px;
+              width: 110px;
+              background: #F1F5F9;
+              border-radius: 20px;
+            }
+            .skeleton-visual {
+              width: 55%;
+              height: 480px;
+              background: #F1F5F9;
+              border-radius: 40px;
+            }
+            .animate-pulse-luxe {
+              animation: pulseLuxe 1.5s infinite ease-in-out;
+            }
+            @keyframes pulseLuxe {
+              0% { opacity: 0.6; }
+              50% { opacity: 1; }
+              100% { opacity: 0.6; }
+            }
+            @media (max-width: 992px) {
+              .hero-skeleton-container { padding: 40px 20px; height: auto; }
+              .skeleton-content { flex-direction: column; gap: 40px; }
+              .skeleton-visual { width: 100%; height: 300px; }
+            }
+          `}</style>
+        </div>
+      ) : (
+        <section className="hero-redesign">
+          <div className="hero-content">
+            <div className="hero-text">
+              <p className="hero-subtitle">Handpicked. Trusted. Yours.</p>
+              <h1>
+                Travel further,<br />
+                feel more.
+              </h1>
+              <div className="hero-nav-btns">
+                <button
+                  className="nav-arrow left"
+                  onClick={() => setActiveDest(destKeys[(currentIndex - 1 + destKeys.length) % destKeys.length])}
+                >←</button>
+                <button
+                  className="nav-arrow right"
+                  onClick={() => setActiveDest(destKeys[(currentIndex + 1) % destKeys.length])}
+                >→</button>
+              </div>
 
-          <div className="hero-visual">
-            <div className="hero-main-img" style={{ backgroundImage: `url(${currentData.bgImage})` }}>
-              <div className="spark-card">
-                <div className="spark-header">
-                  <span className="spark-icon">🌍</span>
-                  <div>
-                    <h4>{activeDest}</h4>
-                    <p>{currentData.region}</p>
-                  </div>
+              <div className="left-gallery">
+                <div
+                  className="gallery-img"
+                  style={{ 
+                    backgroundImage: `url(${destinationsData[nextDest1]?.image || ''})`,
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                  onClick={() => setActiveDest(nextDest1)}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0, left: 0, right: 0, height: '80px',
+                    background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
+                    borderRadius: '0 0 25px 25px',
+                    zIndex: 1
+                  }}></div>
+                  <span style={{ 
+                    color: '#fff', 
+                    fontSize: '14px', 
+                    fontWeight: '700', 
+                    position: 'relative', 
+                    zIndex: 2,
+                    letterSpacing: '0.5px'
+                  }}>{nextDest1}</span>
                 </div>
-                <p className="spark-desc">{currentData.desc}</p>
-                <span className="spark-sub-label">{currentData.label}</span>
-                <div className="card-thumb" style={{ backgroundImage: `url(${currentData.image})` }}></div>
+                <div
+                  className="gallery-img"
+                  style={{ 
+                    backgroundImage: `url(${destinationsData[nextDest2]?.image || ''})`,
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                  onClick={() => setActiveDest(nextDest2)}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0, left: 0, right: 0, height: '80px',
+                    background: 'linear-gradient(to top, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%)',
+                    borderRadius: '0 0 25px 25px',
+                    zIndex: 1
+                  }}></div>
+                  <span style={{ 
+                    color: '#fff', 
+                    fontSize: '14px', 
+                    fontWeight: '700', 
+                    position: 'relative', 
+                    zIndex: 2,
+                    letterSpacing: '0.5px'
+                  }}>{nextDest2}</span>
+                </div>
               </div>
-              <div className="location-tag" onClick={() => router.push('/guide')}>
-                <span>{currentData.locationTag}</span>
-                <div className="location-arrow">→</div>
+            </div>
+
+            <div className="hero-visual">
+              <div className="hero-main-img" style={{ backgroundImage: `url(${currentData.bgImage})` }}>
+                <div className="spark-card">
+                  <div className="spark-header">
+                    <span className="spark-icon">🌍</span>
+                    <div>
+                      <h4>{activeDest}</h4>
+                      <p>{currentData.region}</p>
+                    </div>
+                  </div>
+                  <p className="spark-desc">{currentData.desc}</p>
+                  <span className="spark-sub-label">{currentData.label}</span>
+                  <div className="card-thumb" style={{ backgroundImage: `url(${currentData.image})` }}></div>
+                </div>
+                <div className="location-tag" onClick={() => router.push('/guide')}>
+                  <span>{currentData.locationTag}</span>
+                  <div className="location-arrow">→</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="hero-destinations">
-          {destKeys.map(d => (
-            <span
-              key={d}
-              className={d === activeDest ? 'active' : ''}
-              onClick={() => setActiveDest(d)}
-              style={{ cursor: 'pointer' }}
-            >
-              {d}
-            </span>
-          ))}
-        </div>
-      </section>
+          <div className="hero-destinations">
+            {destKeys.map(d => (
+              <span
+                key={d}
+                className={d === activeDest ? 'active' : ''}
+                onClick={() => setActiveDest(d)}
+                style={{ cursor: 'pointer' }}
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 2. Search & Explore */}
       <section className={`search-explore ${isUnlocked ? 'unlocked' : ''}`}>
