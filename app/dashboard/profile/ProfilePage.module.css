@@ -457,3 +457,76 @@ input:checked+.slider:before {
   margin-top: 8px;
   display: block;
 }
+
+@media (max-width: 1024px) {
+  .profile-edit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  .account-stats-card {
+    margin-bottom: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-edit-body {
+    padding: 24px 16px !important;
+  }
+
+  .profile-edit-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 20px !important;
+    margin-bottom: 30px !important;
+  }
+
+  .header-text {
+    text-align: center !important;
+  }
+
+  .header-text h1 {
+    font-size: 1.8rem !important;
+  }
+
+  .header-text p {
+    font-size: 0.95rem !important;
+  }
+
+  .header-buttons {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+
+  .header-buttons button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .photo-card,
+  .account-stats-card,
+  .form-card {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .input-group.full-width {
+    grid-column: span 1 !important;
+  }
+
+  .pref-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  .toggle {
+    align-self: flex-end !important;
+  }
+}

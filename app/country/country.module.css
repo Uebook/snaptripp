@@ -1970,4 +1970,373 @@
   background: #d4931f;
 }
 
+/* ── Premium Layout Responsive Updates ────────────────── */
+@media (max-width: 1024px) {
+  .premiumHero {
+    padding: 60px 40px 80px !important;
+  }
+
+  .heroWrapper {
+    flex-direction: column !important;
+    gap: 40px !important;
+    align-items: stretch !important;
+  }
+
+  .heroLeft {
+    text-align: center !important;
+  }
+
+  .heroLeft h1 {
+    justify-content: center !important;
+    font-size: 3.2rem !important;
+  }
+
+  .heroDesc {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .heroButtons {
+    justify-content: center !important;
+  }
+
+  .quickFactsCard {
+    width: 100% !important;
+    max-width: 600px !important;
+    margin: 0 auto !important;
+    padding: 30px !important;
+  }
+
+  .tabNavbarWrapper {
+    padding: 0 40px !important;
+  }
+
+  .tabPanel {
+    padding: 45px 40px 60px !important;
+  }
+
+  .introLayout {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+  }
+
+  .introLeft {
+    text-align: center !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .introButtons {
+    justify-content: center !important;
+  }
+
+  .bucketListGrid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 15px !important;
+  }
+
+  .accommodationGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+  }
+
+  .experiencesGrid {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+  }
+
+  .videoResourceCard {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+    padding: 30px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .premiumHero {
+    padding: 40px 20px 60px !important;
+  }
+
+  .heroLeft h1 {
+    font-size: 2.4rem !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+
+  .heroSubTitle {
+    font-size: 1.3rem !important;
+  }
+
+  .heroDesc {
+    font-size: 0.95rem !important;
+  }
+
+  .heroButtons {
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+  }
+
+  .heroButtons button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .quickFactsCard {
+    padding: 24px 20px !important;
+  }
+
+  /* Scrollable horizontal navigation capsule bar on mobile */
+  .tabNavbarWrapper {
+    padding: 0 15px !important;
+    margin-top: -30px !important;
+  }
+
+  .tabNavbarCapsule {
+    display: flex !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    padding: 8px !important;
+    border-radius: 16px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabNavbarCapsule::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .tabBtn {
+    flex: 0 0 auto !important;
+    min-width: 110px !important;
+    padding: 10px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .tabIcon {
+    font-size: 1.3rem !important;
+  }
+
+  .tabLabel {
+    font-size: 0.85rem !important;
+  }
+
+  .tabDesc {
+    display: none !important; /* Hide description on mobile to keep clean styling */
+  }
+
+  .tabPanel {
+    padding: 30px 15px 50px !important;
+  }
+
+  .tabTitle {
+    font-size: 1.8rem !important;
+    text-align: center !important;
+  }
+
+  .tabSubtitle {
+    font-size: 0.95rem !important;
+    text-align: center !important;
+    margin-bottom: 25px !important;
+  }
+
+  .tabPanel h3,
+  .introLeft h3 {
+    font-size: 1.4rem !important;
+    text-align: center !important;
+    margin-top: 40px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .introLeft p {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .introButtons {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 280px !important;
+  }
+
+  .introButtons button {
+    width: 100% !important;
+  }
+
+  .introRightImg {
+    height: 240px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Table styling */
+  .tableWrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .infoTable th,
+  .infoTable td {
+    padding: 12px 14px !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Public Holidays cards */
+  .holidaysCard {
+    padding: 20px !important;
+    border-radius: 16px !important;
+  }
+
+  .holidaysRow {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+  }
+
+  .holidayCol h5 {
+    font-size: 0.75rem !important;
+  }
+
+  .holidayCol p {
+    font-size: 0.85rem !important;
+  }
+
+  /* Bucket List items */
+  .bucketListHeader {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-top: 45px !important;
+  }
+
+  .bucketListGrid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .bucketCard {
+    max-width: 320px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Unique Accommodation */
+  .accommodationGrid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  .accomCard {
+    height: 180px !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Entry Requirements tab subclasses */
+  .entryMainCard {
+    padding: 24px !important;
+    border-radius: 16px !important;
+    height: 180px !important;
+  }
+
+  .entryGrid,
+  .bottomRequirementsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .requirementBox {
+    padding: 20px !important;
+    border-radius: 16px !important;
+  }
+
+  .toggleContainer {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .toggleBtn {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .toggleContentGrid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  .dutyFreeGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* Safety & Culture tab layouts */
+  .safetyHeaderRow {
+    text-align: center !important;
+    margin-bottom: 25px !important;
+  }
+
+  .safetyHeaderRow p {
+    font-size: 0.95rem !important;
+  }
+
+  .safetyColumnsGrid,
+  .experiencesGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .safetyNumbersCard {
+    flex-direction: column !important;
+    gap: 15px !important;
+    padding: 20px !important;
+  }
+
+  .safetyNumbersInfo h3 {
+    font-size: 1.6rem !important;
+  }
+
+  .dualGrid,
+  .phrasesGrid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  .warningBanner {
+    padding: 20px !important;
+  }
+
+  .cultureIntroCard {
+    height: 180px !important;
+    padding: 20px !important;
+  }
+
+  /* Logistics tab layouts */
+  .logisticsMainCard {
+    height: 180px !important;
+    padding: 20px !important;
+  }
+
+  /* Experiences tab layouts */
+  .foodContent {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 20px !important;
+  }
+
+  .foodHero {
+    height: 160px !important;
+  }
+
+  .videoResourceCard {
+    padding: 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .videoInfo h3 {
+    font-size: 1.4rem !important;
+  }
+}
+
 

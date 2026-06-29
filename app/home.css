@@ -1733,7 +1733,19 @@
   }
 
   .hero-visual {
-    height: 400px;
+    height: auto;
+    margin-bottom: 30px;
+  }
+
+  .hero-main-img {
+    height: 420px;
+  }
+
+  .spark-card {
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 380px;
   }
 
   .why-grid {
@@ -1742,6 +1754,7 @@
 
   .testimonial-layout {
     flex-direction: column;
+    gap: 40px;
   }
 
   .stories-grid {
@@ -1749,11 +1762,12 @@
   }
 
   .footer-container {
-    flex-direction: column;
-    gap: 60px;
+    grid-template-columns: 1fr;
+    gap: 40px;
   }
 
   .footer-nav {
+    justify-content: flex-start;
     gap: 40px;
     flex-wrap: wrap;
   }
@@ -1791,12 +1805,60 @@
     padding: 40px 20px;
   }
   
+  .explore-left {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .compact-search {
+    margin: 0 auto;
+  }
+
+  .explore-v-card {
+    margin: 0 auto;
+  }
+
   .explore-card-row {
     flex-direction: column;
   }
   
   .drag-unlock {
     padding: 40px 20px;
+  }
+
+  /* Search & Explore section Right Column alignment and divider styling */
+  .explore-right, .explore-right-locked {
+    padding-left: 0;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .explore-right-locked {
+    align-items: center;
+  }
+
+  .arrow-container {
+    align-items: center;
+    padding-left: 0;
+  }
+
+  .vertical-divider {
+    width: 80%;
+    height: 1px;
+    margin: 30px auto;
+  }
+
+  .search-explore.unlocked .vertical-divider {
+    width: 80%;
+    height: 2px;
+    margin: 30px auto;
+  }
+
+  /* Journey Section floating circles are hidden on mobile/tablet to avoid overlapping text/diagram */
+  .journey-circles {
+    display: none;
   }
 
   .journey-map {
@@ -1832,6 +1894,64 @@
   .start-journey-btn {
     bottom: 30px;
   }
+
+  /* Spark Card adjustments when collapsed to one column */
+  .hero-visual {
+    height: 420px;
+    margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+  }
+
+  .hero-main-img {
+    height: 350px;
+    width: 100%;
+    position: relative;
+  }
+
+  .spark-card {
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 380px;
+    margin: 0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  }
+
+  .location-tag {
+    top: 20px;
+    bottom: auto;
+    right: 20px;
+  }
+
+  /* Quote Section responsive stacking layout */
+  .quote-section {
+    flex-direction: column;
+    gap: 0;
+    border-radius: 24px;
+  }
+
+  .quote-img {
+    width: 100%;
+    height: 220px;
+    flex: none;
+  }
+
+  .quote-content {
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  .quote-content blockquote {
+    font-size: 1.4rem;
+    line-height: 1.4;
+    margin-bottom: 15px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1849,6 +1969,7 @@
     flex-direction: column;
     padding: 20px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
   }
 
   .nav-links.mobile-open {
@@ -1857,17 +1978,52 @@
 
   .hero-text h1 {
     font-size: 2.5rem;
+    margin-bottom: 25px;
   }
 
+  /* Horizontal wrapped flow for destinations instead of giant vertical stacking list */
   .hero-destinations {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    font-size: 1.2rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px 25px;
+    font-size: 1.1rem;
+    margin-top: 50px;
+    padding: 0 20px;
+  }
+
+  .left-gallery {
+    gap: 15px;
+    height: 200px;
+  }
+
+  .gallery-img {
+    width: 140px;
+  }
+
+  .spark-card {
+    padding: 20px;
+    max-width: 320px;
+  }
+
+  .card-thumb {
+    display: none;
+  }
+
+  .spark-desc {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
   }
 
   .why-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .why-card {
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .why-snaptrip h2 {
@@ -1893,6 +2049,145 @@
   
   .newsletter-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Testimonials polaroid scaling */
+  .testimonials-redesign {
+    padding: 60px 20px;
+  }
+  .testimonials-redesign h2 {
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+  }
+  .testimonial-layout {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 60px; /* add spacing at the bottom for the absolute centered arrows */
+  }
+  .testimonial-layout > div[style*="position: absolute"] {
+    position: absolute !important;
+    top: auto !important;
+    bottom: -45px !important;
+    left: 50% !important;
+    right: auto !important;
+    width: auto !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 20px !important;
+    pointer-events: auto !important;
+    z-index: 20 !important;
+  }
+  .testimonial-layout > div[style*="position: absolute"] button {
+    position: static !important;
+    pointer-events: auto !important;
+  }
+  .testimonial-main {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .location-pin {
+    margin: 0 auto 15px;
+  }
+  .testimonial-main blockquote {
+    font-size: 1.4rem;
+    line-height: 1.4;
+    margin-bottom: 25px;
+    min-height: auto !important; /* let it resize naturally on mobile */
+  }
+  .testimonial-user {
+    justify-content: center;
+    text-align: left;
+    margin-bottom: 30px;
+  }
+  .testimonial-polaroid {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    transform: rotate(1deg);
+  }
+  .polaroid-img {
+    height: 280px;
+  }
+
+  /* Curated Stories styling */
+  .curated-stories {
+    padding: 50px 20px;
+  }
+  .curated-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  .curated-stories h2 {
+    font-size: 2.2rem;
+  }
+  .curated-subtitle {
+    text-align: left;
+    font-size: 1rem;
+  }
+  .main-story-card {
+    height: 380px;
+    padding: 24px;
+  }
+  .main-story-card h3 {
+    font-size: 1.8rem;
+  }
+  .side-stories {
+    height: auto;
+    gap: 30px;
+  }
+  .side-story-card {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .side-story-img {
+    width: 100%;
+    height: 200px;
+  }
+
+  /* CTA Banner styling */
+  .cta-banner {
+    padding: 40px 20px;
+    margin-bottom: 40px;
+  }
+  .cta-content {
+    padding: 40px 20px;
+    border-radius: 24px;
+  }
+  .cta-content h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+  }
+  .cta-input-group {
+    width: 100%;
+  }
+
+  /* Footer styling */
+  .site-footer {
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .spin-wheel-outer {
+    transform: scale(0.8);
+    transform-origin: top center;
+    margin-bottom: -60px;
+  }
+}
+
+@media (max-width: 360px) {
+  .spin-wheel-outer {
+    transform: scale(0.7);
+    transform-origin: top center;
+    margin-bottom: -100px;
   }
 }
 

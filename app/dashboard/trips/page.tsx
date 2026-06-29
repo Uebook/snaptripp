@@ -162,6 +162,28 @@ export default function TripsPage() {
 
         .animate-fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+          .trips-container { padding: 40px 20px; }
+          .page-header { flex-direction: column; align-items: stretch; gap: 24px; text-align: center; margin-bottom: 40px; }
+          .page-title { font-size: 32px; letter-spacing: -1px; text-align: center; }
+          .page-subtitle { font-size: 15px; text-align: center; }
+          .btn-gold-luxe { width: 100%; max-width: 280px; margin: 0 auto; text-align: center; box-sizing: border-box; padding: 14px 24px; }
+          .trips-grid-premium { grid-template-columns: 1fr; gap: 24px; }
+          .luxe-trip-card { border-radius: 20px; }
+          .card-top { height: 160px; padding: 20px; }
+          .trip-location-badge { font-size: 24px; }
+          .card-body { padding: 24px; }
+          .card-trip-title { font-size: 20px; margin-bottom: 12px; }
+          .card-meta { margin-bottom: 24px; flex-direction: column; gap: 8px; }
+          .card-actions { flex-direction: column; gap: 12px; }
+          .delete-btn { width: 100%; height: 48px; }
+          .empty-state-luxe { padding: 60px 20px; border-radius: 24px; }
+          .empty-icon { font-size: 60px; margin-bottom: 24px; }
+          h2 { font-size: 24px; }
+          p { font-size: 14px; }
+          .btn-sapphire-luxe { padding: 14px 32px; font-size: 14px; width: 100%; max-width: 280px; box-sizing: border-box; }
+        }
       `}</style>
         </div>
     )

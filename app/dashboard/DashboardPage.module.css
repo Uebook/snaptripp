@@ -1346,39 +1346,190 @@
 @media (max-width: 1024px) {
   .dashboard-grid-layout {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
+  
   .right-sidebar-navigation-card {
     order: -1;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 16px !important;
+    gap: 8px !important;
+    border-radius: 16px !important;
+  }
+
+  .right-sidebar-navigation-card::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .sidebar-tab-button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-wrapper {
-    padding: 20px;
+    padding: 20px 16px !important;
   }
-  .expedition-feed-card {
-    grid-template-columns: 1fr;
+  
+  .card-container {
+    padding: 24px 20px !important;
+    border-radius: 16px !important;
   }
-  .saved-place-card.large-feature-card {
-    grid-column: span 1;
-    flex-direction: column;
+
+  .card-header-title {
+    font-size: 22px !important;
   }
-  .saved-place-card.large-feature-card .saved-place-image-panel {
-    width: 100%;
+
+  .card-header-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 24px !important;
   }
-  .saved-place-card.large-feature-card .saved-place-content-panel {
-    width: 100%;
+
+  .profile-photo-section {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 16px !important;
+    padding-bottom: 20px !important;
+    margin-bottom: 24px !important;
   }
+
   .inputs-grid-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
+
   .field-block.span-2 {
-    grid-column: span 1;
+    grid-column: span 1 !important;
   }
+
+  .form-action-footer {
+    flex-direction: column-reverse !important;
+    gap: 16px !important;
+    margin-top: 24px !important;
+    padding-top: 20px !important;
+  }
+
+  .btn-discard-link {
+    text-align: center !important;
+  }
+
+  .btn-save-changes {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .verify-identity-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+    padding: 20px !important;
+  }
+
+  .verify-card-left {
+    max-width: 100% !important;
+  }
+
+  .verify-card-right-bg {
+    display: none !important;
+  }
+
+  .travel-history-summary-card {
+    padding: 20px !important;
+  }
+
   .metrics-row-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
+
+  .metric-card-total-miles,
+  .metric-card-countries {
+    padding: 24px 20px !important;
+  }
+
+  .metric-card-miles-value {
+    font-size: 32px !important;
+  }
+
+  .metric-card-countries-value {
+    font-size: 36px !important;
+  }
+
+  .expedition-feed-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .expedition-image-panel {
+    height: 180px !important;
+  }
+
+  .expedition-content-panel {
+    padding: 20px !important;
+  }
+
+  .expedition-meta-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .expedition-title-text {
+    font-size: 18px !important;
+  }
+
+  .expedition-details-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .expedition-footer-buttons {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .expedition-left-buttons {
+    flex-direction: column !important;
+  }
+
+  .expedition-left-buttons button {
+    width: 100% !important;
+  }
+
+  .btn-share-icon {
+    align-self: center !important;
+  }
+
+  .saved-place-card.large-feature-card {
+    grid-column: span 1 !important;
+    flex-direction: column !important;
+  }
+
+  .saved-place-card.large-feature-card .saved-place-image-panel {
+    width: 100% !important;
+    height: 180px !important;
+  }
+
+  .saved-place-card.large-feature-card .saved-place-content-panel {
+    width: 100% !important;
+    padding: 20px !important;
+  }
+
   .history-metrics-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .modal-content-card {
+    padding: 20px !important;
   }
 }

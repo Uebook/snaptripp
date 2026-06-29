@@ -41,6 +41,17 @@ export default function FavoritesPage() {
 
         .animate-fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+          .favorites-container { padding: 40px 20px; }
+          .page-title { font-size: 32px; letter-spacing: -1px; text-align: center; }
+          .page-subtitle { font-size: 15px; margin-bottom: 40px; text-align: center; }
+          .empty-favorites-card { padding: 60px 20px; border-radius: 24px; }
+          .empty-icon { font-size: 60px; margin-bottom: 24px; }
+          h2 { font-size: 24px; }
+          p { font-size: 14px; margin-bottom: 24px; }
+          .btn-gold-luxe { padding: 14px 32px; font-size: 14px; width: 100%; max-width: 280px; box-sizing: border-box; text-align: center; }
+        }
       `}</style>
     </div>
   )

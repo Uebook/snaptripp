@@ -80,6 +80,18 @@ export default function SettingsPage() {
 
         .animate-fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+          .settings-container { padding: 40px 20px; }
+          .page-title { font-size: 32px; letter-spacing: -1px; text-align: center; }
+          .page-subtitle { font-size: 15px; margin-bottom: 40px; text-align: center; }
+          .settings-section-luxe { padding: 24px 20px; border-radius: 20px; margin-bottom: 24px; }
+          .section-title { font-size: 20px; margin-bottom: 24px; padding-bottom: 12px; }
+          .setting-row { padding: 20px 0; gap: 16px; }
+          .setting-label { font-size: 15px; }
+          .setting-desc { font-size: 13px; }
+          .btn-red-outline-luxe { width: 100%; text-align: center; box-sizing: border-box; margin-top: 16px; }
+        }
       `}</style>
         </div>
     )

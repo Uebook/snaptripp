@@ -593,7 +593,7 @@ export default function Home() {
 
       {/* 5. Testimonials */}
       <section className="testimonials-redesign">
-        <h2>What Our <span>Travelers Says</span></h2>
+        <h2>What Our <span>Travelers Say</span></h2>
 
         <div className="testimonial-layout" style={{ position: 'relative' }}>
           {testimData.length > 1 && (

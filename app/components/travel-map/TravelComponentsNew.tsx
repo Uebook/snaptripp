@@ -472,9 +472,9 @@ export function CountryRatingModal({
   };
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
+    <div className="country-rating-modal-overlay" style={overlayStyle} onClick={onClose}>
       <div 
-        className="animate-pop" 
+        className="country-rating-modal-content animate-pop" 
         onClick={e => e.stopPropagation()} 
         style={modalContentStyle}
       >
@@ -486,7 +486,7 @@ export function CountryRatingModal({
         </button>
 
         {/* Left Pane - City Checklist */}
-        <div style={leftPaneStyle}>
+        <div className="country-rating-left-pane" style={leftPaneStyle}>
           <h2 style={{ 
             color: '#EBA424', 
             fontSize: '1.8rem', 
@@ -586,7 +586,7 @@ export function CountryRatingModal({
         </div>
 
         {/* Right Pane - Country Rating */}
-        <div style={rightPaneStyle}>
+        <div className="country-rating-right-pane" style={rightPaneStyle}>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -648,7 +648,7 @@ export function CountryRatingModal({
             ))}
           </div>
 
-          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <div className="country-rating-actions" style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
             <button 
               onClick={onClose} 
               style={{ 
