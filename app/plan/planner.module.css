@@ -514,14 +514,63 @@
 }
 
 @media (max-width: 768px) {
+  .modal {
+    padding: 30px 16px;
+    border-radius: 24px;
+  }
   .optionsGrid {
     flex-direction: column;
     align-items: center;
+    gap: 20px;
+  }
+  .optionCard {
+    width: 100%;
+    max-width: 320px;
+    padding: 24px;
   }
   .welcomeText {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
   .stepper {
-    gap: 20px;
+    gap: 12px;
+    margin-bottom: 50px;
+  }
+  .stepLabel {
+    display: none; /* Hide labels on mobile to prevent overlapping */
+  }
+  .durationVisual {
+    gap: 40px;
+  }
+  .durationVisual::after {
+    width: 120px;
+  }
+  .durationGrid {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+  }
+  .durationCard {
+    width: 100%;
+    max-width: 320px;
+    height: 100px;
+  }
+  .vsContainer {
+    flex-direction: column;
+    height: auto;
+    border-radius: 24px;
+  }
+  .vsOption {
+    padding: 24px;
+    height: 250px;
+  }
+  .vsBadge {
+    display: none; /* Hide overlapping Badge in stacked layout */
+  }
+}
+
+@media (max-width: 480px) {
+  .durationVisual {
+    display: none; /* Hide the visual line indicator on very small screens */
   }
 }

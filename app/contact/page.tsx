@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SiteHeader from '@/app/components/SiteHeader';
 import SiteFooter from '@/app/components/SiteFooter';
 
@@ -13,6 +13,29 @@ export default function ContactPage() {
     const [status, setStatus] = useState({ type: '', msg: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+    
+    // Captcha States
+    const [captchaQuestion, setCaptchaQuestion] = useState('')
+    const [captchaToken, setCaptchaToken] = useState('')
+    const [captchaAnswer, setCaptchaAnswer] = useState('')
+
+    const fetchCaptcha = async () => {
+        try {
+            const res = await fetch('/api/contact/captcha')
+            const data = await res.json()
+            if (res.ok) {
+                setCaptchaQuestion(data.question)
+                setCaptchaToken(data.token)
+                setCaptchaAnswer('')
+            }
+        } catch (err) {
+            console.error('Failed to load captcha:', err)
+        }
+    }
+
+    useEffect(() => {
+        fetchCaptcha()
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -24,17 +47,26 @@ export default function ContactPage() {
             const res = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, phone: phoneWithCode })
+                body: JSON.stringify({ 
+                    ...formData, 
+                    phone: phoneWithCode,
+                    captchaAnswer,
+                    captchaToken
+                })
             })
             const data = await res.json()
             if (res.ok) {
                 setStatus({ type: 'success', msg: 'Message sent successfully! We will get back to you soon.' })
                 setFormData({ first_name: '', last_name: '', email: '', countryCode: '+1', phone: '', subject: 'General Inquiry', message: '' })
+                setCaptchaAnswer('')
+                fetchCaptcha()
             } else {
                 setStatus({ type: 'danger', msg: data.error || 'Failed to send message.' })
+                fetchCaptcha()
             }
         } catch (err) {
             setStatus({ type: 'danger', msg: 'Network error. Please try again.' })
+            fetchCaptcha()
         } finally {
             setIsSubmitting(false)
         }
@@ -74,7 +106,7 @@ export default function ContactPage() {
 
             {/* Contact Cards */}
             <section style={{ padding: '0 20px 60px', marginTop: '-80px', position: 'relative', zIndex: 10 }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                <div className="contact-cards-grid">
                     {[
                         { 
                             icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>, 
@@ -110,8 +142,8 @@ export default function ContactPage() {
 
             {/* Form Section */}
             <section style={{ padding: '60px 20px' }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '0', backgroundColor: 'white', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
-                    <div style={{ backgroundColor: '#0f172a', padding: '60px', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="contact-form-grid">
+                    <div className="contact-info-panel" style={{ backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
                             <h3 style={{ fontSize: '2rem', marginBottom: '20px', fontWeight: '700', fontFamily: 'var(--font-serif)' }}>Send us a Message</h3>
                             <p style={{ opacity: 0.8, lineHeight: '1.6', fontSize: '1rem', maxWidth: '80%' }}>
@@ -129,14 +161,14 @@ export default function ContactPage() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ padding: '60px' }}>
+                    <div className="contact-form-panel">
                         {status.msg && (
                             <div style={{ padding: '16px', borderRadius: '8px', marginBottom: '20px', backgroundColor: status.type === 'success' ? '#dcfce7' : '#fee2e2', color: status.type === 'success' ? '#166534' : '#991b1b', fontWeight: '500' }}>
                                 {status.msg}
                             </div>
                         )}
                         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div className="contact-form-row">
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>First Name</label>
                                     <input type="text" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required placeholder="John" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
@@ -146,7 +178,7 @@ export default function ContactPage() {
                                     <input type="text" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} required placeholder="Doe" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
                                 </div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div className="contact-form-row">
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Email Address</label>
                                     <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required placeholder="john@example.com" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
@@ -200,6 +232,32 @@ export default function ContactPage() {
                                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Message</label>
                                 <textarea rows={4} value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} required placeholder="How can we help you?" style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', resize: 'none' }} />
                             </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '600', marginBottom: '8px', color: '#0a192f' }}>Security Verification</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '1rem', fontWeight: '600', color: '#334155', backgroundColor: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', userSelect: 'none' }}>
+                                        {captchaQuestion || 'Loading...'}
+                                    </span>
+                                    <button 
+                                        type="button" 
+                                        onClick={fetchCaptcha} 
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', borderRadius: '50%', backgroundColor: '#f1f5f9', transition: 'background-color 0.2s' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                        title="Refresh Captcha"
+                                    >
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
+                                    </button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={captchaAnswer} 
+                                    onChange={e => setCaptchaAnswer(e.target.value)} 
+                                    required 
+                                    placeholder="Enter your answer" 
+                                    style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', color: '#0a192f' }} 
+                                />
+                            </div>
                             <button type="submit" disabled={isSubmitting} style={{ backgroundColor: '#ffc107', color: '#0a192f', padding: '16px', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1rem', opacity: isSubmitting ? 0.7 : 1 }}>
                                 {isSubmitting ? 'Sending...' : 'Send Message'}
                             </button>
@@ -232,6 +290,61 @@ export default function ContactPage() {
             </section>
 
             <SiteFooter />
+            <style>{`
+                .contact-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 24px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .contact-form-grid {
+                    max-width: 900px;
+                    margin: 0 auto;
+                    display: grid;
+                    grid-template-columns: 1fr 1.5fr;
+                    gap: 0;
+                    background-color: white;
+                    border-radius: 24px;
+                    overflow: hidden;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+                    border: 1px solid #f1f5f9;
+                }
+                .contact-info-panel {
+                    padding: 60px;
+                }
+                .contact-form-panel {
+                    padding: 60px;
+                }
+                .contact-form-row {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                }
+
+                @media (max-width: 768px) {
+                    .contact-form-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .contact-info-panel {
+                        padding: 40px 24px;
+                        gap: 24px;
+                    }
+                    .contact-form-panel {
+                        padding: 40px 24px;
+                    }
+                }
+
+                @media (max-width: 640px) {
+                    .contact-cards-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .contact-form-row {
+                        grid-template-columns: 1fr;
+                        gap: 16px;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

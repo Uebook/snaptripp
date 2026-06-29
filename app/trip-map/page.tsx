@@ -902,13 +902,20 @@ function TripMapContent() {
 
         .trip-map-page {
           height: 100vh;
+          display: flex;
+          flex-direction: column;
           overflow: hidden;
           background: var(--color-ice);
           font-family: 'Inter', sans-serif;
           color: var(--color-sapphire);
         }
 
+        .trip-map-header-wrapper {
+          flex-shrink: 0;
+        }
+
         .trip-map-container {
+          flex: 1;
           display: grid;
           position: relative;
           grid-template-areas: 
@@ -916,7 +923,8 @@ function TripMapContent() {
             "itinerary itinerary";
           grid-template-columns: 450px 1fr;
           grid-template-rows: 1fr 320px;
-          height: calc(100vh - 64px);
+          height: auto !important;
+          min-height: 0;
           background: #FFFFFF;
         }
 
@@ -1825,49 +1833,64 @@ function TripMapContent() {
 
         @media (max-width: 1024px) {
           .trip-map-container {
-            grid-template-columns: var(--sidebar-left) 1fr;
+            grid-template-columns: 320px 1fr 0px !important;
+          }
+          .trip-map-container.itinerary-open {
+            grid-template-columns: 320px 1fr 300px !important;
           }
           .right-sidebar {
-            position: fixed;
-            right: 0;
-            top: 64px;
-            bottom: 0;
-            width: 400px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 50;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-          }
-          .right-sidebar.mobile-active {
-            transform: translateX(0);
+            width: 320px !important;
           }
         }
 
         @media (max-width: 768px) {
           .trip-map-container {
-            display: flex;
+            display: flex !important;
             flex-direction: column;
-            height: calc(100vh - 64px - 64px);
+            flex: 1;
+            height: auto !important;
+            min-height: 0;
           }
 
-          .mobile-bottom-nav { display: flex; }
+          .mobile-bottom-nav { 
+            display: flex; 
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            z-index: 1000;
+            justify-content: space-around;
+            align-items: center;
+          }
 
           .sidebar, .trip-map-main-wrapper {
-            display: none;
-            width: 100%;
-            height: 100%;
+            display: none !important;
+            width: 100% !important;
+            height: 100% !important;
           }
 
           .sidebar.mobile-active, .trip-map-main-wrapper.mobile-active {
-            display: flex;
-            position: relative;
-            transform: none;
-            top: 0;
-            z-index: auto;
-            box-shadow: none;
+            display: flex !important;
+            position: relative !important;
+            transform: none !important;
+            top: 0 !important;
+            z-index: auto !important;
+            box-shadow: none !important;
           }
 
-          .right-sidebar { left: 0; right: 0; width: 100%; }
+          .right-sidebar { 
+            left: 0 !important; 
+            right: 0 !important; 
+            width: 100% !important; 
+          }
+          
+          .itinerary-sidebar {
+            width: 100% !important;
+            height: 100% !important;
+          }
         }
 
         .sidebar-hidden { display: none !important; }
