@@ -977,7 +977,7 @@ export default function AdminExplorePage() {
             )}
 
             {/* Modal Tab Navigation */}
-            <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '10px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
               {[
                 { id: 'base', label: '1. General' },
                 { id: 'overview', label: '2. Overview Tab' },
@@ -992,7 +992,7 @@ export default function AdminExplorePage() {
                   type="button"
                   onClick={() => setGeneralModalTab(tab.id as any)}
                   className={`admin-button ${generalModalTab === tab.id ? '' : 'outline'}`}
-                  style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', whiteSpace: 'nowrap' }}
+                  style={{ padding: '8px 16px', fontSize: '12px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}
                 >
                   {tab.label}
                 </button>
