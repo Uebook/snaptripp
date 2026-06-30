@@ -136,35 +136,12 @@
   border-color: var(--primary);
 }
 
-/* Editorial Grid */
 .editorialGrid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  grid-auto-rows: auto;
+  grid-auto-flow: dense;
   gap: 80px 60px;
   align-items: start;
-}
-
-.guideCard:nth-child(1) {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.guideCard:nth-child(2) {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  padding-top: 60px;
-}
-
-.guideCard:nth-child(3) {
-  grid-column: 1;
-  grid-row: 2 / span 2;
-  padding-top: 40px;
-}
-
-.guideCard:nth-child(4) {
-  grid-column: 2;
-  grid-row: 3;
 }
 
 .guideCard {
@@ -176,20 +153,42 @@
 .cardImageWrapper {
   position: relative;
   width: 100%;
-  border-radius: 4px;
+  border-radius: 0px;
   overflow: hidden;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   background-color: #f5f5f5;
 }
 
-.guideCard:nth-child(1) .cardImageWrapper,
-.guideCard:nth-child(4) .cardImageWrapper {
-  aspect-ratio: 16/10;
+.leftLandscape {
+  grid-column: 1;
+}
+.leftLandscape .cardImageWrapper {
+  aspect-ratio: 1.63; /* Matches the 1.63 ratio of landscape in screenshot */
 }
 
-.guideCard:nth-child(2) .cardImageWrapper,
-.guideCard:nth-child(3) .cardImageWrapper {
-  aspect-ratio: 3/4;
+.rightPortrait {
+  grid-column: 2;
+  grid-row: span 2;
+  padding-top: 60px;
+}
+.rightPortrait .cardImageWrapper {
+  aspect-ratio: 0.77; /* Matches portrait ratio in screenshot */
+}
+
+.leftPortrait {
+  grid-column: 1;
+  grid-row: span 2;
+  padding-top: 40px;
+}
+.leftPortrait .cardImageWrapper {
+  aspect-ratio: 0.77;
+}
+
+.rightLandscape {
+  grid-column: 2;
+}
+.rightLandscape .cardImageWrapper {
+  aspect-ratio: 1.63;
 }
 
 .cardImage {
@@ -200,7 +199,7 @@
 }
 
 .guideCard:hover .cardImage {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .cardTag {
@@ -411,13 +410,15 @@
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  .guideCard:nth-child(1),
-  .guideCard:nth-child(2),
-  .guideCard:nth-child(3),
-  .guideCard:nth-child(4) {
-    grid-column: 1;
-    grid-row: auto;
-    padding-top: 0;
+  .standardCard, .wideCard, .tallCard, .largeCard {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+  }
+  .standardCard .cardImageWrapper,
+  .wideCard .cardImageWrapper,
+  .tallCard .cardImageWrapper,
+  .largeCard .cardImageWrapper {
+    aspect-ratio: 16/10 !important;
   }
   .regionsGrid {
     grid-template-columns: 1fr;

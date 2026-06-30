@@ -172,16 +172,29 @@ export default function CountryGuide() {
         </div>
 
         <div className={styles.editorialGrid}>
-          {featuredGuides.map((guide) => (
-            <Link key={guide.id} href={`/country/${guide.id}`} className={styles.guideCard}>
-              <div className={styles.cardImageWrapper}>
-                <img src={guide.image} alt={guide.title} className={styles.cardImage} />
-                <span className={styles.cardTag}>{guide.tag}</span>
-              </div>
-              <h3 className={styles.cardTitle}>{guide.title}</h3>
-              <p className={styles.cardDesc}>{guide.desc}</p>
-            </Link>
-          ))}
+          {featuredGuides.map((guide, i) => {
+            let cardClass = styles.leftLandscape;
+            if (i % 4 === 0) {
+              cardClass = styles.leftLandscape;
+            } else if (i % 4 === 1) {
+              cardClass = styles.rightPortrait;
+            } else if (i % 4 === 2) {
+              cardClass = styles.leftPortrait;
+            } else if (i % 4 === 3) {
+              cardClass = styles.rightLandscape;
+            }
+
+            return (
+              <Link key={guide.id} href={`/country/${guide.id}`} className={`${styles.guideCard} ${cardClass}`}>
+                <div className={styles.cardImageWrapper}>
+                  <img src={guide.image} alt={guide.title} className={styles.cardImage} />
+                  <span className={styles.cardTag}>{guide.tag}</span>
+                </div>
+                <h3 className={styles.cardTitle}>{guide.title}</h3>
+                <p className={styles.cardDesc}>{guide.desc}</p>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
