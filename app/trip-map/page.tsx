@@ -923,7 +923,7 @@ function TripMapContent() {
             "itinerary itinerary";
           grid-template-columns: 450px 1fr;
           grid-template-rows: 1fr 320px;
-          height: auto !important;
+          height: 100%;
           min-height: 0;
           background: #FFFFFF;
         }
@@ -1903,7 +1903,6 @@ function TripMapContent() {
         />
       )}
 
-      <SiteFooter />
     </div>
   )
 }
