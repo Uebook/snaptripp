@@ -914,6 +914,7 @@ CREATE TABLE IF NOT EXISTS public.country_guides (
   experience_title text not null,
   experience_desc text not null,
   experience_img text not null,
+  sections_data jsonb default '{}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

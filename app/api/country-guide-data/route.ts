@@ -112,7 +112,8 @@ export async function GET(request: Request) {
         desc: guide.experience_desc,
         img: guide.experience_img
       },
-      cities: (cities || []).map(city => ({ name: city.name, desc: city.desc, img: city.img_url }))
+      cities: (cities || []).map(city => ({ name: city.name, desc: city.desc, img: city.img_url })),
+      ...(guide.sections_data || {})
     })
   } catch (error: any) {
     console.error('Fetch country dynamic data error:', error)

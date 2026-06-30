@@ -37,7 +37,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { id, name, desc, tag, hero_img, is_featured, capital, currency, language, time_zone, best_time, emergency_police, emergency_ambulance, emergency_embassy, experience_title, experience_desc, experience_img } = body
+    const { id, name, desc, tag, hero_img, is_featured, capital, currency, language, time_zone, best_time, emergency_police, emergency_ambulance, emergency_embassy, experience_title, experience_desc, experience_img, sections_data } = body
 
     if (!id || !name || !desc || !tag || !hero_img || !capital || !currency || !language || !time_zone || !best_time || !emergency_police || !emergency_ambulance || !emergency_embassy || !experience_title || !experience_desc || !experience_img) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -65,6 +65,7 @@ export async function POST(request: Request) {
         experience_title: experience_title.trim(),
         experience_desc: experience_desc.trim(),
         experience_img: experience_img.trim(),
+        sections_data: sections_data || {},
         updated_at: new Date().toISOString()
       })
       .select()
@@ -73,6 +74,12 @@ export async function POST(request: Request) {
     if (error) {
       if (error.code === '23505') {
         return NextResponse.json({ error: 'A country guide with this ID already exists.' }, { status: 400 })
+      }
+      if (error.message && (error.message.includes('column "sections_data"') || error.message.includes('sections_data'))) {
+        return NextResponse.json({ 
+          error: 'migration_missing',
+          message: 'The "sections_data" column does not exist in the "country_guides" table. Please run the SQL migration script (20260630_add_sections_data.sql) in your Supabase SQL editor.'
+        }, { status: 400 })
       }
       throw error
     }
@@ -95,7 +102,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, name, desc, tag, hero_img, is_featured, capital, currency, language, time_zone, best_time, emergency_police, emergency_ambulance, emergency_embassy, experience_title, experience_desc, experience_img } = body
+    const { id, name, desc, tag, hero_img, is_featured, capital, currency, language, time_zone, best_time, emergency_police, emergency_ambulance, emergency_embassy, experience_title, experience_desc, experience_img, sections_data } = body
 
     if (!id || !name || !desc || !tag || !hero_img || !capital || !currency || !language || !time_zone || !best_time || !emergency_police || !emergency_ambulance || !emergency_embassy || !experience_title || !experience_desc || !experience_img) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -120,13 +127,22 @@ export async function PUT(request: Request) {
         experience_title: experience_title.trim(),
         experience_desc: experience_desc.trim(),
         experience_img: experience_img.trim(),
+        sections_data: sections_data || {},
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      if (error.message && (error.message.includes('column "sections_data"') || error.message.includes('sections_data'))) {
+        return NextResponse.json({ 
+          error: 'migration_missing',
+          message: 'The "sections_data" column does not exist in the "country_guides" table. Please run the SQL migration script (20260630_add_sections_data.sql) in your Supabase SQL editor.'
+        }, { status: 400 })
+      }
+      throw error
+    }
 
     return NextResponse.json({ success: true, guide })
   } catch (error: any) {

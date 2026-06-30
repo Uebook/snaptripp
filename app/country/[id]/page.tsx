@@ -260,11 +260,10 @@ export default function CountryPage() {
           <div className={styles.heroLeft}>
             <p className={styles.heroOverTitle}>Complete Destination Guide</p>
             <h1>
-              {data.name} 
-              {data.name.toLowerCase() === 'italy' ? ' 🇮🇹' : data.name.toLowerCase() === 'ireland' ? ' 🇮🇪' : data.name.toLowerCase() === 'japan' ? ' 🇯🇵' : ''}
+              {data.name} {(data as any).flagEmoji || ''}
             </h1>
             <p className={styles.heroSubTitle}>
-              {data.name.toLowerCase() === 'ireland' ? 'The Emerald Isle' : data.name.toLowerCase() === 'italy' ? 'The Cradle of Culture' : 'Land of the Rising Sun'}
+              {(data as any).heroSubtitle || 'Complete Destination Overview'}
             </p>
             <p className={styles.heroDesc}>{data.desc}</p>
             <div className={styles.heroButtons}>
@@ -287,14 +286,12 @@ export default function CountryPage() {
             </div>
             <div className={styles.quickFactItem}>
               <span>📊 Average Temp</span>
-              <strong>{data.name.toLowerCase() === 'ireland' ? '11°C - 20°C' : data.name.toLowerCase() === 'italy' ? '14°C - 25°C' : '10°C - 22°C'}</strong>
+              <strong>{(data as any).averageTemp || '10°C - 22°C'}</strong>
             </div>
             <div className={styles.quickFactItem}>
               <span>📄 Visa Information</span>
               <strong>
-                {data.name.toLowerCase() === 'italy' || data.name.toLowerCase() === 'ireland' 
-                  ? 'Visa-Free for 90 days\n(US, CA, AU, UK & more)' 
-                  : 'Visa-Free for 90 days'}
+                {(data as any).visaInfo || 'Visa-Free for 90 days'}
               </strong>
             </div>
           </div>
@@ -335,13 +332,13 @@ export default function CountryPage() {
             <div className={styles.introLayout}>
               <div className={styles.introLeft}>
                 <h3>1.1 Country Introduction</h3>
-                <p>{data.countryIntro}</p>
+                <p>{data.countryIntro || `Welcome to ${data.name}. Explore the unique culture, safety protocols, and essential logistics for a perfect travel experience.`}</p>
                 <div className={styles.introButtons}>
-                  <button className={styles.discoverMoreBtn}>
+                  <button className={styles.discoverMoreBtn} onClick={() => window.location.href = '#experiences'}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px', verticalAlign: 'middle' }}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
                     Discover More
                   </button>
-                  <button className={styles.officialGuideBtn}>
+                  <button className={styles.officialGuideBtn} onClick={() => window.open(`https://google.com/search?q=official+tourism+site+${encodeURIComponent(data.name)}`, '_blank')}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px', verticalAlign: 'middle' }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     Official Guide
                   </button>
@@ -365,27 +362,27 @@ export default function CountryPage() {
                 <tbody>
                   <tr>
                     <td><strong>Months</strong></td>
-                    <td>June - August</td>
-                    <td>April - May / Sept - Oct</td>
-                    <td>Nov - March</td>
+                    <td>{((data as any).bestTimePeak?.months) || 'June - August'}</td>
+                    <td>{((data as any).bestTimeShoulder?.months) || 'April - May / Sept - Oct'}</td>
+                    <td>{((data as any).bestTimeOffPeak?.months) || 'Nov - March'}</td>
                   </tr>
                   <tr>
                     <td><strong>Average Temp</strong></td>
-                    <td>15°C - 20°C</td>
-                    <td>10°C - 15°C</td>
-                    <td>5°C - 8°C</td>
+                    <td>{((data as any).bestTimePeak?.temp) || '15°C - 20°C'}</td>
+                    <td>{((data as any).bestTimeShoulder?.temp) || '10°C - 15°C'}</td>
+                    <td>{((data as any).bestTimeOffPeak?.temp) || '5°C - 8°C'}</td>
                   </tr>
                   <tr>
                     <td><strong>Daylight Hours</strong></td>
-                    <td>17 - 19 hours</td>
-                    <td>12 - 15 hours</td>
-                    <td>7 - 9 hours</td>
+                    <td>{((data as any).bestTimePeak?.daylight) || '17 - 19 hours'}</td>
+                    <td>{((data as any).bestTimeShoulder?.daylight) || '12 - 15 hours'}</td>
+                    <td>{((data as any).bestTimeOffPeak?.daylight) || '7 - 9 hours'}</td>
                   </tr>
                   <tr>
                     <td><strong>Ideal For</strong></td>
-                    <td>Festivals, Hiking, Long Days</td>
-                    <td><strong>Road trips, City exploration, Photography</strong></td>
-                    <td>Cosy pubs, Museums, Northern Lights</td>
+                    <td>{((data as any).bestTimePeak?.ideal) || 'Festivals, Hiking, Long Days'}</td>
+                    <td><strong>{((data as any).bestTimeShoulder?.ideal) || 'Road trips, City exploration, Photography'}</strong></td>
+                    <td>{((data as any).bestTimeOffPeak?.ideal) || 'Cosy pubs, Museums, Northern Lights'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -399,19 +396,19 @@ export default function CountryPage() {
               <div className={styles.holidaysRow}>
                 <div className={styles.holidayCol}>
                   <h5>SPRING</h5>
-                  <p>St. Patrick's Day (Mar 17)</p>
+                  <p>{(data as any).holidaysSpring || 'Easter Holidays / Vernal Equinox'}</p>
                 </div>
                 <div className={styles.holidayCol}>
                   <h5>SUMMER</h5>
-                  <p>June Bank Holiday<br />August Bank Holiday</p>
+                  <p>{(data as any).holidaysSummer || 'Summer Bank Holidays / National Celebrations'}</p>
                 </div>
                 <div className={styles.holidayCol}>
                   <h5>AUTUMN</h5>
-                  <p>October Bank Holiday</p>
+                  <p>{(data as any).holidaysAutumn || 'Mid-Autumn Celebrations / Harvest Festival'}</p>
                 </div>
                 <div className={styles.holidayCol}>
                   <h5>WINTER</h5>
-                  <p>Christmas Day (Dec 25)<br />St. Stephen's Day (Dec 26)</p>
+                  <p>{(data as any).holidaysWinter || 'Christmas Holidays / New Year Festival'}</p>
                 </div>
               </div>
             </div>
@@ -419,16 +416,15 @@ export default function CountryPage() {
             {/* 1.4 Bucket List */}
             <div className={styles.bucketListHeader}>
               <h3>1.4 Bucket List</h3>
-              <a href="#" className={styles.viewAllLink}>View All →</a>
             </div>
             <div className={styles.bucketListGrid}>
-              {[
-                { title: 'Wild Atlantic Way', desc: 'A 2,500km coastal route of raw beauty and adventure.', tag: 'COAST', type: 'coast', img: '/images/coastal_beach.webp' },
-                { title: 'Cliffs of Moher', desc: 'Iconic vistas soaring 214m above the Atlantic waves.', tag: 'LANDMARK', type: 'landmark', img: '/images/hero_city.webp' },
-                { title: 'Trinity College', desc: 'Home to the Book of Kells and the stunning Long Room.', tag: 'HERITAGE', type: 'heritage', img: '/images/how_london.webp' },
-                { title: 'Trad Music', desc: 'Authentic sessions in the colorful streets of Galway City.', tag: 'CULTURE', type: 'culture', img: '/images/marrakech.webp' },
-                { title: 'Killarney NP', desc: 'A lush landscape of mountains, lakes, and ancient woods.', tag: 'NATURE', type: 'nature', img: '/images/why_mountains.webp' },
-              ].map((item, i) => {
+              {((data as any).bucketList || [
+                { title: 'Coastline Touring', desc: 'A scenic route of raw beauty and adventure.', tag: 'COAST', type: 'coast', img: '/images/coastal_beach.webp' },
+                { title: 'Historic Sightseeing', desc: 'Soaring vistas and iconic monuments.', tag: 'LANDMARK', type: 'landmark', img: '/images/hero_city.webp' },
+                { title: 'Cultural Heritage', desc: 'Rich historic libraries and libraries of ancient texts.', tag: 'HERITAGE', type: 'heritage', img: '/images/how_london.webp' },
+                { title: 'Local Music & Art', desc: 'Authentic performance and art inside cozy venues.', tag: 'CULTURE', type: 'culture', img: '/images/marrakech.webp' },
+                { title: 'National Parks', desc: 'A lush landscape of mountains, lakes, and ancient woods.', tag: 'NATURE', type: 'nature', img: '/images/why_mountains.webp' },
+              ]).map((item: any, i: number) => {
                 let tagClass = '';
                 if (item.type === 'coast') tagClass = styles.tagCoast;
                 else if (item.type === 'landmark') tagClass = styles.tagLandmark;
@@ -438,8 +434,8 @@ export default function CountryPage() {
 
                 return (
                   <div key={i} className={styles.bucketCard}>
-                    <div className={styles.bucketImg} style={{ backgroundImage: `url(${item.img})` }}>
-                      <span className={`${styles.bucketTag} ${tagClass}`}>{item.tag}</span>
+                    <div className={styles.bucketImg} style={{ backgroundImage: `url(${item.img || '/images/coastal_beach.webp'})` }}>
+                      <span className={`${styles.bucketTag} ${tagClass}`}>{item.tag || 'EXPLORE'}</span>
                     </div>
                     <div className={styles.bucketContent}>
                       <h4>{item.title}</h4>
@@ -453,13 +449,13 @@ export default function CountryPage() {
             {/* 1.5 Unique Accommodation */}
             <h3>1.5 Unique Accommodation</h3>
             <div className={styles.accommodationGrid}>
-              {[
-                { title: 'Castle Hotels', desc: 'Stay like royalty in Ashford Castle.', img: '/images/how_london.webp' },
-                { title: 'Lighthouse Cottages', desc: 'Wake up to the sounds of the ocean.', img: '/images/coastal_beach.webp' },
-                { title: 'Traditional Thatched', desc: 'Authentic countryside living experience.', img: '/images/why_mountains.webp' },
-                { title: 'Luxury Glamping', desc: 'Star-gaze from the comfort of a geodome bed.', img: '/images/hero_city.webp' },
-              ].map((item, i) => (
-                <div key={i} className={styles.accomCard} style={{ backgroundImage: `url(${item.img})` }}>
+              {((data as any).uniqueAccommodations || [
+                { title: 'Luxury Castles & Villas', desc: 'Stay like royalty in historic country estates.', img: '/images/how_london.webp' },
+                { title: 'Ocean Lighthouse Cottages', desc: 'Wake up to the direct sound of rolling ocean waves.', img: '/images/coastal_beach.webp' },
+                { title: 'Countryside Cabins', desc: 'Authentic local countryside living experience.', img: '/images/why_mountains.webp' },
+                { title: 'Glamping Domes', desc: 'Star-gaze from the comfort of a geodome bed.', img: '/images/hero_city.webp' },
+              ]).map((item: any, i: number) => (
+                <div key={i} className={styles.accomCard} style={{ backgroundImage: `url(${item.img || '/images/how_london.webp'})` }}>
                   <div className={styles.accomContent}>
                     <h4>{item.title}</h4>
                     <p>{item.desc}</p>
@@ -475,7 +471,7 @@ export default function CountryPage() {
             <h2 className={styles.tabTitle}>Entry Requirements</h2>
             <p className={styles.tabSubtitle}>Essential information for travellers entering the country, including visa guidelines, customs regulations, and health protocols.</p>
             
-            <div className={styles.entryMainCard} style={{ backgroundImage: 'url(/images/hero_city.webp)' }}>
+            <div className={styles.entryMainCard} style={{ backgroundImage: `url(${(data as any).entryImg || '/images/hero_city.webp'})` }}>
               <div className={styles.entryMainContent}>
                 <h3>Immigration & Entry Control</h3>
                 <p>Welcome to {data.name}. Ensure you have valid documents ready upon arrival.</p>
@@ -496,17 +492,25 @@ export default function CountryPage() {
                     <div className={styles.toggleCard}>
                       <h5>Eligible Regions</h5>
                       <ul>
-                        <li>European Union / EEA Members</li>
-                        <li>United States, Canada, Australia</li>
-                        <li>Selected Nations (Full list online)</li>
+                        {((data as any).visaFreeRegions || [
+                          'European Union / EEA Members',
+                          'United States, Canada, Australia',
+                          'Selected Nations (Full list online)'
+                        ]).map((region: string, idx: number) => (
+                          <li key={idx}>{region}</li>
+                        ))}
                       </ul>
                     </div>
                     <div className={styles.toggleCard}>
                       <h5>Conditions</h5>
                       <ul>
-                        <li>Tourism or Business (90 days)</li>
-                        <li>Valid Passport for Stay Duration</li>
-                        <li>Evidence of Sufficient Funds</li>
+                        {((data as any).visaFreeConditions || [
+                          'Tourism or Business (90 days)',
+                          'Valid Passport for Stay Duration',
+                          'Evidence of Sufficient Funds'
+                        ]).map((cond: string, idx: number) => (
+                          <li key={idx}>{cond}</li>
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -515,17 +519,25 @@ export default function CountryPage() {
                     <div className={styles.toggleCard}>
                       <h5>Who Needs It</h5>
                       <ul>
-                        <li>Non-exempt third-country nationals</li>
-                        <li>Stays exceeding 90 days</li>
-                        <li>Employment or study purposes</li>
+                        {((data as any).visaRequiredWho || [
+                          'Non-exempt third-country nationals',
+                          'Stays exceeding 90 days',
+                          'Employment or study purposes'
+                        ]).map((who: string, idx: number) => (
+                          <li key={idx}>{who}</li>
+                        ))}
                       </ul>
                     </div>
                     <div className={styles.toggleCard}>
                       <h5>How to Apply</h5>
                       <ul>
-                        <li>Submit application at local consulate</li>
-                        <li>Provide invitation or travel booking</li>
-                        <li>Pay processing fee (approx. €80)</li>
+                        {((data as any).visaRequiredHow || [
+                          'Submit application at local consulate',
+                          'Provide invitation or travel booking',
+                          'Pay processing fee (approx. €80)'
+                        ]).map((how: string, idx: number) => (
+                          <li key={idx}>{how}</li>
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -535,27 +547,19 @@ export default function CountryPage() {
               <div className={styles.requirementBox}>
                 <h4>🛂 Passport Checklist</h4>
                 <div className={styles.checklistList}>
-                  <div className={styles.checklistItem}>
-                    <span className={styles.checkIcon}>✓</span>
-                    <div className={styles.checkText}>
-                      <h5>6 Months Validity</h5>
-                      <p>Recommended validity beyond your planned stay date.</p>
+                  {((data as any).passportChecklist || [
+                    { title: '6 Months Validity', desc: 'Recommended validity beyond your planned stay date.' },
+                    { title: 'Two Blank Pages', desc: 'Required for entry stamps and visa stickers.' },
+                    { title: 'Digital Copy', desc: 'Secure backup highly advised in case of physical loss.' }
+                  ]).map((item: any, idx: number) => (
+                    <div key={idx} className={styles.checklistItem}>
+                      <span className={styles.checkIcon}>✓</span>
+                      <div className={styles.checkText}>
+                        <h5>{item.title}</h5>
+                        <p>{item.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className={styles.checklistItem}>
-                    <span className={styles.checkIcon}>✓</span>
-                    <div className={styles.checkText}>
-                      <h5>Two Blank Pages</h5>
-                      <p>Required for entry stamps and visa stickers.</p>
-                    </div>
-                  </div>
-                  <div className={styles.checklistItem}>
-                    <span className={styles.checkIcon}>✓</span>
-                    <div className={styles.checkText}>
-                      <h5>Digital Copy</h5>
-                      <p>Secure backup highly advised in case of physical loss.</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -566,19 +570,19 @@ export default function CountryPage() {
                 <div className={styles.dutyFreeGrid}>
                   <div className={styles.dutyFreeCard}>
                     <h5>🚬 Tobacco</h5>
-                    <p>200 Cigarettes or 50 Cigars</p>
+                    <p>{(data as any).customsTobacco || '200 Cigarettes or 50 Cigars'}</p>
                   </div>
                   <div className={styles.dutyFreeCard}>
                     <h5>🍷 Alcohol</h5>
-                    <p>1L Spirits or 2L Fortified Wine</p>
+                    <p>{(data as any).customsAlcohol || '1L Spirits or 2L Fortified Wine'}</p>
                   </div>
                   <div className={styles.dutyFreeCard}>
                     <h5>🎁 Gifts</h5>
-                    <p>Value up to €430 per adult</p>
+                    <p>{(data as any).customsGifts || 'Value up to €430 per adult'}</p>
                   </div>
                   <div className={styles.dutyFreeCard}>
                     <h5>💵 Cash</h5>
-                    <p>Declare over €10,000</p>
+                    <p>{(data as any).customsCash || 'Declare over €10,000'}</p>
                   </div>
                 </div>
               </div>
@@ -589,15 +593,15 @@ export default function CountryPage() {
                   <div className={styles.healthItem}>
                     <span style={{ fontSize: '1.2rem' }}>💉</span>
                     <div className={styles.healthText}>
-                      <h5>No Mandatory Vaccines</h5>
-                      <p>Standard vaccinations recommended (Tetanus, MMR).</p>
+                      <h5>{(data as any).vaccinesTitle || 'No Mandatory Vaccines'}</h5>
+                      <p>{(data as any).vaccinesDesc || 'Standard vaccinations recommended (Tetanus, MMR).'}</p>
                     </div>
                   </div>
                   <div className={styles.healthItem}>
                     <span style={{ fontSize: '1.2rem' }}>🏥</span>
                     <div className={styles.healthText}>
-                      <h5>Travel Insurance</h5>
-                      <p>Mandatory for visa applicants, highly advised for all.</p>
+                      <h5>{(data as any).insuranceTitle || 'Travel Insurance'}</h5>
+                      <p>{(data as any).insuranceDesc || 'Mandatory for visa applicants, highly advised for all.'}</p>
                     </div>
                   </div>
                 </div>
@@ -617,16 +621,16 @@ export default function CountryPage() {
             <div className={styles.safetyColumnsGrid} style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '0 auto' }}>
               <div className={styles.safetySectionCol}>
                 <h3><span>03</span> Safety & Security</h3>
-                <div className={styles.safetyCardImg} style={{ backgroundImage: 'url(/images/marrakech.webp)' }}></div>
+                <div className={styles.safetyCardImg} style={{ backgroundImage: `url(${(data as any).safetyImg || '/images/marrakech.webp'})` }}></div>
                 
                 <div className={styles.safetyNumbersCard}>
                   <div className={styles.safetyNumbersInfo}>
                     <h5>EMERGENCY NUMBERS</h5>
-                    <h3>{data.emergencyNumbers?.police || '112'} / {data.emergencyNumbers?.ambulance || '112'}</h3>
-                    <p>Both numbers are free to call and work from any mobile phone, even with no credit or a locked screen.</p>
+                    <h3>{(data as any).emergency?.police || '112'} / {(data as any).emergency?.ambulance || '112'}</h3>
+                    <p>Emergency numbers are free to call and work from any mobile phone, even with no credit or a locked screen.</p>
                   </div>
                   <div className={styles.actionIcons}>
-                    <button className={styles.actionBtn}>📞</button>
+                    <button className={styles.actionBtn} onClick={() => window.open(`tel:${(data as any).emergency?.police || '112'}`)}>📞</button>
                     <button className={styles.actionBtn}>🏥</button>
                   </div>
                 </div>
@@ -634,25 +638,26 @@ export default function CountryPage() {
                 <div className={styles.dualGrid}>
                   <div className={styles.healthItem}>
                     <div className={styles.healthText}>
-                      <h5>🩺 Health Tips</h5>
-                      <p>Tap water is safe to drink. Carry standard sunscreens and stay hydrated.</p>
+                      <h5>{(data as any).healthTipsTitle || '🩺 Health Tips'}</h5>
+                      <p>{(data as any).healthTipsDesc || 'Tap water is safe to drink. Carry standard sunscreens and stay hydrated.'}</p>
                     </div>
                   </div>
                   <div className={styles.healthItem}>
                     <div className={styles.healthText}>
-                      <h5>🛡️ Tourist Assistance</h5>
-                      <p>The local Tourist Assistance Service helps victims of crime or accidents.</p>
+                      <h5>{(data as any).safetyAssistanceTitle || '🛡️ Tourist Assistance'}</h5>
+                      <p>{(data as any).safetyAssistanceDesc || 'The local Tourist Assistance Service helps victims of crime or accidents.'}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className={styles.warningBanner}>
                   <h5>♀ SOLO FEMALE TRAVEL</h5>
-                  <h4>Extremely Safe & Accessible</h4>
-                  <p>Generally very safe. Use common sense in major city centers late at night. Trust your instincts. Public transit is secure and well-monitored.</p>
+                  <h4>{(data as any).soloFemaleTitle || 'Extremely Safe & Accessible'}</h4>
+                  <p>{(data as any).soloFemaleDesc || 'Generally very safe. Use common sense in major city centers late at night. Trust your instincts. Public transit is secure and well-monitored.'}</p>
                   <div className={styles.tagRow}>
-                    <span className={styles.warningTag}>RELIABLE</span>
-                    <span className={styles.warningTag}>WELL-LIT AREAS</span>
+                    {((data as any).soloFemaleTags || ['RELIABLE', 'WELL-LIT AREAS']).map((tag: string, idx: number) => (
+                      <span key={idx} className={styles.warningTag}>{tag}</span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -671,11 +676,11 @@ export default function CountryPage() {
             <div className={styles.safetyColumnsGrid} style={{ gridTemplateColumns: '1fr', maxWidth: '800px', margin: '0 auto' }}>
               <div className={styles.safetySectionCol}>
                 <h3><span>04</span> Culture & Conduct</h3>
-                <div className={styles.cultureIntroCard} style={{ backgroundImage: 'url(/images/why_mountains.webp)' }}>
+                <div className={styles.cultureIntroCard} style={{ backgroundImage: `url(${(data as any).cultureImg || '/images/why_mountains.webp'})` }}>
                   <div className={styles.cultureIntroContent}>
                     <span className={styles.bucketTag} style={{ background: '#EBA424', color: '#fff', marginBottom: '10px', display: 'inline-block' }}>AUTHENTIC EXPERIENCE</span>
-                    <h4>Traditional Irish Session</h4>
-                    <p>Music is the heartbeat of local culture. Respect the session by listening quietly and avoiding flash photography.</p>
+                    <h4>{(data as any).cultureExperienceTitle || 'Local Highlight'}</h4>
+                    <p>{(data as any).cultureExperienceDesc || 'Immerse yourself in local traditions, live performances, and historical landmarks.'}</p>
                   </div>
                 </div>
 
@@ -683,15 +688,15 @@ export default function CountryPage() {
                   <div className={styles.healthItem}>
                     <span style={{ fontSize: '1.4rem', background: '#e0f2fe', padding: '10px', borderRadius: '12px', marginRight: '6px' }}>💬</span>
                     <div className={styles.healthText}>
-                      <h5>The Craic (Crack)</h5>
-                      <p>"Any craic?" Refers to news, gossip, fun, and entertainment. It's the core of social life.</p>
+                      <h5>{(data as any).cultureHighlight1Title || 'Social Atmosphere'}</h5>
+                      <p>{(data as any).cultureHighlight1Desc || 'Locals are friendly, warm, and enjoy engaging in lively conversations.'}</p>
                     </div>
                   </div>
                   <div className={styles.healthItem}>
                     <span style={{ fontSize: '1.4rem', background: '#ffedd5', padding: '10px', borderRadius: '12px', marginRight: '6px' }}>👥</span>
                     <div className={styles.healthText}>
-                      <h5>The Round System</h5>
-                      <p>If someone buys you a drink, you are expected to buy a 'round' for the group later. Don't skip your turn.</p>
+                      <h5>{(data as any).cultureHighlight2Title || 'Social Etiquette'}</h5>
+                      <p>{(data as any).cultureHighlight2Desc || 'Learn the basic guidelines for socializing in public and dining.'}</p>
                     </div>
                   </div>
                 </div>
@@ -704,37 +709,33 @@ export default function CountryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td style={{ width: '130px' }}><strong>Tipping</strong></td>
-                        <td>10-12% is standard in restaurants. Not expected in pubs unless table service is provided.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Religion</strong></td>
-                        <td>Respectful attire in churches. Avoid discussing sensitive historical politics in casual settings.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Punctuality</strong></td>
-                        <td>'Irish Time' is relaxed, but formal tours and transport depart exactly as scheduled.</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Environment</strong></td>
-                        <td>Follow 'Leave No Trace' principles in the countryside. Stick to marked trails in National Parks.</td>
-                      </tr>
+                      {((data as any).conductGuide || [
+                        { label: 'Tipping', desc: '10% is standard in restaurants if service charge is not included.' },
+                        { label: 'Religion', desc: 'Respectful attire when visiting historic temples or cathedrals.' },
+                        { label: 'Punctuality', desc: 'Arrive on time for bookings and transport connections.' },
+                        { label: 'Environment', desc: 'Protect natural environments and follow local recycling rules.' }
+                      ]).map((item: any, idx: number) => (
+                        <tr key={idx}>
+                          <td style={{ width: '130px' }}><strong>{item.label}</strong></td>
+                          <td>{item.desc}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
 
                 <div className={styles.phrasesSection}>
-                  <h4>USEFUL IRISH PHRASES (GAEILGE)</h4>
+                  <h4>USEFUL PHRASES</h4>
                   <div className={styles.phrasesGrid}>
-                    <div className={styles.phraseItem}>
-                      <h5>Sláinte</h5>
-                      <p>(Slawn-cha) - Cheers / Health</p>
-                    </div>
-                    <div className={styles.phraseItem}>
-                      <h5>Go raibh maith agat</h5>
-                      <p>(Guh rev mah ag-ut) - Thank you</p>
-                    </div>
+                    {((data as any).usefulPhrases || [
+                      { phrase: 'Hello', translation: 'Primary standard greeting' },
+                      { phrase: 'Thank you', translation: 'Expressing gratitude' }
+                    ]).map((p: any, idx: number) => (
+                      <div key={idx} className={styles.phraseItem}>
+                        <h5>{p.phrase}</h5>
+                        <p>{p.translation}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -749,31 +750,32 @@ export default function CountryPage() {
               <h2>05 Logistics</h2>
             </div>
             
-            <div className={styles.logisticsMainCard} style={{ backgroundImage: 'url(/images/hero_city.webp)' }}>
-              <span className={styles.bucketTag} style={{ background: '#fff', color: '#1a1a1a', margin: '20px' }}>Modern Infrastructure</span>
+            <div className={styles.logisticsMainCard} style={{ backgroundImage: `url(${(data as any).logisticsImg || '/images/hero_city.webp'})` }}>
+              <span className={styles.bucketTag} style={{ background: '#fff', color: '#1a1a1a', margin: '20px' }}>Infrastructure Details</span>
             </div>
 
             <div className={styles.cardsRow} style={{ gridTemplateColumns: 'repeat(3, 1fr)', padding: 0, marginBottom: '24px' }}>
               <div className={styles.infoCard}>
                 <h4 style={{ fontSize: '0.85rem', color: '#855F1B', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 800 }}>CURRENCY</h4>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px' }}>{data.stats?.currency || 'Euro'}</h3>
-                <p style={{ fontSize: '0.9rem', color: '#666' }}>Accepted nationwide, contactless widely available.</p>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px' }}>{data.stats?.currency || 'Local Currency'}</h3>
+                <p style={{ fontSize: '0.9rem', color: '#666' }}>{(data as any).logisticsCurrencyDesc || 'Credit cards widely accepted; keep cash for smaller venues.'}</p>
               </div>
               <div className={styles.infoCard}>
                 <h4 style={{ fontSize: '0.85rem', color: '#855F1B', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 800 }}>DRIVING RULES</h4>
                 <span style={{ fontSize: '0.75rem', color: '#888', display: 'block', marginBottom: '6px' }}>Side of the road</span>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px' }}>{data.drivingRules || 'Left side'}</h3>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px' }}>{data.drivingRules || 'Right side'}</h3>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <span className={styles.warningTag} style={{ background: '#7c2d12', color: '#ffedd5' }}>M50</span>
-                  <span className={styles.warningTag} style={{ background: '#7c2d12', color: '#ffedd5' }}>Toll</span>
+                  {((data as any).drivingRulesTags || ['Standard rules']).map((tag: string, idx: number) => (
+                    <span key={idx} className={styles.warningTag} style={{ background: '#7c2d12', color: '#ffedd5' }}>{tag}</span>
+                  ))}
                 </div>
               </div>
               <div className={styles.infoCard}>
                 <h4 style={{ fontSize: '0.85rem', color: '#855F1B', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 800 }}>LOCAL TRANSPORT</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-                  <span className={styles.warningTag}>Rail</span>
-                  <span className={styles.warningTag}>Bus</span>
-                  <span className={styles.warningTag} style={{ background: '#854d0e', color: '#fef9c3' }}>TFI Leap Card</span>
+                  {((data as any).transportTags || ['Rail', 'Bus', 'Taxi']).map((tag: string, idx: number) => (
+                    <span key={idx} className={styles.warningTag}>{tag}</span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -782,17 +784,17 @@ export default function CountryPage() {
               <div className={styles.infoCard} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h4 style={{ fontSize: '0.85rem', color: '#855F1B', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 800 }}>ELECTRICITY</h4>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px' }}>{data.name.toLowerCase() === 'ireland' ? 'Type G plug' : 'Type C & F plug'}</h3>
-                  <p style={{ fontSize: '0.9rem', color: '#666' }}>230V / 50Hz</p>
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px' }}>{(data as any).plugType || (data.name.toLowerCase() === 'ireland' ? 'Type G plug' : 'Type C & F plug')}</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#666' }}>{(data as any).voltage || '230V / 50Hz'}</p>
                 </div>
                 <span style={{ fontSize: '2.5rem' }}>🔌</span>
               </div>
               <div className={styles.infoCard}>
                 <h4 style={{ fontSize: '0.85rem', color: '#855F1B', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 800 }}>ESSENTIAL APPS</h4>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                  <span className={styles.warningTag} style={{ padding: '8px 14px', borderRadius: '10px' }}>🚍 TFI Live</span>
-                  <span className={styles.warningTag} style={{ padding: '8px 14px', borderRadius: '10px' }}>🗺️ Citymapper</span>
-                  <span className={styles.warningTag} style={{ padding: '8px 14px', borderRadius: '10px' }}>🍴 OpenTable</span>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  {((data as any).essentialApps || ['Google Maps', 'Uber']).map((app: string, idx: number) => (
+                    <span key={idx} className={styles.warningTag} style={{ padding: '8px 14px', borderRadius: '10px' }}>{app}</span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -808,60 +810,52 @@ export default function CountryPage() {
 
             <div className={styles.experiencesGrid}>
               <div className={styles.foodCard}>
-                <div className={styles.foodHero} style={{ backgroundImage: 'url(/images/marrakech.webp)' }}>
+                <div className={styles.foodHero} style={{ backgroundImage: `url(${(data as any).experiencesImg || data.heroImg || '/images/marrakech.webp'})` }}>
                   <h4>Traditional Flavors</h4>
                 </div>
                 <div className={styles.foodContent}>
                   <div>
                     <h5>Must-Try Food & Drink</h5>
                     <ul>
-                      <li>Irish Stew & Soda Bread</li>
-                      <li>Fresh Atlantic Seafood</li>
-                      <li>Guinness or Local Craft Ale</li>
+                      {((data as any).mustTryFoods || ['Local Specialities']).map((food: string, idx: number) => (
+                        <li key={idx}>{food}</li>
+                      ))}
                     </ul>
                   </div>
                   <div>
                     <h5>Alcohol Laws</h5>
-                    <p>Trading hours: 10:30am - 11:30pm (Mon-Sat), 12:30pm - 11:00pm (Sun).</p>
+                    <p>{(data as any).alcoholLaws || 'Varies by municipality and country rules.'}</p>
                   </div>
                 </div>
               </div>
 
               <div className={styles.rulesList}>
-                <div className={styles.ruleItemCard}>
-                  <span style={{ fontSize: '1.2rem' }}>🚭</span>
-                  <div className={styles.ruleItemText}>
-                    <h5>SMOKING/VAPING BAN</h5>
-                    <p>Strictly prohibited in all enclosed workplaces, including pubs and restaurants.</p>
+                {((data as any).localRules || [
+                  { emoji: '🚭', title: 'SMOKING/VAPING BAN', desc: 'Strictly prohibited in enclosed public spaces.' },
+                  { emoji: '🛍️', title: 'SHOPPING TIPS', desc: 'Levy may apply to plastic bags. Always carry a reusable tote.' },
+                  { emoji: '⚖️', title: 'LOCAL LAWS', desc: 'Littering and jaywalking can carry heavy fines.' }
+                ]).map((rule: any, idx: number) => (
+                  <div key={idx} className={styles.ruleItemCard}>
+                    <span style={{ fontSize: '1.2rem' }}>{rule.emoji}</span>
+                    <div className={styles.ruleItemText}>
+                      <h5>{rule.title}</h5>
+                      <p>{rule.desc}</p>
+                    </div>
                   </div>
-                </div>
-                <div className={styles.ruleItemCard}>
-                  <span style={{ fontSize: '1.2rem' }}>🛍️</span>
-                  <div className={styles.ruleItemText}>
-                    <h5>SHOPPING TIPS</h5>
-                    <p>Levy applies to plastic bags. Always carry a reusable tote.</p>
-                  </div>
-                </div>
-                <div className={styles.ruleItemCard}>
-                  <span style={{ fontSize: '1.2rem' }}>⚖️</span>
-                  <div className={styles.ruleItemText}>
-                    <h5>LOCAL LAWS</h5>
-                    <p>Jaywalking is technically an offense; use crossings. Littering carries heavy fines.</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
             {/* Video Resource Card */}
             <div className={styles.videoResourceCard}>
-              <div className={styles.videoThumbnail} style={{ backgroundImage: 'url(/images/coastal_beach.webp)' }}>
-                <button className={styles.playBtn}>▶</button>
+              <div className={styles.videoThumbnail} style={{ backgroundImage: `url(${(data as any).videoThumbnail || '/images/coastal_beach.webp'})` }}>
+                <button className={styles.playBtn} onClick={() => window.open((data as any).videoUrl || 'https://youtube.com', '_blank')}>▶</button>
               </div>
               <div className={styles.videoInfo}>
                 <h5>VIDEO RESOURCE</h5>
-                <h3>The Perfect 10 Days in {data.name} Itinerary</h3>
-                <p>Watch our comprehensive video guide covering the best routes, hidden gems, and local secrets to help you navigate the Emerald Isle like a pro.</p>
-                <button className={styles.watchNowBtn}>Watch Now</button>
+                <h3>{(data as any).videoTitle || `The Perfect 10 Days in ${data.name} Itinerary`}</h3>
+                <p>{(data as any).videoDesc || 'Watch our comprehensive video guide covering the best routes, hidden gems, and local secrets to help you navigate like a pro.'}</p>
+                <button className={styles.watchNowBtn} onClick={() => window.open((data as any).videoUrl || 'https://youtube.com', '_blank')}>Watch Now</button>
               </div>
             </div>
           </div>
