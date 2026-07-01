@@ -114,9 +114,7 @@ export default function HomeClient({
   const [reelOffset, setReelOffset] = useState(15) // Landing on INDIA
   const [landingIndex, setLandingIndex] = useState(2) // Default to India
   
-  const [countries, setCountries] = useState<string[]>(
-    initialCountries.length > 0 ? initialCountries : ['Japan', 'Greece', 'India', 'Germany', 'Brazil', 'Italy', 'Spain', 'UAE', 'USA', 'Canada', 'Thailand', 'Ireland']
-  )
+  const [countries, setCountries] = useState<string[]>(initialCountries)
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [animateSteps, setAnimateSteps] = useState(false)
@@ -162,6 +160,23 @@ export default function HomeClient({
       setNewsletterMsg(err.message || 'Something went wrong')
     }
   }
+
+
+  // Fetch countries dynamically from the API
+  useEffect(() => {
+    async function fetchCountries() {
+      try {
+        const res = await fetch('/api/countries')
+        const data = await res.json()
+        if (data.success && Array.isArray(data.countries)) {
+          setCountries(data.countries)
+        }
+      } catch (err) {
+        console.error('Failed to fetch countries from api:', err)
+      }
+    }
+    fetchCountries()
+  }, [])
 
   // Observer for Journey section
   useEffect(() => {
