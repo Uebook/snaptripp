@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import crypto from 'crypto'
 
-const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'default-captcha-fallback-secret-snaptrip'
+const SECRET = 'snaptrip-captcha-secure-signing-key-98234'
 
 function verifyCaptcha(token: string, userAnswer: string | number): boolean {
   try {

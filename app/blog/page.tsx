@@ -73,7 +73,7 @@ export default function BlogPage() {
   useEffect(() => {
     const loadBlogs = async () => {
       try {
-        const res = await fetch('/api/admin/blogs')
+        const res = await fetch('/api/blogs')
         const data = await res.json()
         if (res.ok && data.blogs) {
           const published = data.blogs.filter((b: any) => b.status !== 'Draft')

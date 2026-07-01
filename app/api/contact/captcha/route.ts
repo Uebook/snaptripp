@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'default-captcha-fallback-secret-snaptrip'
+const SECRET = 'snaptrip-captcha-secure-signing-key-98234'
 
 export async function GET() {
   try {

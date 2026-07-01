@@ -186,10 +186,14 @@ export default function TravelMapPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('redirectAfterLogin', '/travel-map');
       }
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/`
+        : 'https://snaptrip.io/';
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `https://snaptrip-rho.vercel.app/`,
+          redirectTo: redirectUrl,
         },
       })
       if (error) throw error

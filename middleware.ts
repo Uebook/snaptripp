@@ -58,8 +58,13 @@ export async function middleware(request: NextRequest) {
 
   const isAdminPath = request.nextUrl.pathname.startsWith('/admin');
   const isAdminAuthPage = request.nextUrl.pathname.startsWith('/admin/auth');
+  const isAdminApiPath = request.nextUrl.pathname.startsWith('/api/admin');
 
-  if (isAdminPath && !isAdminAuthPage && !user) {
+  if (isAdminApiPath) {
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  } else if (isAdminPath && !isAdminAuthPage && !user) {
     const redirectUrl = new URL('/admin/auth', request.url)
     return NextResponse.redirect(redirectUrl)
   }

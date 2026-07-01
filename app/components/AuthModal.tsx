@@ -89,7 +89,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo }: Au
                 localStorage.setItem('redirectAfterLogin', nextPath);
             }
 
-            const finalRedirectTo = `https://snaptrip-rho.vercel.app/`;
+            const finalRedirectTo = typeof window !== 'undefined'
+                ? `${window.location.origin}/`
+                : 'https://snaptrip.io/';
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,

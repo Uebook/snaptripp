@@ -121,7 +121,7 @@ export default function BlogDetailsPage() {
   useEffect(() => {
     const loadBlogData = async () => {
       try {
-        const allRes = await fetch('/api/admin/blogs')
+        const allRes = await fetch('/api/blogs')
         const allData = await allRes.json()
         let databaseBlogs: any[] = []
         if (allRes.ok && allData.blogs) {

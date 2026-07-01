@@ -49,7 +49,7 @@ function PlanTripContent() {
   useEffect(() => {
     const fetchHeroCarousel = async () => {
       try {
-        const res = await fetch('/api/admin/carousel')
+        const res = await fetch('/api/carousel')
         if (res.ok) {
           const data = await res.json()
           if (data.items && data.items.length > 0) {
@@ -76,7 +76,7 @@ function PlanTripContent() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch('/api/admin/sync/countries')
+        const res = await fetch('/api/countries')
         const data = await res.json()
         if (data.success && data.countries) {
           setCountries(data.countries)

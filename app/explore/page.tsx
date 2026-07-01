@@ -66,7 +66,7 @@ export default function CountryGuide() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch('/api/admin/sync/countries')
+        const res = await fetch('/api/countries')
         const data = await res.json()
         if (data.success && data.countries) {
           setCountries(data.countries)
