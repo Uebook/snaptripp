@@ -961,7 +961,7 @@
   }
 
   /* Shrinking social media share buttons on mobile */
-  .share-modal-content button[onClick*="handleShare"] {
+  .share-btn {
     padding: 8px 12px !important;
     font-size: 12px !important;
   }
@@ -1011,5 +1011,35 @@
 
   .country-rating-actions button {
     flex: 1 !important;
+  }
+}
+
+/* Page Header responsiveness */
+@media (max-width: 768px) {
+  .travel-map-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 20px !important;
+  }
+  .travel-map-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+  .travel-map-actions > div {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  .travel-map-actions > div > button {
+    flex: 1 !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+  .travel-map-actions > button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }

@@ -106,10 +106,11 @@ export default function AdminExplorePage() {
   const [uploadingHeroImg, setUploadingHeroImg] = useState(false)
   const [uploadingExpImg, setUploadingExpImg] = useState(false)
   const [uploadingCityImg, setUploadingCityImg] = useState<Record<number, boolean>>({})
+  const [uploadingKeys, setUploadingKeys] = useState<Record<string, boolean>>({})
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: 'hero_img' | 'experience_img' | 'city_img',
+    type: string,
     cityIdx?: number
   ) => {
     const file = e.target.files?.[0]
@@ -119,6 +120,8 @@ export default function AdminExplorePage() {
     else if (type === 'experience_img') setUploadingExpImg(true)
     else if (type === 'city_img' && cityIdx !== undefined) {
       setUploadingCityImg(prev => ({ ...prev, [cityIdx]: true }))
+    } else {
+      setUploadingKeys(prev => ({ ...prev, [type]: true }))
     }
 
     try {
@@ -142,6 +145,28 @@ export default function AdminExplorePage() {
         setCurrentGuide(prev => ({ ...prev, experience_img: publicUrl }))
       } else if (type === 'city_img' && cityIdx !== undefined) {
         updateCityField(cityIdx, 'img_url', publicUrl)
+      } else if (type.startsWith('bucketList_') || type.startsWith('uniqueAccommodations_')) {
+        const [arrayKey, indexStr] = type.split('_')
+        const idx = parseInt(indexStr, 10)
+        const list = [...(currentGuide.sections_data?.[arrayKey] || [])]
+        if (list[idx]) {
+          list[idx].img = publicUrl
+          setCurrentGuide(prev => ({
+            ...prev,
+            sections_data: {
+              ...(prev.sections_data || {}),
+              [arrayKey]: list
+            }
+          }))
+        }
+      } else {
+        setCurrentGuide(prev => ({
+          ...prev,
+          sections_data: {
+            ...(prev.sections_data || {}),
+            [type]: publicUrl
+          }
+        }))
       }
     } catch (error: any) {
       alert('Error uploading file: ' + error.message)
@@ -150,6 +175,8 @@ export default function AdminExplorePage() {
       else if (type === 'experience_img') setUploadingExpImg(false)
       else if (type === 'city_img' && cityIdx !== undefined) {
         setUploadingCityImg(prev => ({ ...prev, [cityIdx]: false }))
+      } else {
+        setUploadingKeys(prev => ({ ...prev, [type]: false }))
       }
     }
   }
@@ -163,39 +190,41 @@ export default function AdminExplorePage() {
     isUploading: boolean
   ) => {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
         <label style={{ fontWeight: '600', fontSize: '13px', color: 'var(--admin-muted)' }}>{label}</label>
-        <div className="image-upload-section">
-          {value ? (
-            <div className="image-preview-box" style={{ backgroundImage: `url(${value})` }}>
-              <button type="button" className="remove-preview-btn" onClick={onRemove}>
-                &times;
+        
+        {value && (
+          <div className="image-preview-box" style={{ backgroundImage: `url(${value})`, marginBottom: '10px', position: 'relative', height: '140px', backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
+            <button type="button" className="remove-preview-btn" onClick={onRemove} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+              &times;
+            </button>
+          </div>
+        )}
+
+        <div className="image-upload-options" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <input
+            type="text"
+            placeholder="Paste image URL (e.g. /images/guide_france.webp)"
+            className="image-upload-input"
+            value={value}
+            onChange={e => onUrlChange(e.target.value)}
+            style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div className="file-input-wrapper" style={{ position: 'relative', overflow: 'hidden', display: 'inline-block' }}>
+              <button type="button" className="browse-btn" style={{ padding: '8px 16px', background: '#F6B800', color: '#031B4E', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '13px' }}>
+                Browse Local Image
               </button>
-            </div>
-          ) : (
-            <div className="image-upload-options">
               <input
-                type="text"
-                placeholder="Paste image URL (e.g. /images/guide_france.webp)"
-                className="image-upload-input"
-                value={value}
-                onChange={e => onUrlChange(e.target.value)}
+                type="file"
+                accept="image/*"
+                className="file-input-hidden"
+                onChange={onFileChange}
+                style={{ position: 'absolute', left: 0, top: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
               />
-              <div className="image-upload-or">Or upload local file</div>
-              <div className="file-input-wrapper">
-                <button type="button" className="browse-btn">
-                  Browse Image
-                </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="file-input-hidden"
-                  onChange={onFileChange}
-                />
-                {isUploading && <div className="upload-spinner"></div>}
-              </div>
             </div>
-          )}
+            {isUploading && <div className="upload-spinner" style={{ border: '3px solid #f3f3f3', borderTop: '3px solid #F6B800', borderRadius: '50%', width: '16px', height: '16px', animation: 'spin 1s linear infinite' }}></div>}
+          </div>
         </div>
       </div>
     )
@@ -977,7 +1006,7 @@ export default function AdminExplorePage() {
             )}
 
             {/* Modal Tab Navigation */}
-            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', gap: '8px 6px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px', flexWrap: 'wrap' }}>
               {[
                 { id: 'base', label: '1. General' },
                 { id: 'overview', label: '2. Overview Tab' },
@@ -1175,16 +1204,14 @@ export default function AdminExplorePage() {
                           />
                         </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontWeight: '600', fontSize: '13px', color: 'var(--admin-muted)' }}>Overview Segment Image URL</label>
-                          <input
-                            type="text"
-                            value={sections.overviewImg || ''}
-                            onChange={e => updateSec('overviewImg', e.target.value)}
-                            placeholder="/images/explore_spain.webp"
-                            style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--admin-border)', fontSize: '14px', background: '#f8fafc', width: '100%', boxSizing: 'border-box' }}
-                          />
-                        </div>
+                        {renderImageUploader(
+                          'Overview Segment Image',
+                          sections.overviewImg || '',
+                          url => updateSec('overviewImg', url),
+                          () => updateSec('overviewImg', ''),
+                          e => handleFileUpload(e, 'overviewImg'),
+                          uploadingKeys.overviewImg || false
+                        )}
 
                         <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid var(--admin-border)', paddingBottom: '6px', margin: '8px 0 4px 0' }}>1.2 Best Time Parameter Details</h4>
                         
@@ -1247,9 +1274,16 @@ export default function AdminExplorePage() {
                                     <option value="nature">Nature</option>
                                   </select>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
-                                  <input type="text" placeholder="Description" value={item.desc || ''} onChange={e => updateBucketItem(idx, 'desc', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px' }} />
-                                  <input type="text" placeholder="Image Path/URL" value={item.img || ''} onChange={e => updateBucketItem(idx, 'img', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px' }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <input type="text" placeholder="Description" value={item.desc || ''} onChange={e => updateBucketItem(idx, 'desc', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px', width: '100%' }} />
+                                  {renderImageUploader(
+                                    'Bucket Item Image',
+                                    item.img || '',
+                                    url => updateBucketItem(idx, 'img', url),
+                                    () => updateBucketItem(idx, 'img', ''),
+                                    e => handleFileUpload(e, `bucketList_${idx}`),
+                                    uploadingKeys[`bucketList_${idx}`] || false
+                                  )}
                                 </div>
                                 <button type="button" onClick={() => removeBucketItem(idx)} style={{ position: 'absolute', top: '4px', right: '4px', background: 'none', border: 'none', color: 'var(--admin-danger)', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>×</button>
                               </div>
@@ -1267,9 +1301,16 @@ export default function AdminExplorePage() {
                             {(sections.uniqueAccommodations || []).length === 0 && <p style={{ fontSize: '12px', color: 'var(--admin-muted)', margin: 0, textAlign: 'center' }}>No unique accommodations added yet. Fallback values will be used.</p>}
                             {(sections.uniqueAccommodations || []).map((item: any, idx: number) => (
                               <div key={idx} style={{ background: '#f8fafc', padding: '10px', borderRadius: '10px', border: '1px solid var(--admin-border)', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                  <input type="text" placeholder="Title" value={item.title || ''} onChange={e => updateAccomItem(idx, 'title', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px' }} />
-                                  <input type="text" placeholder="Image Path/URL" value={item.img || ''} onChange={e => updateAccomItem(idx, 'img', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px' }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <input type="text" placeholder="Title" value={item.title || ''} onChange={e => updateAccomItem(idx, 'title', e.target.value)} required style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px', width: '100%' }} />
+                                  {renderImageUploader(
+                                    'Accommodation Image',
+                                    item.img || '',
+                                    url => updateAccomItem(idx, 'img', url),
+                                    () => updateAccomItem(idx, 'img', ''),
+                                    e => handleFileUpload(e, `uniqueAccommodations_${idx}`),
+                                    uploadingKeys[`uniqueAccommodations_${idx}`] || false
+                                  )}
                                 </div>
                                 <textarea placeholder="Description" value={item.desc || ''} onChange={e => updateAccomItem(idx, 'desc', e.target.value)} required rows={2} style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '12px', resize: 'none', width: '100%', boxSizing: 'border-box' }} />
                                 <button type="button" onClick={() => removeAccomItem(idx)} style={{ position: 'absolute', top: '4px', right: '4px', background: 'none', border: 'none', color: 'var(--admin-danger)', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>×</button>
@@ -1303,10 +1344,14 @@ export default function AdminExplorePage() {
                             <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Visa Short Info (Hero)</label>
                             <input type="text" placeholder="e.g. Visa-free for 90 days" value={sections.visaInfo || ''} onChange={e => updateSec('visaInfo', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
                           </div>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Entry Image URL</label>
-                            <input type="text" placeholder="/images/spain_entry.webp" value={sections.entryImg || ''} onChange={e => updateSec('entryImg', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-                          </div>
+                          {renderImageUploader(
+                            'Entry Image',
+                            sections.entryImg || '',
+                            url => updateSec('entryImg', url),
+                            () => updateSec('entryImg', ''),
+                            e => handleFileUpload(e, 'entryImg'),
+                            uploadingKeys.entryImg || false
+                          )}
                         </div>
 
                         <h4 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid var(--admin-border)', paddingBottom: '6px', margin: '8px 0 4px 0' }}>Visa Details Lists (Comma separated values)</h4>
@@ -1354,10 +1399,14 @@ export default function AdminExplorePage() {
                     {/* TAB 4: Safety & Security */}
                     {generalModalTab === 'safety' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontWeight: '600', fontSize: '13px', color: 'var(--admin-muted)' }}>Safety Segment Image URL</label>
-                          <input type="text" placeholder="/images/safety.webp" value={sections.safetyImg || ''} onChange={e => updateSec('safetyImg', e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-                        </div>
+                        {renderImageUploader(
+                          'Safety Segment Image',
+                          sections.safetyImg || '',
+                          url => updateSec('safetyImg', url),
+                          () => updateSec('safetyImg', ''),
+                          e => handleFileUpload(e, 'safetyImg'),
+                          uploadingKeys.safetyImg || false
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1386,10 +1435,14 @@ export default function AdminExplorePage() {
                     {generalModalTab === 'culture' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Culture Segment Image URL</label>
-                            <input type="text" placeholder="/images/culture.webp" value={sections.cultureImg || ''} onChange={e => updateSec('cultureImg', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-                          </div>
+                          {renderImageUploader(
+                            'Culture Segment Image',
+                            sections.cultureImg || '',
+                            url => updateSec('cultureImg', url),
+                            () => updateSec('cultureImg', ''),
+                            e => handleFileUpload(e, 'cultureImg'),
+                            uploadingKeys.cultureImg || false
+                          )}
                           <div>
                             <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Culture Experience Title</label>
                             <input type="text" placeholder="Traditional Flamenco" value={sections.cultureExperienceTitle || ''} onChange={e => updateSec('cultureExperienceTitle', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
@@ -1443,10 +1496,14 @@ export default function AdminExplorePage() {
                     {generalModalTab === 'logistics' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Logistics Image URL</label>
-                            <input type="text" placeholder="/images/logistics.webp" value={sections.logisticsImg || ''} onChange={e => updateSec('logisticsImg', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-                          </div>
+                          {renderImageUploader(
+                            'Logistics Image',
+                            sections.logisticsImg || '',
+                            url => updateSec('logisticsImg', url),
+                            () => updateSec('logisticsImg', ''),
+                            e => handleFileUpload(e, 'logisticsImg'),
+                            uploadingKeys.logisticsImg || false
+                          )}
                           <div>
                             <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Driving side rules (e.g. Left side)</label>
                             <input type="text" placeholder="e.g. Drive on the right" value={sections.drivingRules || ''} onChange={e => updateSec('drivingRules', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
@@ -1491,10 +1548,14 @@ export default function AdminExplorePage() {
                             <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Must-Try Food List (Comma-separated)</label>
                             <input type="text" placeholder="Paella, Tapas, Sangria" value={sections.mustTryFoods ? sections.mustTryFoods.join(', ') : ''} onChange={e => updateSec('mustTryFoods', e.target.value.split(',').map(s => s.trim()))} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
                           </div>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--admin-muted)' }}>Experiences Banner Image</label>
-                            <input type="text" placeholder="/images/food.webp" value={sections.experiencesImg || ''} onChange={e => updateSec('experiencesImg', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--admin-border)', fontSize: '13px', width: '100%', boxSizing: 'border-box' }} />
-                          </div>
+                          {renderImageUploader(
+                            'Experiences Banner Image',
+                            sections.experiencesImg || '',
+                            url => updateSec('experiencesImg', url),
+                            () => updateSec('experiencesImg', ''),
+                            e => handleFileUpload(e, 'experiencesImg'),
+                            uploadingKeys.experiencesImg || false
+                          )}
                         </div>
 
                         <div>

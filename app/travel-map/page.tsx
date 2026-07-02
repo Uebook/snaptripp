@@ -24,7 +24,7 @@ export default function TravelMapPage() {
   const [userCityLogs, setUserCityLogs] = useState<any[]>([]);
   
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [mainViewMode, setMainViewMode] = useState<'map' | 'list'>('map');
+  const [mainViewMode, setMainViewMode] = useState<'map' | 'list' | 'score' | 'countries'>('map');
 
   const fetchUserData = async (userId: string) => {
     // We swallow errors because if tables don't exist yet, we still want the UI to render empty
@@ -376,90 +376,143 @@ export default function TravelMapPage() {
       <SiteHeader />
       
       <div style={{ maxWidth: '1200px', margin: '40px auto 0', padding: '0 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+        <div className="travel-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontSize: '32px', color: '#031B4E', margin: '0 0 8px', fontFamily: '"Playfair Display", serif' }}>Your Travel Map</h1>
             <p style={{ color: '#64748B', margin: 0 }}>Track your journeys, collect stamps, and relive your favorite memories.</p>
           </div>
-          <button 
-            onClick={() => setIsShareModalOpen(true)}
-            style={{ padding: '12px 24px', background: '#F6B800', color: '#031B4E', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-12-4l4-4 4 4m-4-4v12" />
-            </svg>
-            Share Journey
-          </button>
+          <div className="travel-map-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* View Mode Toggle Option */}
+            <div style={{ 
+              display: 'flex', 
+              background: '#FFF', 
+              padding: '6px', 
+              borderRadius: '30px', 
+              width: 'fit-content', 
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+              position: 'relative'
+            }}>
+              <button 
+                onClick={() => setMainViewMode('map')}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '24px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: mainViewMode === 'map' ? '#F6B800' : 'transparent',
+                  color: mainViewMode === 'map' ? '#031B4E' : '#64748B',
+                  boxShadow: mainViewMode === 'map' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                  <line x1="9" y1="3" x2="9" y2="18" />
+                  <line x1="15" y1="6" x2="15" y2="21" />
+                </svg>
+                Map
+              </button>
+              <button 
+                onClick={() => setMainViewMode('list')}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '24px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: mainViewMode === 'list' ? '#F6B800' : 'transparent',
+                  color: mainViewMode === 'list' ? '#031B4E' : '#64748B',
+                  boxShadow: mainViewMode === 'list' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+                List
+              </button>
+              <button 
+                onClick={() => setMainViewMode('score')}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '24px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: mainViewMode === 'score' ? '#F6B800' : 'transparent',
+                  color: mainViewMode === 'score' ? '#031B4E' : '#64748B',
+                  boxShadow: mainViewMode === 'score' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                  <path d="M12 2a5 5 0 0 0-5 5v3.5a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z" />
+                </svg>
+                Travel Score
+              </button>
+              <button 
+                onClick={() => setMainViewMode('countries')}
+                style={{
+                  padding: '10px 24px',
+                  border: 'none',
+                  borderRadius: '24px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: mainViewMode === 'countries' ? '#F6B800' : 'transparent',
+                  color: mainViewMode === 'countries' ? '#031B4E' : '#64748B',
+                  boxShadow: mainViewMode === 'countries' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  <path d="M2 12h20" />
+                </svg>
+                Visited Countries
+              </button>
+            </div>
+
+            <button 
+              onClick={() => setIsShareModalOpen(true)}
+              style={{ padding: '12px 24px', background: '#F6B800', color: '#031B4E', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center', height: '46px' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-12-4l4-4 4 4m-4-4v12" />
+              </svg>
+              Share Journey
+            </button>
+          </div>
         </div>
 
-        {/* View Mode Toggle Option */}
-        <div style={{ 
-          display: 'flex', 
-          background: '#FFF', 
-          padding: '6px', 
-          borderRadius: '30px', 
-          width: 'fit-content', 
-          marginBottom: '32px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
-          position: 'relative'
-        }}>
-          <button 
-            onClick={() => setMainViewMode('map')}
-            style={{
-              padding: '10px 24px',
-              border: 'none',
-              borderRadius: '24px',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: mainViewMode === 'map' ? '#F6B800' : 'transparent',
-              color: mainViewMode === 'map' ? '#031B4E' : '#64748B',
-              boxShadow: mainViewMode === 'map' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-              <line x1="9" y1="3" x2="9" y2="18" />
-              <line x1="15" y1="6" x2="15" y2="21" />
-            </svg>
-            Map
-          </button>
-          <button 
-            onClick={() => setMainViewMode('list')}
-            style={{
-              padding: '10px 24px',
-              border: 'none',
-              borderRadius: '24px',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              background: mainViewMode === 'list' ? '#F6B800' : 'transparent',
-              color: mainViewMode === 'list' ? '#031B4E' : '#64748B',
-              boxShadow: mainViewMode === 'list' ? '0 4px 12px rgba(246, 184, 0, 0.25)' : 'none',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="8" y1="6" x2="21" y2="6" />
-              <line x1="8" y1="12" x2="21" y2="12" />
-              <line x1="8" y1="18" x2="21" y2="18" />
-              <line x1="3" y1="6" x2="3.01" y2="6" />
-              <line x1="3" y1="12" x2="3.01" y2="12" />
-              <line x1="3" y1="18" x2="3.01" y2="18" />
-            </svg>
-            List
-          </button>
-        </div>
-
-        {mainViewMode === 'map' ? (
+        {mainViewMode === 'map' && (
           <div style={{ display: 'flex', gap: '24px', marginTop: '20px' }}>
             <div style={{ flex: '1', height: '600px', background: '#FFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
               <InteractiveWorldMap 
@@ -469,12 +522,34 @@ export default function TravelMapPage() {
               />
             </div>
           </div>
-        ) : (
+        )}
+
+        {mainViewMode === 'list' && (
           <AccordionCountrySelector 
             userCountryLogs={userCountryLogs} 
             onCountrySelect={handleCountryClick} 
             onToggleCountry={handleToggleCountry}
           />
+        )}
+
+        {mainViewMode === 'score' && (
+          <div style={{ marginTop: '20px' }}>
+            <TravelScoreProfile 
+              userCountryLogs={userCountryLogs} 
+              userCityLogs={userCityLogs} 
+            />
+          </div>
+        )}
+
+        {mainViewMode === 'countries' && (
+          <div style={{ marginTop: '20px' }}>
+            <VisitedCountriesSection 
+              userCountryLogs={userCountryLogs} 
+              userCityLogs={userCityLogs} 
+              userId={user?.id}
+              onUpdate={() => fetchUserData(user.id)}
+            />
+          </div>
         )}
 
 
