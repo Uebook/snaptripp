@@ -973,9 +973,6 @@ export default function AdminExplorePage() {
                         <button className="admin-button outline" onClick={() => handleOpenEditGeneralModal(guide)} style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '8px' }}>
                           Edit Base
                         </button>
-                        <button className="admin-button outline" onClick={() => handleOpenDetailsModal(guide.id)} style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '8px', color: 'var(--admin-accent)' }}>
-                          Edit Sub-Sections
-                        </button>
                         <button className="admin-button outline" onClick={() => handleDeleteGuide(guide.id)} style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '8px', color: 'var(--admin-danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
                           Delete
                         </button>

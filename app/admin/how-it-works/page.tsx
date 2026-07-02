@@ -37,7 +37,7 @@ interface StepItem {
 }
 
 export default function AdminHowItWorksPage() {
-  const [activeTab, setActiveTab] = useState<'settings' | 'planning_steps' | 'how_steps'>('settings')
+  const [activeTab, setActiveTab] = useState<'settings' | 'planning_steps' | 'how_steps'>('planning_steps')
 
   // Tab 1 Settings States
   const [settings, setSettings] = useState<PageSettings>({
@@ -254,13 +254,6 @@ export default function AdminHowItWorksPage() {
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       {/* Sub tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px' }}>
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`admin-button ${activeTab === 'settings' ? '' : 'outline'}`}
-          style={{ padding: '10px 20px', borderRadius: '10px' }}
-        >
-          Interactive Demo
-        </button>
         <button
           onClick={() => setActiveTab('planning_steps')}
           className={`admin-button ${activeTab === 'planning_steps' ? '' : 'outline'}`}
