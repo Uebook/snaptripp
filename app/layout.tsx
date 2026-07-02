@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: 'Snaptrip',
   description: 'Your travel companion',
   referrer: 'no-referrer',
+  icons: {
+    icon: '/images/applogo.webp',
+    shortcut: '/images/applogo.webp',
+    apple: '/images/applogo.webp',
+  },
 }
 
 export default function RootLayout({
