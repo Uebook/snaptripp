@@ -237,12 +237,14 @@ export function VisitedCountriesSection({
   userCountryLogs = [],
   userCityLogs = [],
   userId,
-  onUpdate
+  onUpdate,
+  onNavigateToMap
 }: {
   userCountryLogs?: any[],
   userCityLogs?: any[],
   userId?: string,
-  onUpdate?: () => void
+  onUpdate?: () => void,
+  onNavigateToMap?: () => void
 }) {
   const [activeContinent, setActiveContinent] = useState<string>(CONTINENTS_CATEGORIES[0]);
   const [uploadingCountry, setUploadingCountry] = useState<string | null>(null);
@@ -539,10 +541,7 @@ export function VisitedCountriesSection({
 
       {/* Add more countries dashed button */}
       <button 
-        onClick={() => {
-          const selectBtn = document.querySelector('button[onClick*="setMainViewMode(\'list\')"]') as HTMLButtonElement;
-          if (selectBtn) selectBtn.click();
-        }}
+        onClick={onNavigateToMap}
         style={{
           width: '100%',
           maxWidth: '600px',

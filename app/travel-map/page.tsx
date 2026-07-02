@@ -548,6 +548,7 @@ export default function TravelMapPage() {
               userCityLogs={userCityLogs} 
               userId={user?.id}
               onUpdate={() => fetchUserData(user.id)}
+              onNavigateToMap={() => setMainViewMode('map')}
             />
           </div>
         )}
